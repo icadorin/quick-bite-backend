@@ -14,20 +14,6 @@ O sistema é construído com uma arquitetura de microsserviços, utilizando Spri
 Cliente → API Gateway (8081) → Microsserviços (8082-8086)
 ```
 
-## ✅ Status dos Serviços
-
-🟢 API Gateway (8081)
-
-🟢 Auth Service (8082)
-
-🔵 Product Service (8083)
-
-🔵 Order Service (8084)
-
-🔵 Payment Service (8085)
-
-🔵 Notification Service (8086)
-
 ## ☁️ Infraestrutura na Nuvem
 
 | Serviço       | Fornecedor   | Uso                  |
@@ -92,3 +78,36 @@ mvn spring-boot:run
 ## ✅ Verificação
 
 Acesse: http://localhost:8082/api/auth/test
+
+## 🔐 Auth Service Database (`quickbite-auth-db`)
+
+![Modelo de Dados](./images/auth.png)
+
+
+### 🔗 Relacionamentos principais
+- **users** ⮕ **user_profiles** → Relação 1:1 (cada usuário tem um perfil)  
+- **users** ⮕ **refresh_tokens** → Relação 1:N (um usuário pode ter múltiplos tokens ativos)  
+
+---
+
+## 🍕 Product Service Database (`quickbite-product-db`)
+
+![Modelo de Dados](./images/product.png)
+
+
+### 🔗 Relacionamentos principais
+- **restaurants** ⮕ **products** → Relação 1:N (um restaurante oferece vários produtos)  
+- **categories** ⮕ **products** → Relação 1:N (uma categoria pode agrupar vários produtos)  
+
+---
+
+## 📋 Order Service Database (`quickbite-order-db`)
+
+![Modelo de Dados](./images/order.png)
+
+### 🔗 Relacionamentos principais
+- **orders** ⮕ **order_items** → Relação 1:N (um pedido contém vários itens)  
+- **orders** ⮕ **order_status_history** → Relação 1:N (um pedido possui histórico de mudanças de status)  
+
+
+
