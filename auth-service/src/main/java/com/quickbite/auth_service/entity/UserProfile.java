@@ -2,19 +2,18 @@ package com.quickbite.auth_service.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "user_product")
+@Table(name = "user_profiles")
 public class UserProfile {
 
     @Id
     private Long userId;
 
-    @OneToMany
+    @OneToOne
     @MapsId
     @JoinColumn(name = "user_id")
     private User user;
