@@ -24,6 +24,9 @@ public class UserProfile {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    @Column(name = "address")
+    private String address;
+
     @Column(name = "preferred_language", length = 10)
     private String preferredLanguage = "pt_BR";
 
