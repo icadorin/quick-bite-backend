@@ -1,13 +1,16 @@
 package com.quickbite.auth_service.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Data
 @Entity
 @Table(name = "refresh_tokens")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class RefreshToken {
 
     @Id
@@ -25,7 +28,8 @@ public class RefreshToken {
     private LocalDateTime expiresAt;
 
     @Column(nullable = false)
-    private Boolean revoked = false;
+    @Builder.Default
+    private boolean revoked = false;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
