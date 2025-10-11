@@ -1,13 +1,20 @@
 package com.quickbite.product_service.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
 @Table(name = "products")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Product {
 
     @Id
@@ -29,27 +36,27 @@ public class Product {
     private String description;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private Double price;
+    private BigDecimal price;
 
     @Column(name = "compare_price", precision = 10, scale = 2)
-    private Double comparePrice;
+    private BigDecimal comparePrice;
 
     @Column(name = "cost_price", precision = 10, scale = 2)
-    private Double costPrice;
+    private BigDecimal costPrice;
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @Column(columnDefinition = "JSONB")
+    @Column(columnDefinition = "jsonb")
     private String ingredients;
 
-    @Column(columnDefinition = "JSONB")
+    @Column(columnDefinition = "jsonb")
     private String allergens;
 
-    @Column(name = "is_available")
+    @Column(name = "is_available", nullable = false)
     private Boolean isAvailable = true;
 
-    @Column(name = "is_featured")
+    @Column(name = "is_featured", nullable = false)
     private Boolean isFeatured = false;
 
     @Column(name = "preparation_time")
@@ -57,7 +64,7 @@ public class Product {
 
     private Integer calories;
 
-    @Column(name = "sort_order")
+    @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
     @Column(name = "created_at", nullable = false)

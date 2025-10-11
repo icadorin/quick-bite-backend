@@ -1,13 +1,20 @@
 package com.quickbite.product_service.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
 @Table(name = "restaurants")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Restaurant {
 
     @Id
@@ -23,7 +30,7 @@ public class Restaurant {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(columnDefinition = "JSONB")
+    @Column(columnDefinition = "jsonb")
     private String address;
 
     @Column(length = 20)
@@ -41,17 +48,17 @@ public class Restaurant {
     @Column(name = "cuisine_type", length = 100)
     private String cuisineType;
 
-    @Column(name = "is_Active")
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(name = "opening_hours", columnDefinition = "JSONB")
+    @Column(name = "opening_hours", columnDefinition = "jsonb")
     private String openingHours;
 
     @Column(name = "delivery_time_range", length = 20)
     private String deliveryTimeRange;
 
     @Column(name = "minimum_order_amount", precision = 10, scale = 2)
-    private Double minimumOrderAmount = 0.0;
+    private BigDecimal minimumOrderAmount = BigDecimal.ZERO;
 
     @Column(precision = 3, scale = 2)
     private Double rating = 0.0;

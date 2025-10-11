@@ -1,13 +1,19 @@
 package com.quickbite.product_service.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
 @Entity
 @Table(name = "categories")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Category {
 
     @Id
@@ -23,10 +29,10 @@ public class Category {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @Column(name = "sort_order")
+    @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
     @Column(name = "created_at", nullable = false)
