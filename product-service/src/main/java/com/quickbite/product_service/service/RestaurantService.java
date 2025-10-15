@@ -66,6 +66,28 @@ public class RestaurantService {
     }
 
     @Transactional
+    public RestaurantResponse updateRestaurant(Long id, RestaurantRequest request) {
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
+
+        restaurant.setName(request.getName());
+        restaurant.setDescription(request.getDescription());
+        restaurant.setAddress(convertToJson(request.getAddress()));
+        restaurant.setPhone(request.getPhone());
+        restaurant.setEmail(request.getEmail());
+        restaurant.setLogoUrl(request.getLogoUrl());
+        restaurant.setBannerUrl(request.getBannerUrl());
+        restaurant.setCuisineType(request.getCuisineType());
+        restaurant.setIsActive(request.getIsActive());
+        restaurant.setOpeningHours(convertToJson(request.getOpeningHours()));
+        restaurant.setDeliveryTimeRange(request.getDeliveryTimeRange());
+        restaurant.setMinimumOrderAmount(request.getMinimumOrderAmount());
+
+        Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
+        return mapToResponse(updatedRestaurant);
+    }
+
+    @Transactional
     public void deleteRestaurant(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
@@ -93,6 +115,11 @@ public class RestaurantService {
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
+    }
+
+    public Restaurant getRestaurantEntity(Long id) {
+        return restaurantRepository.findByIdAndIsActiveTrue(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
     }
 
     private RestaurantResponse mapToResponse(Restaurant restaurant) {
