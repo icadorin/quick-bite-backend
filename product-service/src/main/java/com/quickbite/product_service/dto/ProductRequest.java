@@ -27,7 +27,7 @@ public class ProductRequest {
 
     private BigDecimal comparePrice;
     private BigDecimal costPrice;
-    private String imaUrl;
+    private String imageUrl;
     private List<String> ingredients;
     private List<String> allergens;
     private Boolean isAvailable = true;
