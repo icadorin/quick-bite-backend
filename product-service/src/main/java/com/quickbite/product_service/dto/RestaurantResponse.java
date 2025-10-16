@@ -19,11 +19,11 @@ public class RestaurantResponse {
     private String bannerUrl;
     private String cuisineType;
     private Boolean isActive;
-    private Map<String, String> openingHours;
+    private Map<String, Object> openingHours;
     private String deliveryTimeRange;
     private BigDecimal minimumOrderAmount;
     private Double rating;
-    private Integer totalReview;
+    private Integer totalReviews;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

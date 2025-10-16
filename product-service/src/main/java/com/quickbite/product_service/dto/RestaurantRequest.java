@@ -23,7 +23,7 @@ public class RestaurantRequest {
     private String bannerUrl;
     private String cuisineType;
     private Boolean isActive = true;
-    private Map<String, String> openingHours;
+    private Map<String, Object> openingHours;
     private String deliveryTimeRange;
     private BigDecimal minimumOrderAmount = BigDecimal.ZERO;
 }

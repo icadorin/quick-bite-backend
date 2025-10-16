@@ -4,7 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Map;
 
 @Data
 public class ProductResponse {
@@ -19,8 +19,8 @@ public class ProductResponse {
     private BigDecimal comparePrice;
     private BigDecimal costPrice;
     private String imageUrl;
-    private List<String> ingredients;
-    private List<String> allergens;
+    private Map<String, Object> ingredients;
+    private Map<String, Object> allergens;
     private Boolean isAvailable;
     private Boolean isFeatured;
     private Integer preparationTime;

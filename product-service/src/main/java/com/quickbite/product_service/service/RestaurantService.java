@@ -1,6 +1,5 @@
 package com.quickbite.product_service.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.product_service.dto.RestaurantRequest;
 import com.quickbite.product_service.dto.RestaurantResponse;
@@ -12,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,14 +47,14 @@ public class RestaurantService {
             .ownerId(request.getOwnerId())
             .name(request.getName())
             .description(request.getDescription())
-            .address(convertToJson(request.getAddress()))
+            .address(request.getAddress())
             .phone(request.getPhone())
             .email(request.getEmail())
             .logoUrl(request.getLogoUrl())
             .bannerUrl(request.getBannerUrl())
             .cuisineType(request.getCuisineType())
             .isActive(request.getIsActive())
-            .openingHours(convertToJson(request.getOpeningHours()))
+            .openingHours(request.getOpeningHours())
             .deliveryTimeRange(request.getDeliveryTimeRange())
             .minimumOrderAmount(request.getMinimumOrderAmount())
             .build();
@@ -72,14 +70,14 @@ public class RestaurantService {
 
         restaurant.setName(request.getName());
         restaurant.setDescription(request.getDescription());
-        restaurant.setAddress(convertToJson(request.getAddress()));
+        restaurant.setAddress(request.getAddress());
         restaurant.setPhone(request.getPhone());
         restaurant.setEmail(request.getEmail());
         restaurant.setLogoUrl(request.getLogoUrl());
         restaurant.setBannerUrl(request.getBannerUrl());
         restaurant.setCuisineType(request.getCuisineType());
         restaurant.setIsActive(request.getIsActive());
-        restaurant.setOpeningHours(convertToJson(request.getOpeningHours()));
+        restaurant.setOpeningHours(request.getOpeningHours());
         restaurant.setDeliveryTimeRange(request.getDeliveryTimeRange());
         restaurant.setMinimumOrderAmount(request.getMinimumOrderAmount());
 
@@ -125,22 +123,12 @@ public class RestaurantService {
     private RestaurantResponse mapToResponse(Restaurant restaurant) {
         RestaurantResponse response = objectMapper.convertValue(restaurant, RestaurantResponse.class);
 
-        try {
-            if (restaurant.getAddress() != null) {
-                response.setAddress(objectMapper.readValue(
-                    restaurant.getAddress(),
-                    new TypeReference<Map<String, Object>>() {}
-                ));
-            }
+        if (restaurant.getAddress() != null) {
+            response.setAddress(restaurant.getAddress());
+        }
 
-            if (restaurant.getOpeningHours() != null) {
-                response.setOpeningHours(objectMapper.readValue(
-                    restaurant.getOpeningHours(),
-                    new TypeReference<Map<String, String>>() {}
-                ));
-            }
-        } catch (Exception e) {
-            //
+        if (restaurant.getOpeningHours() != null) {
+            response.setOpeningHours(restaurant.getOpeningHours());
         }
 
         return response;
