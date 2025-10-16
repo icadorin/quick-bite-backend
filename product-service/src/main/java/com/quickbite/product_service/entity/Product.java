@@ -5,9 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Data
 @Entity
@@ -29,7 +32,7 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -48,15 +51,19 @@ public class Product {
     private String imageUrl;
 
     @Column(columnDefinition = "jsonb")
-    private String ingredients;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> ingredients;
 
     @Column(columnDefinition = "jsonb")
-    private String allergens;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> allergens;
 
     @Column(name = "is_available", nullable = false)
+    @Builder.Default
     private Boolean isAvailable = true;
 
     @Column(name = "is_featured", nullable = false)
+    @Builder.Default
     private Boolean isFeatured = false;
 
     @Column(name = "preparation_time")
@@ -65,6 +72,7 @@ public class Product {
     private Integer calories;
 
     @Column(name = "sort_order", nullable = false)
+    @Builder.Default
     private Integer sortOrder = 0;
 
     @Column(name = "created_at", nullable = false)

@@ -5,9 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Data
 @Entity
@@ -24,19 +27,20 @@ public class Restaurant {
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(columnDefinition = "jsonb")
-    private String address;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> address;
 
     @Column(length = 20)
     private String phone;
 
-    @Column(length = 255)
+    @Column
     private String email;
 
     @Column(name = "logo_url", length = 500)
@@ -49,21 +53,26 @@ public class Restaurant {
     private String cuisineType;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "opening_hours", columnDefinition = "jsonb")
-    private String openingHours;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> openingHours;
 
     @Column(name = "delivery_time_range", length = 20)
     private String deliveryTimeRange;
 
     @Column(name = "minimum_order_amount", precision = 10, scale = 2)
+    @Builder.Default
     private BigDecimal minimumOrderAmount = BigDecimal.ZERO;
 
-    @Column(precision = 3, scale = 2)
+    @Column
+    @Builder.Default
     private Double rating = 0.0;
 
     @Column(name = "total_reviews")
+    @Builder.Default
     private Integer totalReviews = 0;
 
     @Column(name = "created_at", nullable = false)
