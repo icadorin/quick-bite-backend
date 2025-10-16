@@ -1,6 +1,5 @@
 package com.quickbite.product_service.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
@@ -10,14 +9,12 @@ import com.quickbite.product_service.repository.CategoryRepository;
 import com.quickbite.product_service.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -63,8 +60,8 @@ public class ProductService {
             .comparePrice(request.getComparePrice())
             .costPrice(request.getCostPrice())
             .imageUrl(request.getImageUrl())
-            .ingredients(convertToJson(request.getIngredients()))
-            .allergens(convertToJson(request.getAllergens()))
+            .ingredients(request.getIngredients())
+            .allergens(request.getAllergens())
             .isAvailable(request.getIsAvailable())
             .isFeatured(request.getIsFeatured())
             .preparationTime(request.getPreparationTime())
@@ -96,8 +93,8 @@ public class ProductService {
         product.setComparePrice(request.getComparePrice());
         product.setCostPrice(request.getCostPrice());
         product.setImageUrl(request.getImageUrl());
-        product.setIngredients(convertToJson(request.getIngredients()));
-        product.setAllergens(convertToJson(request.getAllergens()));
+        product.setIngredients(request.getIngredients());
+        product.setAllergens(request.getAllergens());
         product.setIsAvailable(request.getIsAvailable());
         product.setIsFeatured(request.getIsFeatured());
         product.setPreparationTime(request.getPreparationTime());
@@ -168,8 +165,9 @@ public class ProductService {
     }
 
     private ProductResponse mapToResponse(Product product) {
-        ProductResponse response = objectMapper.convertValue(product, ProductResponse.class);
+        ProductResponse response = new ProductResponse();
 
+        response.setId(product.getId());
         response.setRestaurantId(product.getRestaurant().getId());
         response.setRestaurantName(product.getRestaurant().getName());
 
@@ -178,23 +176,21 @@ public class ProductService {
             response.setCategoryName(product.getCategory().getName());
         }
 
-        try {
-            if (product.getIngredients() != null) {
-                response.setIngredients(
-                    objectMapper.readValue(product.getIngredients(),
-                    new TypeReference<List<String>>() {}
-                ));
-            }
-
-            if (product.getAllergens() != null) {
-                response.setAllergens(objectMapper.readValue(
-                    product.getAllergens(),
-                    new TypeReference<List<String>>() {}
-                ));
-            }
-        } catch (Exception e) {
-            //
-        }
+        response.setName(product.getName());
+        response.setDescription(product.getDescription());
+        response.setPrice(product.getPrice());
+        response.setComparePrice(product.getComparePrice());
+        response.setCostPrice(product.getCostPrice());
+        response.setImageUrl(product.getImageUrl());
+        response.setIngredients(product.getIngredients());
+        response.setAllergens(product.getAllergens());
+        response.setIsAvailable(product.getIsAvailable());
+        response.setIsFeatured(product.getIsFeatured());
+        response.setPreparationTime(product.getPreparationTime());
+        response.setCalories(product.getCalories());
+        response.setSortOrder(product.getSortOrder());
+        response.setCreatedAt(product.getCreatedAt());
+        response.setUpdatedAt(product.getUpdatedAt());
 
         return response;
     }
