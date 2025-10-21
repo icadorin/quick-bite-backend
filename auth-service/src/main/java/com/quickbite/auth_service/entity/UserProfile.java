@@ -31,9 +31,11 @@ public class UserProfile {
     private String address;
 
     @Column(name = "preferred_language", length = 10)
+    @Builder.Default
     private String preferredLanguage = "pt_BR";
 
     @Column(name = "notification_preferences")
+    @Builder.Default
     private String notificationPreferences = "{\"email\": true, \"sms\": false}";
 
     @Column(name = "created_at", nullable = false)

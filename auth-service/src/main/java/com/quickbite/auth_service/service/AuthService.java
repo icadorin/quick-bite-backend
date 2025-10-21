@@ -79,8 +79,6 @@ public class AuthService {
             .email(request.getEmail())
             .passwordHash(passwordEncoder.encode(request.getPassword()))
             .fullName(request.getFullName())
-            .role(parseUserRole(request.getRole()))
-            .status(User.UserStatus.ACTIVE)
             .build();
 
         return userRepository.save(user);
