@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -53,19 +54,23 @@ public class AuthService {
 
     public AuthResponse login(String email, String password) {
         log.info("Tentativa de login: {}", email);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password)
+            );
 
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(email, password)
-        );
+            User user = (User) authentication.getPrincipal();
+            validateUserActive(user);
 
-        User user = (User) authentication.getPrincipal();
-        validateUserActive(user);
+            String accessToken = jwtService.generateToken(user);
+            String refreshToken = generateRefreshToken(user);
 
-        String accessToken = jwtService.generateToken(user);
-        String refreshToken = generateRefreshToken(user);
-
-        log.info("Login realizado com sucesso: {}", email);
-        return new AuthResponse(accessToken, refreshToken, user);
+            log.info("Login realizado com sucesso: {}", email);
+            return new AuthResponse(accessToken, refreshToken, user);
+        } catch (AuthenticationException e) {
+            log.warn("Falha na autenticação para: {} - {}", email, e.getMessage());
+            throw new AuthException("Credenciais inválidas");
+        }
     }
 
     private void validateEmailNotExists(String email) {
