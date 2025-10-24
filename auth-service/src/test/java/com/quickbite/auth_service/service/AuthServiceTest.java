@@ -1,6 +1,7 @@
 package com.quickbite.auth_service.service;
 
 import com.quickbite.auth_service.dto.AuthResponse;
+import com.quickbite.auth_service.dto.RegisterRequest;
 import com.quickbite.auth_service.entity.RefreshToken;
 import com.quickbite.auth_service.entity.User;
 import com.quickbite.auth_service.entity.UserProfile;
@@ -25,7 +26,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,44 +98,70 @@ public class AuthServiceTest {
 
     @Test
     void register_ShouldCreateUserSuccessfully() {
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-        when(jwtService.generateToken(any(User.class))).thenReturn("accessToken");
-        when(jwtService.getTokenExpirationInSeconds()).thenReturn(3600L);
 
-        RefreshToken refreshToken = RefreshToken.builder()
-            .token("refreshToken")
-            .user(testUser)
+        RegisterRequest registerRequest = RegisterRequest.builder()
+            .email("new@test.com")
+            .password("password123")
+            .fullName("New User")
+            .phone("11999999999")
+            .address("Test Street, 123")
             .build();
-        lenient().when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(refreshToken);
+
+        User newUser = User.builder()
+            .id(4L)
+            .email("new@test.com")
+            .passwordHash("encoded-password")
+            .fullName("New User")
+            .role(User.UserRole.CUSTOMER)
+            .status(User.UserStatus.ACTIVE)
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .build();
+
+        when(userRepository.findByEmail("new@test.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+        when(jwtService.generateToken(any(User.class))).thenReturn("access-token");
+        when(jwtService.getTokenExpirationInSeconds()).thenReturn(3600L);
 
         AuthResponse response = authService.register(registerRequest);
 
         assertNotNull(response);
-        assertEquals("accessToken", response.getAccessToken());
+        assertEquals("access-token", response.getAccessToken());
         assertEquals("Bearer", response.getTokenType());
         assertEquals(3600L, response.getExpiresIn());
+        assertEquals(newUser, response.getUser());
 
+        verify(userRepository).findByEmail("new@test.com");
+        verify(passwordEncoder).encode("password123");
         verify(userRepository).save(any(User.class));
-        verify(userProfileRepository).save(any(UserProfile.class));
+        verify(userProfileRepository).save((any(UserProfile.class)));
         verify(refreshTokenRepository).save(any(RefreshToken.class));
+        verify(jwtService).generateToken(any(User.class));
     }
 
     @Test
     void register_ShouldThrowExceptionWhenEmailExists() {
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
+        RegisterRequest registerRequest = RegisterRequest.builder()
+            .email(validEmail)
+            .password("password123")
+            .fullName("Existing User")
+            .build();
+
+        when(userRepository.findByEmail(validEmail)).thenReturn(Optional.of(activeUser));
 
         AuthException exception = assertThrows(AuthException.class,
             () -> authService.register(registerRequest));
 
         assertEquals("Email já cadastrado", exception.getMessage());
+        verify(userRepository).findByEmail(validEmail);
         verify(userRepository, never()).save(any(User.class));
+        verify(userProfileRepository, never()).save(any(UserProfile.class));
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
     @Test
     void login_ShouldReturnAuthResponseWhenCredentialAreValid() {
-
         Authentication authentication  = mock(Authentication.class);
 
         when(authenticationManager.authenticate(
@@ -165,7 +191,6 @@ public class AuthServiceTest {
 
     @Test
     void login_ShouldThrowAuthExceptionWhenCredentialsAreInvalid() {
-
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
             .thenThrow(new BadCredentialsException("Credenciais inválidas"));
 
@@ -180,7 +205,6 @@ public class AuthServiceTest {
 
     @Test
     void login_ShouldThrowAuthExceptionWhenUserIsInactive() {
-
         Authentication authentication = mock(Authentication.class);
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -198,7 +222,6 @@ public class AuthServiceTest {
 
     @Test
     void login_ShouldThrowAuthExceptionWhenUserIsSuspended() {
-
         Authentication authentication = mock(Authentication.class);
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -215,6 +238,41 @@ public class AuthServiceTest {
     }
 
     @Test
+    void login_ShouldGenerateValidRefreshToken() {
+
+        Authentication authentication = mock(Authentication.class);
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(activeUser);
+        when(jwtService.generateToken(activeUser)).thenReturn(accessToken);
+
+        AuthResponse response = authService.login(validEmail, validPassword);
+
+        assertNotNull(response.getRefreshToken());
+
+        verify(refreshTokenRepository).save(argThat(token ->
+            token.getUser().equals(activeUser) &&
+            !token.isRevoked() &&
+            token.getExpiresAt().isAfter(LocalDateTime.now()) &&
+            token.getToken() != null
+        ));
+    }
+
+    @Test
+    void login_ShouldHandleAuthenticationManagerExceptions() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenThrow(new RuntimeException("Erro interno no servidor"));
+
+        assertThrows(RuntimeException.class,
+            () -> authService.login(validEmail, validPassword));
+
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(jwtService, never()).generateToken(any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
     void login_ShouldThrowExceptionWhenAuthenticationFails() {
 
         String email = "test@example.com";
@@ -223,7 +281,10 @@ public class AuthServiceTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
             .thenThrow(new BadCredentialsException("Invalid credential"));
 
-        assertThrows(BadCredentialsException.class,
+        AuthException exception = assertThrows(AuthException.class,
             () -> authService.login(email, password));
+
+        assertEquals("Credenciais inválidas", exception.getMessage());
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 }
