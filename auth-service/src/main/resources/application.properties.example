@@ -1,0 +1,21 @@
+# Server Configuration
+server.port=8082
+spring.application.name=auth-service
+
+# Database Configuration - QUICKBITE-AUTH-DB
+spring.datasource.url=jdbc:postgresql://localhost:5432/quickbite-auth-db
+spring.datasource.username=example_user
+spring.datasource.password=example_password
+
+# Hibernate / JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.format_sql=true
+
+# Logging
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.com.quickbite.auth_service=DEBUG
+
+# Chave
+jwt.secret=minhaChave
