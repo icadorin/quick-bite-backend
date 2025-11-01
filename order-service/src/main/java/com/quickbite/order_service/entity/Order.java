@@ -1,13 +1,17 @@
 package com.quickbite.order_service.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Builder
 @Data
 @Entity
 @Table(name = "orders")
@@ -25,12 +29,14 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
+    @Builder.Default
     private OrderStatus status = OrderStatus.PENDING;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "delivery_address", columnDefinition = "JSONB")
+    @Column(name = "delivery_address", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String deliveryAddress;
 
     @Column(name = "customer_notes", length = 500)
@@ -46,12 +52,15 @@ public class Order {
     private String paymentMethod;
 
     @Column(name = "payment_status", length = 50)
+    @Builder.Default
     private String paymentStatus = "PENDING";
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)

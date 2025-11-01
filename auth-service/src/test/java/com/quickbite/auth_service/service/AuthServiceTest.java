@@ -161,11 +161,11 @@ public class AuthServiceTest {
     }
 
     @Test
-    void login_ShouldReturnAuthResponseWhenCredentialAreValid() {
+    void login_ShouldReturnAuthResponseWhenCredentialsAreValid() {
         Authentication authentication  = mock(Authentication.class);
 
         when(authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(validEmail, validPassword)
+            new UsernamePasswordAuthenticationToken(validEmail, validPassword)
         )).thenReturn(authentication);
 
         when(authentication.getPrincipal()).thenReturn(activeUser);
