@@ -1,7 +1,6 @@
 package com.quickbite.order_service.service;
 
 import com.quickbite.order_service.client.ProductServiceClient;
-import com.quickbite.order_service.client.RestaurantServiceClient;
 import com.quickbite.order_service.dtos.*;
 import com.quickbite.order_service.entity.Order;
 import com.quickbite.order_service.entity.OrderItem;
@@ -29,7 +28,6 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final ProductServiceClient productServiceClient;
-    private final RestaurantServiceClient restaurantServiceClient;
 
     public List<OrderResponse> getUserOrders(Long userId) {
         return orderRepository.findByUserId(userId)
@@ -56,7 +54,7 @@ public class OrderService {
     public OrderResponse createOrder(OrderRequest request, Long userId) {
         log.info("Create order for user: {}", userId);
 
-        restaurantServiceClient.validateRestaurant(request.getRestaurantId());
+        productServiceClient.validateRestaurant(request.getRestaurantId());
 
         BigDecimal totalAmount = calculateOrderTotal(request.getItems());
 
@@ -172,7 +170,7 @@ public class OrderService {
             .map(this::mapHistoryToResponse)
             .toList();
 
-        RestaurantResponse restaurant = restaurantServiceClient.getRestaurant(order.getRestaurantId());
+        RestaurantResponse restaurant = productServiceClient.getRestaurant(order.getRestaurantId());
 
         return OrderResponse.builder()
             .id(order.getId())
