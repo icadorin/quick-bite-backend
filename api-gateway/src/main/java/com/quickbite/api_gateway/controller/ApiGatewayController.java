@@ -17,7 +17,15 @@ public class ApiGatewayController {
     private final RoutingService routingService;
     private final WebClient webClient;
 
-    @RequestMapping(value = "/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+    @RequestMapping(
+        value = "/**",
+        method = {
+            RequestMethod.GET,
+            RequestMethod.POST,
+            RequestMethod.PUT,
+            RequestMethod.DELETE
+        }
+    )
     public Mono<ResponseEntity<String>> routeAllRequests(
         HttpServletRequest request,
         @RequestBody(required = false) String body

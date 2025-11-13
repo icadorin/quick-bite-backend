@@ -14,10 +14,10 @@ public class RouteConfig {
     @RequiredArgsConstructor
     public enum Service {
         AUTH("auth", "8082"),
-        PRODUCT("products", "8083"),
-        ORDER("orders", "8084"),
-        PAYMENT("payments", "8085"),
-        NOTIFICATIONS("notifications", "8086");
+        PRODUCT("product", "8083"),
+        ORDER("order", "8084"),
+        PAYMENT("payment", "8085"),
+        NOTIFICATION("notification", "8086");
 
         private final String pathPrefix;
         private final String port;
@@ -25,10 +25,10 @@ public class RouteConfig {
 
     private static final Map<String, Service> PATH_TO_SERVICE = Map.of(
         "auth", Service.AUTH,
-        "products", Service.PRODUCT,
-        "orders", Service.ORDER,
+        "product", Service.PRODUCT,
+        "order", Service.ORDER,
         "payment", Service.PAYMENT,
-        "notifications", Service.NOTIFICATIONS
+        "notification", Service.NOTIFICATION
     );
 
     public Optional<Service> findServiceByPath(String requestPath) {
