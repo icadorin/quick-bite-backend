@@ -28,5 +28,7 @@ public class RegisterRequest {
 
     private String phone;
     private String address;
+
+    @Builder.Default
     private String role = "CUSTOMER";
 }

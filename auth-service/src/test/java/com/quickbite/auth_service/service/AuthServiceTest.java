@@ -12,7 +12,7 @@ import com.quickbite.auth_service.exception.ValidationException;
 import com.quickbite.auth_service.repository.RefreshTokenRepository;
 import com.quickbite.auth_service.repository.UserProfileRepository;
 import com.quickbite.auth_service.repository.UserRepository;
-import com.quickbite.auth_service.util.TestConstants;
+import com.quickbite.auth_service.constants.TestConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

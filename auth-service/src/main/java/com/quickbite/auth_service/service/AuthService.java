@@ -1,5 +1,6 @@
 package com.quickbite.auth_service.service;
 
+import com.quickbite.auth_service.constants.AuthConstants;
 import com.quickbite.auth_service.dto.AuthResponse;
 import com.quickbite.auth_service.dto.RegisterRequest;
 import com.quickbite.auth_service.entity.RefreshToken;
@@ -23,16 +24,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
-    private static final int REFRESH_TOKEN_EXPIRATION_DAYS = 7;
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
-    private static final int MIN_PASSWORD_LENGTH = 6;
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
@@ -79,13 +75,13 @@ public class AuthService {
             return new AuthResponse(accessToken, refreshToken, user);
         } catch (BadCredentialsException e) {
             log.warn("Credenciais inválidas para: {}", email);
-            throw new AuthException("Email ou senha incorretos");
+            throw new AuthException(AuthConstants.INVALID_CREDENTIALS);
         } catch (DisabledException e) {
             log.warn("Usuário desativado tentou login: {}", email);
-            throw new InvalidUserStatusException("Usuário desativado");
+            throw new InvalidUserStatusException(AuthConstants.USER_DISABLED);
         } catch (AuthenticationException e) {
             log.warn("Falha na autenticação para: {} - {}", email, e.getMessage());
-            throw new AuthException("Error na autenticação");
+            throw new AuthException(AuthConstants.AUTHENTICATION_ERROR);
         }
     }
 
@@ -101,37 +97,37 @@ public class AuthService {
 
     private void validateEmailFormat(String email){
         if (email == null || email.trim().isEmpty()) {
-            throw new ValidationException("Email é obrigatório");
+            throw new ValidationException(AuthConstants.EMAIL_REQUIRED);
         }
 
-        if (!EMAIL_PATTERN.matcher(email).matches()) {
-            throw new ValidationException("Formato de email inválido");
+        if (!AuthConstants.EMAIL_PATTERN.matcher(email).matches()) {
+            throw new ValidationException(AuthConstants.INVALID_EMAIL_FORMAT);
         }
     }
 
     private void validatePasswordStrength(String password) {
         if (password == null || password.trim().isEmpty()) {
-            throw new ValidationException("Senha é obrigatória");
+            throw new ValidationException(AuthConstants.PASSWORD_REQUIRED);
         }
 
-        if (password.length() < MIN_PASSWORD_LENGTH) {
-            throw new ValidationException("Senha deve ter pelo menos " + MIN_PASSWORD_LENGTH + " caracteres");
+        if (password.length() < AuthConstants.MIN_PASSWORD_LENGTH) {
+            throw new ValidationException(AuthConstants.PASSWORD_TOO_SHORT);
         }
     }
 
     private void validatePasswordNotEmpty(String password) {
         if (password == null || password.trim().isEmpty()) {
-            throw new ValidationException("Senha é obrigatória");
+            throw new ValidationException(AuthConstants.PASSWORD_REQUIRED);
         }
     }
 
     private void validateFullName(String fullName) {
         if (fullName == null || fullName.trim().isEmpty()) {
-            throw new ValidationException("Nome completo é obrigatório");
+            throw new ValidationException(AuthConstants.FULL_NAME_REQUIRED);
         }
 
         if (fullName.trim().length() < 2) {
-            throw new ValidationException("Nome completo deve ter pelo menos 2 caracteres");
+            throw new ValidationException(AuthConstants.FULL_NAME_TOO_SHORT);
         }
     }
 
@@ -139,14 +135,14 @@ public class AuthService {
         String clearProne = phone.replaceAll("[^0-9]", "");
 
         if (clearProne.length() < 10 || clearProne.length() > 11) {
-            throw new ValidationException("Número de telefone inválido");
+            throw new ValidationException(AuthConstants.INVALID_PHONE);
         }
     }
 
     private void validateEmailNotExists(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
             log.warn("Tentativa de registrar email já existente: {}", email);
-            throw new UserAlreadyExistsException("Email já cadastrado");
+            throw new UserAlreadyExistsException(AuthConstants.USER_ALREADY_EXISTS);
         }
     }
 
@@ -174,13 +170,13 @@ public class AuthService {
         try {
             return User.UserRole.valueOf(role.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new AuthException("Role inválida: " + role);
+            throw new AuthException(AuthConstants.INVALID_ROLE + role);
         }
     }
 
     private void validateUserActive(User user) {
         if(user.getStatus() != User.UserStatus.ACTIVE) {
-            throw new InvalidUserStatusException("Usuário inativo. Entre em contato com o suporte");
+            throw new InvalidUserStatusException(AuthConstants.INVALID_USER_STATUS);
         }
     }
 
@@ -188,7 +184,7 @@ public class AuthService {
         RefreshToken refreshToken = RefreshToken.builder()
             .user(user)
             .token(UUID.randomUUID().toString())
-            .expiresAt(LocalDateTime.now().plusDays(REFRESH_TOKEN_EXPIRATION_DAYS))
+            .expiresAt(LocalDateTime.now().plusDays(AuthConstants.REFRESH_TOKEN_EXPIRATION_DAYS))
             .revoked(false)
             .build();
 
@@ -202,11 +198,11 @@ public class AuthService {
         log.info("Atualizando token com refresh token");
 
         if (refreshToken == null || refreshToken.trim().isEmpty()) {
-            throw new TokenException("Refresh token não fornecido");
+            throw new TokenException(AuthConstants.REFRESH_TOKEN_NOT_PROVIDED);
         }
 
         RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
-            .orElseThrow(() -> new AuthException("Refresh token inválido"));
+            .orElseThrow(() -> new AuthException(AuthConstants.INVALID_REFRESH_TOKEN));
 
         validateRefreshToken(storedToken);
 
@@ -234,13 +230,13 @@ public class AuthService {
 
     private void validateRefreshToken(RefreshToken refreshToken) {
         if (refreshToken.isRevoked()) {
-            throw new AuthException("Refresh token revogado");
+            throw new AuthException(AuthConstants.REFRESH_TOKEN_REVOKED);
         }
 
         if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
             refreshToken.setRevoked(true);
             refreshTokenRepository.save(refreshToken);
-            throw new AuthException("Refresh token expirado");
+            throw new AuthException(AuthConstants.REFRESH_TOKEN_EXPIRED);
         }
     }
 

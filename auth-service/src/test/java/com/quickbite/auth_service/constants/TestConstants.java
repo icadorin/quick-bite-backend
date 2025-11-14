@@ -1,4 +1,4 @@
-package com.quickbite.auth_service.util;
+package com.quickbite.auth_service.constants;
 
 public class TestConstants {
 
