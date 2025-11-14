@@ -5,7 +5,7 @@ import com.quickbite.auth_service.dto.RegisterRequest;
 import com.quickbite.auth_service.entity.RefreshToken;
 import com.quickbite.auth_service.entity.User;
 import com.quickbite.auth_service.entity.UserProfile;
-import com.quickbite.auth_service.exception.AuthException;
+import com.quickbite.auth_service.exception.*;
 import com.quickbite.auth_service.repository.RefreshTokenRepository;
 import com.quickbite.auth_service.repository.UserProfileRepository;
 import com.quickbite.auth_service.repository.UserRepository;
@@ -13,6 +13,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -28,6 +31,8 @@ import java.util.UUID;
 public class AuthService {
 
     private static final int REFRESH_TOKEN_EXPIRATION_DAYS = 7;
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
+    private static final int MIN_PASSWORD_LENGTH = 6;
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
@@ -40,6 +45,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         log.info("Registrando novo usuário: {}", request.getEmail());
 
+        validateRegistrationRequest(request);
         validateEmailNotExists(request.getEmail());
 
         User user = createUser(request);
@@ -54,7 +60,11 @@ public class AuthService {
 
     public AuthResponse login(String email, String password) {
         log.info("Tentativa de login: {}", email);
+
         try {
+            validateEmailFormat(email);
+            validatePasswordNotEmpty(password);
+
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
             );
@@ -67,15 +77,76 @@ public class AuthService {
 
             log.info("Login realizado com sucesso: {}", email);
             return new AuthResponse(accessToken, refreshToken, user);
+        } catch (BadCredentialsException e) {
+            log.warn("Credenciais inválidas para: {}", email);
+            throw new AuthException("Email ou senha incorretos");
+        } catch (DisabledException e) {
+            log.warn("Usuário desativado tentou login: {}", email);
+            throw new InvalidUserStatusException("Usuário desativado");
         } catch (AuthenticationException e) {
             log.warn("Falha na autenticação para: {} - {}", email, e.getMessage());
-            throw new AuthException("Credenciais inválidas");
+            throw new AuthException("Error na autenticação");
+        }
+    }
+
+    private void validateRegistrationRequest(RegisterRequest request) {
+        validateEmailFormat(request.getEmail());
+        validatePasswordStrength(request.getPassword());
+        validateFullName(request.getFullName());
+
+        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
+            validatePhoneFormat(request.getPhone());
+        }
+    }
+
+    private void validateEmailFormat(String email){
+        if (email == null || email.trim().isEmpty()) {
+            throw new ValidationException("Email é obrigatório");
+        }
+
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new ValidationException("Formato de email inválido");
+        }
+    }
+
+    private void validatePasswordStrength(String password) {
+        if (password == null || password.trim().isEmpty()) {
+            throw new ValidationException("Senha é obrigatória");
+        }
+
+        if (password.length() < MIN_PASSWORD_LENGTH) {
+            throw new ValidationException("Senha deve ter pelo menos " + MIN_PASSWORD_LENGTH + "caracteres");
+        }
+    }
+
+    private void validatePasswordNotEmpty(String password) {
+        if (password == null || password.trim().isEmpty()) {
+            throw new ValidationException("Senha é obrigatória");
+        }
+    }
+
+    private void validateFullName(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty()) {
+            throw new ValidationException("Nome completo é obrigatório");
+        }
+
+        if (fullName.trim().length() < 2) {
+            throw new ValidationException("Nome completo deve ter pelo menos 2 caracteres");
+        }
+    }
+
+    private void validatePhoneFormat(String phone) {
+        String clearProne = phone.replaceAll("[^0-9]", "");
+
+        if (clearProne.length() < 10 || clearProne.length() > 11) {
+            throw new ValidationException("Número de telefone inválido");
         }
     }
 
     private void validateEmailNotExists(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new AuthException("Email já cadastrado");
+            log.warn("Tentativa de registrar email já existente: {}", email);
+            throw new UserAlreadyExistsException("Email já cadastrado");
         }
     }
 
@@ -109,7 +180,7 @@ public class AuthService {
 
     private void validateUserActive(User user) {
         if(user.getStatus() != User.UserStatus.ACTIVE) {
-            throw new AuthException("Usuário inativo");
+            throw new InvalidUserStatusException("Usuário inativo.");
         }
     }
 
@@ -129,6 +200,10 @@ public class AuthService {
     @Transactional
     public  AuthResponse refreshToken(String refreshToken) {
         log.info("Atualizando token com refresh token");
+
+        if (refreshToken == null || refreshToken.trim().isEmpty()) {
+            throw new TokenException("Refresh token não fornecido");
+        }
 
         RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
             .orElseThrow(() -> new AuthException("Refresh token inválido"));
