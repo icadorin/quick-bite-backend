@@ -16,7 +16,7 @@ public class RoutingService {
 
         RouteConfig.Service service = routeConfig.findServiceByPath(requestPath).orElse(RouteConfig.Service.AUTH);
 
-        String targetUrl = "http://localhost:" + service.getPort() + "/" + requestPath;
+        String targetUrl = "http://localhost:" + service.getPort() + requestPath;
 
         log.info("Roteamento: {} -> {}", requestPath, targetUrl);
 
