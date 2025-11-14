@@ -115,7 +115,7 @@ public class AuthService {
         }
 
         if (password.length() < MIN_PASSWORD_LENGTH) {
-            throw new ValidationException("Senha deve ter pelo menos " + MIN_PASSWORD_LENGTH + "caracteres");
+            throw new ValidationException("Senha deve ter pelo menos " + MIN_PASSWORD_LENGTH + " caracteres");
         }
     }
 
@@ -180,7 +180,7 @@ public class AuthService {
 
     private void validateUserActive(User user) {
         if(user.getStatus() != User.UserStatus.ACTIVE) {
-            throw new InvalidUserStatusException("Usuário inativo.");
+            throw new InvalidUserStatusException("Usuário inativo. Entre em contato com o suporte");
         }
     }
 
