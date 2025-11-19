@@ -11,7 +11,7 @@ import java.util.Map;
 @Data
 public class ProductRequest {
 
-    @NotNull(message = "Resturant ID is required")
+    @NotNull(message = "Restaurant ID is required")
     private Long restaurantId;
 
     private Long categoryId;
