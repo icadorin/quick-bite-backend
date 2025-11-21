@@ -1,8 +1,6 @@
 package com.quickbite.product_service.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,27 +10,49 @@ import java.util.Map;
 public class ProductRequest {
 
     @NotNull(message = "Restaurant ID is required")
+    @Positive(message = "Restaurant ID must be positive")
     private Long restaurantId;
 
+    @Positive(message = "Category ID must be positive")
     private Long categoryId;
 
     @NotBlank(message = "Name is required")
+    @Size(min = 2, max = 255, message = "Name must be between 2 and 255 characters")
     private String name;
 
+    @Size(max = 1000, message = "Description must not exceed 1000 characters")
     private String description;
 
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
+    @Digits(integer = 10, fraction = 2, message = "Price must have up to 10 integer digits and 2" +
+        "fractions digits")
     private BigDecimal price;
 
+    @Positive(message = "Cost price must be positive")
+    @Digits(integer = 10, fraction = 2, message = "Compare price must have up to 10 integer digits and" +
+        "2 fraction digits")
     private BigDecimal comparePrice;
+
+    @Positive(message = "Cost price must be positive")
+    @Digits(integer = 10, fraction = 2, message = "Cost price must have up to 10 integer digits and 2" +
+        "fraction digits")
     private BigDecimal costPrice;
+
+    @Size(max = 500, message = "Image URL must not exceed 500 characters")
     private String imageUrl;
+
     private Map<String, Object> ingredients;
     private Map<String, Object> allergens;
     private Boolean isAvailable = true;
     private Boolean isFeatured = false;
+
+    @PositiveOrZero(message = "Preparation time must be zero or positive")
     private Integer preparationTime;
+
+    @PositiveOrZero(message = "Calories must be zero or positive")
     private Integer calories;
+
+    @PositiveOrZero(message = "Sort order must be zero or positive")
     private Integer sortOrder = 0;
 }
