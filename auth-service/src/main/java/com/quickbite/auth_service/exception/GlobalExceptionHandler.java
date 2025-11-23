@@ -17,7 +17,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthException.class)
-    public ResponseEntity<ErrorResponse> handlerAuthException(AuthException ex) {
+    public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex) {
         ErrorResponse error = ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.BAD_REQUEST.value())
@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handlerUserAlreadyExistsException(UserAlreadyExistsException ex) {
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
         ErrorResponse error = ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.CONFLICT.value())
@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidUserStatusException.class)
-    public ResponseEntity<ErrorResponse> handlerInvalidUserStatusException(InvalidUserStatusException ex) {
+    public ResponseEntity<ErrorResponse> handleInvalidUserStatusException(InvalidUserStatusException ex) {
         ErrorResponse error = ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.FORBIDDEN.value())
@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TokenException.class)
-    public ResponseEntity<ErrorResponse> handlerTokenException(TokenException ex) {
+    public ResponseEntity<ErrorResponse> handleTokenException(TokenException ex) {
         ErrorResponse error = ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.UNAUTHORIZED.value())
@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorResponse> handlerValidationException(ValidationException ex) {
+    public ResponseEntity<ErrorResponse> handleValidationException(ValidationException ex) {
         ErrorResponse error = ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.BAD_REQUEST.value())
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handlerMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handlerGenericException(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Erro interno do servidor: ", ex);
 
         ErrorResponse error = ErrorResponse.builder()
