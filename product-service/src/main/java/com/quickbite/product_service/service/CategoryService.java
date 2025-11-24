@@ -4,11 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.product_service.dto.CategoryRequest;
 import com.quickbite.product_service.dto.CategoryResponse;
 import com.quickbite.product_service.entity.Category;
+import com.quickbite.product_service.exception.BusinessRuleViolationException;
+import com.quickbite.product_service.exception.DataValidationException;
 import com.quickbite.product_service.exception.ResourceNotFoundException;
 import com.quickbite.product_service.repository.CategoryRepository;
+import com.quickbite.product_service.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,16 +22,43 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
     private final ObjectMapper objectMapper;
 
+    private void validateCategoryRequest(CategoryRequest request) {
+        if (!StringUtils.hasText(request.getName())) {
+            throw new DataValidationException("Category name is required");
+        }
+
+        if (request.getName().length() > 100) {
+            throw new DataValidationException("Category name must not exceed 100 carecteres");
+        }
+
+        if (request.getDescription() != null && request.getDescription().length() > 500) {
+            throw new DataValidationException("Category description must not exceed 500 carecteres");
+        }
+
+        if (request.getSortOrder() != null && request.getSortOrder() < 0) {
+            throw new DataValidationException("Sort order must be a position number");
+        }
+    }
+
     public List<CategoryResponse> getAllCategories() {
-        return categoryRepository.findByIsActiveTrueOrderBySortOrderAsc()
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        try {
+            return categoryRepository.findByIsActiveTrueOrderBySortOrderAsc()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new BusinessRuleViolationException("Error retrieving categories", e);
+        }
     }
 
     public CategoryResponse getCategoryById(Long id) {
+        if (id == null || id <= 0) {
+            throw new DataValidationException("Invalid category ID");
+        }
+
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         return mapToResponse(category);
@@ -35,55 +66,98 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse createCategory(CategoryRequest request) {
-        if (categoryRepository.existsByName((request.getName()))) {
-            throw new IllegalArgumentException("Category with name '" + request.getName() + "' already exists");
+        validateCategoryRequest(request);
+
+        if (categoryRepository.existsByName((request.getName().trim()))) {
+            throw new BusinessRuleViolationException("Category with name '" + request.getName() + "' already exists");
         }
 
-        Category category = Category.builder()
-            .name(request.getName())
-            .description(request.getDescription())
-            .imageUrl(request.getImageUrl())
-            .sortOrder(request.getSortOrder())
-            .isActive(request.getIsActive())
-            .build();
+        try {
+            Category category = Category.builder()
+                .name(request.getName())
+                .description(request.getDescription() != null ? request.getDescription().trim() : null)
+                .imageUrl(request.getImageUrl())
+                .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
+                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .build();
 
-        Category savedCategory = categoryRepository.save(category);
-        return mapToResponse(savedCategory);
+            Category savedCategory = categoryRepository.save(category);
+            return mapToResponse(savedCategory);
+        } catch (Exception e) {
+            throw new BusinessRuleViolationException("Error creating category", e);
+        }
     }
 
     @Transactional
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
+        if (id == null || id < 0) {
+            throw new DataValidationException("Invalid category ID");
+        }
+
+        validateCategoryRequest(request);
+
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
 
-        if (!category.getName().equals(request.getName()) && categoryRepository.existsByName(request.getName())) {
-            throw new IllegalArgumentException("Category with name '" + request.getName() + "' already exists");
+        if (!category.getName().equals(request.getName().trim()) &&
+            categoryRepository.existsByName(request.getName().trim())) {
+            throw new BusinessRuleViolationException("Category with name '" + request.getName() + "' already exists");
         }
 
-        category.setName(request.getName());
-        category.setDescription(request.getDescription());
-        category.setImageUrl(request.getImageUrl());
-        category.setSortOrder(request.getSortOrder());
-        category.setIsActive(request.getIsActive());
+        try {
+            category.setName(request.getName().trim());
+            category.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
+            category.setImageUrl(request.getImageUrl());
+            category.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : category.getSortOrder());
 
-        Category updatedCategory = categoryRepository.save(category);
-        return mapToResponse(updatedCategory);
+            if (request.getIsActive() != null) {
+                category.setIsActive(request.getIsActive());
+            }
+
+            Category updatedCategory = categoryRepository.save(category);
+            return mapToResponse(updatedCategory);
+        } catch (Exception e) {
+            throw new BusinessRuleViolationException("Error updating category", e);
+        }
     }
 
     @Transactional
     public void deleteCategory(Long id) {
+        if (id == null || id <= 0) {
+            throw new DataValidationException("Invalid category ID");
+        }
+
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
 
-        category.setIsActive(false);
-        categoryRepository.save(category);
+        Long productCount = productRepository.countByRestaurantIdAndIsAvailableTrue(id);
+        if (productCount > 0) {
+            throw new BusinessRuleViolationException(
+                "Cannot delete category with associated products. There are " + productCount
+                + "product in this category."
+            );
+        }
+        try {
+            category.setIsActive(false);
+            categoryRepository.save(category);
+        } catch (Exception e) {
+            throw new BusinessRuleViolationException("Error deleting category", e);
+        }
     }
 
     public List<CategoryResponse> searchCategories(String name) {
-        return categoryRepository.searchActiveCategoriesByName(name)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        if (!StringUtils.hasText(name) || name.trim().length() < 2) {
+            throw new DataValidationException("Search term must be at least 2 catacteres long");
+        }
+
+        try {
+            return categoryRepository.searchActiveCategoriesByName(name)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new BusinessRuleViolationException("Error searching categories", e);
+        }
     }
 
     private CategoryResponse mapToResponse(Category category) {
