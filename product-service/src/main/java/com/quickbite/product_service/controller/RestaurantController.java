@@ -37,7 +37,7 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.createRestaurant(request));
     }
 
-    @PutMapping("/id")
+    @PutMapping("/{id}")
     public ResponseEntity<RestaurantResponse> updateRestaurant(
         @PathVariable Long id,
         @Valid @RequestBody RestaurantRequest request
@@ -56,7 +56,7 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.searchRestaurants(name));
     }
 
-    @GetMapping("/cuisineType")
+    @GetMapping("/cuisine/{cuisineType}")
     public ResponseEntity<List<RestaurantResponse>> getRestaurantByCuisine(@PathVariable String cuisineType){
         return ResponseEntity.ok(restaurantService.getRestaurantsCuisine(cuisineType));
     }
