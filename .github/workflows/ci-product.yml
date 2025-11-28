@@ -1,4 +1,4 @@
-name: 🔐 CI - Auth Service
+name: 🍔 CI - Product Service
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ master, main ]
 
 jobs:
-  test-auth-service:
-    name: 🧪 Test Auth Service
+  test-product-service:
+    name: 🧪 Test Product Service
     runs-on: ubuntu-latest
 
     steps:
@@ -21,26 +21,20 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-          cache-dependency-path: auth-service/pom.xml
+          cache-dependency-path: product-service/pom.xml
 
       - name: 🔍 Run unit tests
         run: |
-          cd auth-service
+          cd product-service
           mvn test
-        env:
-          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb
-          SPRING_DATASOURCE_USERNAME: sa
-          SPRING_DATASOURCE_PASSWORD:
-          JWT_SECRET: test-secret-key-for-ci-cd-pipeline-123456
-          JWT_EXPIRATION: 3600000
 
       - name: 📦 Build application
         run: |
-          cd auth-service
+          cd product-service
           mvn clean package -DskipTests
 
-     - name: ✅ CI/CD Success
+      - name: ✅ CI/CD Success
         run: |
-          echo "🎉 AUTH SERVICE TESTS PASSED!"
-          echo "📦 Auth Service built successfully"
+          echo "🎉 PRODUCT SERVICE TESTS PASSED!"
+          echo "📦 Product Service built successfully"
           echo "🚀 CI/CD is OK!"
