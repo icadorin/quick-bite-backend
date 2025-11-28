@@ -39,7 +39,7 @@ jobs:
           cd auth-service
           mvn clean package -DskipTests
 
-     - name: ✅ CI/CD Success
+      - name: ✅ CI/CD Success
         run: |
           echo "🎉 AUTH SERVICE TESTS PASSED!"
           echo "📦 Auth Service built successfully"
