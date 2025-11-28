@@ -2,22 +2,22 @@ package com.quickbite.product_service.constants;
 
 public class TestConstants {
 
-    private static final Long VALID_CATEGORY_ID = 1L;
-    private static final Long VALID_PRODUCT_ID = 1L;
-    private static final Long VALID_RESTAURANT_ID = 1L;
-    private static final Long VALID_OWNER_ID = 1L;
-    private static final Long INVALID_ID = -1L;
-    private static final Long NON_EXISTENT_ID = 999L;
+    public static final Long VALID_CATEGORY_ID = 1L;
+    public static final Long VALID_PRODUCT_ID = 1L;
+    public static final Long VALID_RESTAURANT_ID = 1L;
+    public static final Long VALID_OWNER_ID = 1L;
+    public static final Long INVALID_ID = -1L;
+    public static final Long NON_EXISTENT_ID = 999L;
 
-    private static final String VALID_CATEGORY_NAME = "Test Category";
-    private static final String VALID_PRODUCT_NAME = "Teste Product";
-    private static final String VALID_RESTAURANT_NAME = "Test Restaurant";
-    private static final String UPDATED_CATEGORY_NAME = "Updated Category";
-    private static final String UPDATED_PRODUCT_NAME = "Updated Product";
-    private static final String UPDATED_RESTAURANT_NAME = "Updated Restaurant";
+    public static final String VALID_CATEGORY_NAME = "Test Category";
+    public static final String VALID_PRODUCT_NAME = "Teste Product";
+    public static final String VALID_RESTAURANT_NAME = "Test Restaurant";
+    public static final String UPDATED_CATEGORY_NAME = "Updated Category";
+    public static final String UPDATED_PRODUCT_NAME = "Updated Product";
+    public static final String UPDATED_RESTAURANT_NAME = "Updated Restaurant";
 
-    private static final String VALID_DESCRIPTION = "Test Description";
-    private static final String UPDATED_DESCRIPTION = "Updated Description";
+    public static final String VALID_DESCRIPTION = "Test Description";
+    public static final String UPDATED_DESCRIPTION = "Updated Description";
 
     public static final String VALID_IMAGE_URL = "http://test.com/image.jpg";
     public static final String VALID_LOGO_URL = "http://test.com/logo.jpg";
@@ -46,14 +46,14 @@ public class TestConstants {
     public static final String CATEGORY_NOT_FOUND_MESSAGE = "Category not found with id: ";
     public static final String PRODUCT_NOT_FOUND_MESSAGE = "Product not found with id: ";
     public static final String RESTAURANT_NOT_FOUND_MESSAGE = "Restaurant not found with id: ";
-    public static final String CATEGORY_ALREADY_EXISTS_MESSAGE = "Category with name  '%s' already exists";
-    public static final String RESTAURANT_ALREADY_EXISTS_MESSAGE = "Restaurant with name  '%s' already exists";
+    public static final String CATEGORY_ALREADY_EXISTS_MESSAGE = "Category with name '%s' already exists";
+    public static final String RESTAURANT_ALREADY_EXISTS_MESSAGE = "Restaurant with name '%s' already exists";
     public static final String CATEGORY_HAS_PRODUCTS_MESSAGE = "Cannot delete category with associated products";
     public static final String INVALID_PRICE_RANGE_MESSAGE = "minPrice must be less than or equal to maxPrice";
     public static final String INVALID_RATING_RANGE_MESSAGE = "Minimum rating must be between 0 and 5";
     public static final String SEARCH_TERM_TOO_SHORT_MESSAGE = "Search term must be at least 2 characters long";
     public static final String NAME_REQUIRED_MESSAGE = "Name is required";
-    public static final String NAME_TOO_LONG_MESSAGE = "Name must not exceed 255 characters";
+    public static final String NAME_TOO_LONG_MESSAGE = "Category name must not exceed 100 characters";
     public static final String PRICE_REQUIRED_MESSAGE = "Price is required";
     public static final String PRICE_POSITIVE_MESSAGE = "Price must be positive";
     public static final String RESTAURANT_ID_REQUIRED_MESSAGE = "Valid restaurant ID is required";
