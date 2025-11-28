@@ -22,4 +22,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     List<Restaurant> findActiveRestaurantsWithMinRating(@Param("minRating") Double minRating);
 
     Optional<Restaurant> findByIdAndIsActiveTrue(Long id);
+
+    boolean existsByNameAndOwnerId(String name, Long ownerId);
 }

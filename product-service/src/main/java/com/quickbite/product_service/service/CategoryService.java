@@ -27,15 +27,15 @@ public class CategoryService {
 
     private void validateCategoryRequest(CategoryRequest request) {
         if (!StringUtils.hasText(request.getName())) {
-            throw new DataValidationException("Category name is required");
+            throw new DataValidationException("Name is required");
         }
 
         if (request.getName().length() > 100) {
-            throw new DataValidationException("Category name must not exceed 100 carecteres");
+            throw new DataValidationException("Category name must not exceed 100 characters");
         }
 
         if (request.getDescription() != null && request.getDescription().length() > 500) {
-            throw new DataValidationException("Category description must not exceed 500 carecteres");
+            throw new DataValidationException("Category description must not exceed 500 characters");
         }
 
         if (request.getSortOrder() != null && request.getSortOrder() < 0) {
@@ -68,13 +68,15 @@ public class CategoryService {
     public CategoryResponse createCategory(CategoryRequest request) {
         validateCategoryRequest(request);
 
-        if (categoryRepository.existsByName((request.getName().trim()))) {
-            throw new BusinessRuleViolationException("Category with name '" + request.getName() + "' already exists");
+        String trimmedName = request.getName().trim();
+
+        if (categoryRepository.existsByName(trimmedName)) {
+            throw new BusinessRuleViolationException("Category with name '" + trimmedName + "' already exists");
         }
 
         try {
             Category category = Category.builder()
-                .name(request.getName())
+                .name(trimmedName)
                 .description(request.getDescription() != null ? request.getDescription().trim() : null)
                 .imageUrl(request.getImageUrl())
                 .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
@@ -83,6 +85,7 @@ public class CategoryService {
 
             Category savedCategory = categoryRepository.save(category);
             return mapToResponse(savedCategory);
+
         } catch (Exception e) {
             throw new BusinessRuleViolationException("Error creating category", e);
         }
@@ -99,13 +102,14 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
 
-        if (!category.getName().equals(request.getName().trim()) &&
-            categoryRepository.existsByName(request.getName().trim())) {
-            throw new BusinessRuleViolationException("Category with name '" + request.getName() + "' already exists");
+        String trimmedName = request.getName().trim();
+
+        if (!category.getName().equals(trimmedName) && categoryRepository.existsByName(trimmedName)) {
+            throw new BusinessRuleViolationException("Category with name '" + trimmedName + "' already exists");
         }
 
         try {
-            category.setName(request.getName().trim());
+            category.setName(trimmedName);
             category.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
             category.setImageUrl(request.getImageUrl());
             category.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : category.getSortOrder());
@@ -116,6 +120,7 @@ public class CategoryService {
 
             Category updatedCategory = categoryRepository.save(category);
             return mapToResponse(updatedCategory);
+
         } catch (Exception e) {
             throw new BusinessRuleViolationException("Error updating category", e);
         }
@@ -147,7 +152,7 @@ public class CategoryService {
 
     public List<CategoryResponse> searchCategories(String name) {
         if (!StringUtils.hasText(name) || name.trim().length() < 2) {
-            throw new DataValidationException("Search term must be at least 2 catacteres long");
+            throw new DataValidationException("Search term must be at least 2 characters long");
         }
 
         try {

@@ -10,13 +10,11 @@ import com.quickbite.product_service.exception.ResourceNotFoundException;
 import com.quickbite.product_service.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.prefs.BackingStoreException;
 import java.util.stream.Collectors;
 
 @Service
@@ -90,7 +88,7 @@ public class RestaurantService {
     }
 
     private boolean isValidPhone(String phone) {
-        String phoneRegex = "^[\\+]?[1-9][\\d]{0,15}$";
+        String phoneRegex = "^[+]?[1-9]\\d{0,15}$";
         return phone.matches(phoneRegex);
     }
 
@@ -160,10 +158,16 @@ public class RestaurantService {
         Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
 
-        if (!request.getName().equals(request.getName().trim() &&
-            restaurantRepository.existsByNameAndOwnerId(request.getName().trim(), request.getOwnerId()))) {
-            throw new BusinessRuleViolationException("Restaurant with name '" + request.getName() +
-                "Already exists for this owner");
+        String name = request.getName().trim();
+
+        if (!request.getName().equals(name)) {
+            throw new BusinessRuleViolationException("Restaurant name cannot contain leading or trailing spaces");
+        }
+
+        if (restaurantRepository.existsByNameAndOwnerId(name, request.getOwnerId())) {
+            throw new BusinessRuleViolationException(
+                "Restaurant with name '" + request.getName() + "' already exists for this owner"
+            );
         }
 
         try {
