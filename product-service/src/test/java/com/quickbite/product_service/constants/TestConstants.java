@@ -45,7 +45,26 @@ public class TestConstants {
 
     public static final String CATEGORY_NOT_FOUND_MESSAGE = "Category not found with id: ";
     public static final String PRODUCT_NOT_FOUND_MESSAGE = "Product not found with id: ";
-    public static final String RESTAURANT_NOT_FOUND_MESSSAGE = "Restaurant not found with id: "
-    public static final String CATEGORY_ALREADY_EXISTS_MESSAGE = "Category with name  '%s' already exists"
-    public static final String RESTAURANT_ALREADY_EXISTS_MESSAGE = "Restaurant with name  '%s' already exists"
+    public static final String RESTAURANT_NOT_FOUND_MESSAGE = "Restaurant not found with id: ";
+    public static final String CATEGORY_ALREADY_EXISTS_MESSAGE = "Category with name  '%s' already exists";
+    public static final String RESTAURANT_ALREADY_EXISTS_MESSAGE = "Restaurant with name  '%s' already exists";
+    public static final String CATEGORY_HAS_PRODUCTS_MESSAGE = "Cannot delete category with associated products";
+    public static final String INVALID_PRICE_RANGE_MESSAGE = "minPrice must be less than or equal to maxPrice";
+    public static final String INVALID_RATING_RANGE_MESSAGE = "Minimum rating must be between 0 and 5";
+    public static final String SEARCH_TERM_TOO_SHORT_MESSAGE = "Search term must be at least 2 characters long";
+    public static final String NAME_REQUIRED_MESSAGE = "Name is required";
+    public static final String NAME_TOO_LONG_MESSAGE = "Name must not exceed 255 characters";
+    public static final String PRICE_REQUIRED_MESSAGE = "Price is required";
+    public static final String PRICE_POSITIVE_MESSAGE = "Price must be positive";
+    public static final String RESTAURANT_ID_REQUIRED_MESSAGE = "Valid restaurant ID is required";
+    public static final String OWNER_ID_REQUIRED_MESSAGE = "Valid owner ID is required";
+    public static final String INVALID_EMAIL_MESSAGE = "Email must be valid";
+    public static final String INVALID_PHONE_MESSAGE = "Phone number must be valid";
+
+    public static final String SHORT_NAME = "A";
+    public static final String LONG_NAME = "A".repeat(256);
+    public static final String LONG_DESCRIPTION = "A".repeat(1001);
+    public static final String LONG_EMAIL = "a".repeat(256) + "@test.com";
+    public static final String SEARCH_TERM_SHORT = "a";
+    public static final String VALID_SEARCH_TERM = "test";
 }
