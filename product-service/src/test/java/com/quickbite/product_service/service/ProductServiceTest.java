@@ -1,0 +1,256 @@
+package com.quickbite.product_service.service;
+
+import com.quickbite.product_service.constants.TestConstants;
+import com.quickbite.product_service.dto.ProductRequest;
+import com.quickbite.product_service.dto.ProductResponse;
+import com.quickbite.product_service.dto.RestaurantResponse;
+import com.quickbite.product_service.entity.Category;
+import com.quickbite.product_service.entity.Product;
+import com.quickbite.product_service.entity.Restaurant;
+import com.quickbite.product_service.exception.DataValidationException;
+import com.quickbite.product_service.exception.ResourceNotFoundException;
+import com.quickbite.product_service.repository.CategoryRepository;
+import com.quickbite.product_service.repository.ProductRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class ProductServiceTest {
+
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
+    private RestaurantService restaurantService;
+
+    @Mock
+    private CategoryRepository categoryRepository;
+
+    @InjectMocks
+    private ProductService productService;
+
+    private ProductRequest validProductRequest;
+    private Product activeProduct;
+    private Restaurant sampleRestaurant;
+    private Category sampleCategory;
+    private ProductResponse productResponse;
+
+    @BeforeEach
+    void setUp() {
+        sampleRestaurant = Restaurant.builder()
+            .id(TestConstants.VALID_RESTAURANT_ID)
+            .name(TestConstants.VALID_RESTAURANT_NAME)
+            .isActive(true)
+            .build();
+
+        sampleCategory = Category.builder()
+            .id(TestConstants.VALID_CATEGORY_ID)
+            .name(TestConstants.VALID_CATEGORY_NAME)
+            .isActive(true)
+            .build();
+
+        validProductRequest = ProductRequest.builder()
+            .restaurantId(TestConstants.VALID_RESTAURANT_ID)
+            .categoryId(TestConstants.VALID_CATEGORY_ID)
+            .name(TestConstants.VALID_PRODUCT_NAME)
+            .description(TestConstants.VALID_DESCRIPTION)
+            .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
+            .isAvailable(true)
+            .build();
+
+        activeProduct = Product.builder()
+            .id(TestConstants.VALID_PRODUCT_ID)
+            .restaurant(sampleRestaurant)
+            .category(sampleCategory)
+            .name(TestConstants.VALID_PRODUCT_NAME)
+            .description(TestConstants.VALID_DESCRIPTION)
+            .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
+            .isAvailable(true)
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .build();
+
+        productResponse = ProductResponse.builder()
+            .id(TestConstants.VALID_PRODUCT_ID)
+            .name(TestConstants.VALID_PRODUCT_NAME)
+            .description(TestConstants.VALID_DESCRIPTION)
+            .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
+            .restaurantId(TestConstants.VALID_RESTAURANT_ID)
+            .restaurantName(TestConstants.VALID_RESTAURANT_NAME)
+            .categoryId(TestConstants.VALID_CATEGORY_ID)
+            .categoryName(TestConstants.VALID_CATEGORY_NAME)
+            .build();
+    }
+
+    @Test
+    void createProduct_ShouldCreateProductSuccessfully() {
+        RestaurantResponse restaurantResponse = RestaurantResponse.builder()
+            .id(sampleRestaurant.getId())
+            .name(sampleRestaurant.getName())
+            .isActive(true)
+            .build();
+
+        when(restaurantService.getRestaurantById(TestConstants.VALID_RESTAURANT_ID))
+            .thenReturn(restaurantResponse);
+        when(restaurantService.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID)).thenReturn(sampleRestaurant);
+        when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID)).thenReturn(Optional.of(sampleCategory));
+        when(productRepository.save(any(Product.class))).thenReturn(activeProduct);
+
+        ProductResponse result = productService.createProduct(validProductRequest);
+
+        assertNotNull(result);
+        verify(restaurantService).getRestaurantById(TestConstants.VALID_RESTAURANT_ID);
+        verify(categoryRepository).findById(TestConstants.VALID_CATEGORY_ID);
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    void createProduct_ShouldThrowValidationExceptionWhenPriceIsNull() {
+        validProductRequest.setPrice(null);
+
+        DataValidationException exception = assertThrows(DataValidationException.class,
+            () -> productService.createProduct(validProductRequest));
+
+        assertEquals(TestConstants.PRICE_REQUIRED_MESSAGE, exception.getMessage());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    void createProduct_ShouldThrowValidationExceptionWhenPriceIsNegative() {
+        validProductRequest.setPrice(BigDecimal.valueOf(TestConstants.NEGATIVE_PRICE));
+
+        DataValidationException exception = assertThrows(DataValidationException.class,
+            () -> productService.createProduct(validProductRequest));
+
+        assertEquals(TestConstants.PRICE_MUST_GREATER_ZERO, exception.getMessage());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    void createProduct_ShouldThrowValidationExceptionWhenNameIsEmpty() {
+        validProductRequest.setName("");
+
+        DataValidationException exception = assertThrows(DataValidationException.class,
+            () -> productService.createProduct(validProductRequest));
+
+        assertEquals(TestConstants.PRODUCT_NAME_REQUIRED_MESSAGE, exception.getMessage());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    void createProduct_ShouldThrowExceptionWhenRestaurantNotFound() {
+        when(restaurantService.getRestaurantById(TestConstants.VALID_RESTAURANT_ID))
+            .thenThrow(new ResourceNotFoundException(TestConstants.RESTAURANT_NOT_FOUND_MESSAGE
+                + TestConstants.VALID_RESTAURANT_ID));
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+            () -> productService.createProduct(validProductRequest));
+
+        assertEquals(TestConstants.RESTAURANT_NOT_FOUND_MESSAGE + TestConstants.VALID_RESTAURANT_ID,
+            exception.getMessage());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    void getProductById_ShouldReturnProductWhenExists() {
+        when(productRepository.findById(TestConstants.VALID_PRODUCT_ID)).thenReturn(Optional.of(activeProduct));
+
+        ProductResponse result = productService.getProductById(TestConstants.VALID_PRODUCT_ID);
+
+        assertNotNull(result);
+        assertEquals(TestConstants.VALID_PRODUCT_ID, result.getId());
+        verify(productRepository).findById(TestConstants.VALID_PRODUCT_ID);
+    }
+
+    @Test
+    void getProductById_ShouldThrowExceptionWhenProductNotFound() {
+        when(productRepository.findById(TestConstants.NON_EXISTENT_ID)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+            () -> productService.getProductById(TestConstants.NON_EXISTENT_ID));
+
+        assertEquals(TestConstants.PRODUCT_NOT_FOUND_MESSAGE + TestConstants.NON_EXISTENT_ID,
+            exception.getMessage());
+        verify(productRepository).findById(TestConstants.NON_EXISTENT_ID);
+    }
+
+    @Test
+    void getFeaturedProducts_ShouldReturnFeaturedProducts() {
+        List<Product> featuredProducts = List.of(activeProduct);
+        when(productRepository.findByIsFeaturedTrueAndIsAvailableTrue()).thenReturn(featuredProducts);
+
+        List<ProductResponse> result = productService.getFeaturedProducts();
+
+        assertFalse(result.isEmpty());
+        verify(productRepository).findByIsFeaturedTrueAndIsAvailableTrue();
+    }
+
+    @Test
+    void getProductsByPriceRange_ShouldReturnProductsWhenValidRange() {
+        List<Product> products = List.of(activeProduct);
+        when(productRepository.findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID))
+            .thenReturn(products);
+
+        List<ProductResponse> result = productService.getProductsByPriceRange(TestConstants.VALID_RESTAURANT_ID,
+            TestConstants.MIN_PRICE, TestConstants.MAX_PRICE);
+
+        assertFalse(result.isEmpty());
+        verify(productRepository).findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID);
+    }
+
+    @Test
+    void getProductsByPriceRange_ShouldThrowExceptionWhenInvalidRange() {
+        DataValidationException exception = assertThrows(DataValidationException.class,
+            () -> productService.getProductsByPriceRange(
+                TestConstants.VALID_RESTAURANT_ID, TestConstants.INVALID_MIN_PRICE, TestConstants.MAX_PRICE
+            ));
+
+        assertEquals(TestConstants.INVALID_PRICE_RANGE_MESSAGE, exception.getMessage());
+        verify(productRepository, never()).findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(any(), any(), any());
+    }
+
+    @Test
+    void deleteProduct_ShouldSoftDeleteProductSuccessfully() {
+        when(productRepository.findById(TestConstants.VALID_PRODUCT_ID)).thenReturn(Optional.of(activeProduct));
+        when(productRepository.save(any(Product.class))).thenReturn(activeProduct);
+
+        productService.deleteProduct(TestConstants.VALID_PRODUCT_ID);
+
+        verify(productRepository).findById(TestConstants.VALID_PRODUCT_ID);
+        verify(productRepository).save(argThat(p -> !p.getIsAvailable()));
+    }
+
+    @Test
+    void getProductsByRestaurant_ShouldReturnProductsWhenRestaurantExists() {
+        List<Product> products = List.of(activeProduct);
+        when(productRepository.findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID))
+            .thenReturn(products);
+
+        List<ProductResponse> result = productService.getProductsByRestaurant(TestConstants.VALID_RESTAURANT_ID);
+
+        assertFalse(result.isEmpty());
+        verify(productRepository).findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID);
+    }
+
+    @Test
+    void getProductsByRestaurant_ShouldThrowExceptionWhenRestaurantIdInvalid() {
+        DataValidationException exception = assertThrows(DataValidationException.class,
+            () -> productService.getProductsByRestaurant(TestConstants.INVALID_ID));
+
+        assertEquals(TestConstants.RESTAURANT_ID_REQUIRED_MESSAGE, exception.getMessage());
+        verify(productRepository, never()).findByRestaurantIdAndIsAvailableTrue(any());
+    }
+}

@@ -52,10 +52,12 @@ public class TestConstants {
     public static final String INVALID_PRICE_RANGE_MESSAGE = "minPrice must be less than or equal to maxPrice";
     public static final String INVALID_RATING_RANGE_MESSAGE = "Minimum rating must be between 0 and 5";
     public static final String SEARCH_TERM_TOO_SHORT_MESSAGE = "Search term must be at least 2 characters long";
-    public static final String NAME_REQUIRED_MESSAGE = "Name is required";
+    public static final String PRODUCT_NAME_REQUIRED_MESSAGE = "Product name is required";
+    public static final String CATEGORY_NAME_REQUIRED_MESSAGE = "Category name is required";
+
     public static final String NAME_TOO_LONG_MESSAGE = "Category name must not exceed 100 characters";
-    public static final String PRICE_REQUIRED_MESSAGE = "Price is required";
-    public static final String PRICE_POSITIVE_MESSAGE = "Price must be positive";
+    public static final String PRICE_REQUIRED_MESSAGE = "Product price is required";
+    public static final String PRICE_MUST_GREATER_ZERO = "Product price must be greater than zero";
     public static final String RESTAURANT_ID_REQUIRED_MESSAGE = "Valid restaurant ID is required";
     public static final String OWNER_ID_REQUIRED_MESSAGE = "Valid owner ID is required";
     public static final String INVALID_EMAIL_MESSAGE = "Email must be valid";

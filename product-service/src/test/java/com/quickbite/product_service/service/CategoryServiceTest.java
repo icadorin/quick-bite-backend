@@ -111,7 +111,7 @@ public class CategoryServiceTest {
         DataValidationException exception = assertThrows(DataValidationException.class,
             () -> categoryService.createCategory(validCategoryRequest));
 
-        assertEquals(TestConstants.NAME_REQUIRED_MESSAGE, exception.getMessage());
+        assertEquals(TestConstants.CATEGORY_NAME_REQUIRED_MESSAGE, exception.getMessage());
         verify(categoryRepository, never()).existsByName(anyString());
     }
 
