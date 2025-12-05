@@ -116,7 +116,7 @@ public class CategoryServiceTest {
     }
 
     @Test
-    void createCategory_ShouldThrowsValidationExceptionWhenNameIsTooLong() {
+    void createCategory_ShouldThrowValidationExceptionWhenNameIsTooLong() {
         validCategoryRequest.setName(TestConstants.LONG_NAME);
 
         DataValidationException exception = assertThrows(DataValidationException.class,
@@ -150,7 +150,7 @@ public class CategoryServiceTest {
     }
 
     @Test
-    void getCategoryId_ShouldThrowValidationExceptionWhenIdIsInvalid() {
+    void getCategoryById_ShouldThrowValidationExceptionWhenIdIsInvalid() {
         DataValidationException exception = assertThrows(DataValidationException.class,
             () -> categoryService.getCategoryById(TestConstants.INVALID_ID));
 
@@ -264,7 +264,7 @@ public class CategoryServiceTest {
     }
 
     @Test
-    void searchCategories_ShouldThrowExceptionWhenSearchTermTooSort() {
+    void searchCategories_ShouldThrowExceptionWhenSearchTermTooShort() {
         DataValidationException exception = assertThrows(DataValidationException.class,
             () -> categoryService.searchCategories(TestConstants.SEARCH_TERM_SHORT));
 
