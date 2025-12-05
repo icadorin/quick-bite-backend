@@ -1,12 +1,14 @@
 package com.quickbite.product_service.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.Map;
 
 @Data
+@Builder
 public class ProductRequest {
 
     @NotNull(message = "Restaurant ID is required")
@@ -44,7 +46,11 @@ public class ProductRequest {
 
     private Map<String, Object> ingredients;
     private Map<String, Object> allergens;
+
+    @Builder.Default
     private Boolean isAvailable = true;
+
+    @Builder.Default
     private Boolean isFeatured = false;
 
     @PositiveOrZero(message = "Preparation time must be zero or positive")
@@ -54,5 +60,6 @@ public class ProductRequest {
     private Integer calories;
 
     @PositiveOrZero(message = "Sort order must be zero or positive")
+    @Builder.Default
     private Integer sortOrder = 0;
 }

@@ -1,5 +1,6 @@
 package com.quickbite.product_service.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
+@Builder
 public class RestaurantResponse {
     private Long id;
     private Long ownerId;
