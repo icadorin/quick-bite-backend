@@ -3,6 +3,7 @@ package com.quickbite.product_service.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
+import com.quickbite.product_service.entity.Category;
 import com.quickbite.product_service.entity.Product;
 import com.quickbite.product_service.exception.BusinessRuleViolationException;
 import com.quickbite.product_service.exception.DataValidationException;
@@ -91,7 +92,9 @@ public class ProductService {
         }
 
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product not"));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Product not found with id: " + id
+            ));
 
         return mapToResponse(product);
     }
@@ -102,8 +105,10 @@ public class ProductService {
 
         restaurantService.getRestaurantById(request.getRestaurantId());
 
+        Category category = null;
+
         if (request.getCategoryId() != null) {
-            categoryRepository.findById(request.getCategoryId())
+            category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                     "Category not found with id: " + request.getCategoryId()
                 ));
@@ -112,8 +117,7 @@ public class ProductService {
         try {
             Product product = Product.builder()
                 .restaurant(restaurantService.getRestaurantEntity(request.getRestaurantId()))
-                .category(request.getCategoryId() != null ?
-                    categoryRepository.findById(request.getCategoryId()).orElse(null) : null)
+                .category(category)
                 .name(request.getName().trim())
                 .description(request.getDescription() != null ? request.getDescription().trim() : null)
                 .price(request.getPrice())
@@ -237,12 +241,10 @@ public class ProductService {
         }
 
         try {
-            return productRepository.findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
-                    restaurantId,
-                    BigDecimal.valueOf(minPrice),
-                    BigDecimal.valueOf(maxPrice)
-                )
+            return productRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
                 .stream()
+                .filter(p -> p.getPrice().doubleValue() >= minPrice
+                    && p.getPrice().doubleValue() <= maxPrice)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
         } catch (Exception e) {

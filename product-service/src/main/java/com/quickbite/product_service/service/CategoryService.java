@@ -27,7 +27,7 @@ public class CategoryService {
 
     private void validateCategoryRequest(CategoryRequest request) {
         if (!StringUtils.hasText(request.getName())) {
-            throw new DataValidationException("Name is required");
+            throw new DataValidationException("Category name is required");
         }
 
         if (request.getName().length() > 100) {
