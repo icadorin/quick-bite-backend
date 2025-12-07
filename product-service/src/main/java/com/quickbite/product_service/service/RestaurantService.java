@@ -251,7 +251,7 @@ public class RestaurantService {
 
     public List<RestaurantResponse> getRestaurantsWithMinRating(Double minRating) {
         if (minRating == null || minRating < 0 || minRating > 5) {
-            throw new DataValidationException("Minimum rating must be between  0 and 5");
+            throw new DataValidationException("Minimum rating must be between 0 and 5");
         }
 
         try {
