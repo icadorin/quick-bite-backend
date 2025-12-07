@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class RestaurantResponse {
     private Long id;
     private Long ownerId;

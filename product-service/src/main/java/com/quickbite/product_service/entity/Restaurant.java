@@ -17,7 +17,7 @@ import java.util.Map;
 @Table(name = "restaurants")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class Restaurant {
 
     @Id

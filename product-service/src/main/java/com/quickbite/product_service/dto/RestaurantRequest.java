@@ -1,12 +1,14 @@
 package com.quickbite.product_service.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.Map;
 
 @Data
+@Builder(toBuilder = true)
 public class RestaurantRequest {
 
     @NotNull(message = "Owner ID is required")
@@ -39,6 +41,7 @@ public class RestaurantRequest {
     @Size(max = 100, message = "Cusine type must not exceed 100 characters")
     private String cuisineType;
 
+    @Builder.Default
     private Boolean isActive = true;
 
     private Map<String, Object> openingHours;
@@ -49,5 +52,6 @@ public class RestaurantRequest {
     @PositiveOrZero(message = "Minimum amount must be zero or positive")
     @Digits(integer = 10, fraction = 2, message = "Minimum order amount must have up to" +
         "10 integer digits and 2 fraction digits")
+    @Builder.Default
     private BigDecimal minimumOrderAmount = BigDecimal.ZERO;
 }
