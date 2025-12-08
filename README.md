@@ -1,9 +1,13 @@
 # QuickBite
 
-⚙️ Implementação de uma plataforma web do zero, abordando todas as etapas de desenvolvimento, assim como tecnologias para contrução do projeto, desde a documentação/prototipagem até o build/deploy.
+## 📚 Doc
+ Acompanhe o processo de desenvolvimento e aprendizado do projeto: [QuickBite Docs](https://israelcadorin.vercel.app/quickbite)
 
-🍔 QuickBite - Backend Monorepo (Cloud Setup)
-Este é o repositório principal (monorepo) que contém toda a arquitetura de microsserviços do backend para a plataforma QuickBite, um sistema de delivery de comida.
+## ⚙️ Resumo
+
+ Implementação de uma plataforma backend para sistema de delivery de comida.
+
+🍔 QuickBite - Backend Monorepo que contém toda a arquitetura de microsserviços para a plataforma QuickBite.
 
 🏗️ Arquitetura
 O sistema é construído com uma arquitetura de microsserviços, utilizando Spring Boot e Spring Cloud, conectando-se a serviços em nuvem.
@@ -77,37 +81,4 @@ mvn spring-boot:run
 
 ## ✅ Verificação
 
-Acesse: http://localhost:8082/api/auth/test
-
-## 🔐 Auth Service Database (`quickbite-auth-db`)
-
-![Modelo de Dados](./images/auth.png)
-
-
-### 🔗 Relacionamentos principais
-- **users** ⮕ **user_profiles** → Relação 1:1 (cada usuário tem um perfil)  
-- **users** ⮕ **refresh_tokens** → Relação 1:N (um usuário pode ter múltiplos tokens ativos)  
-
----
-
-## 🍕 Product Service Database (`quickbite-product-db`)
-
-![Modelo de Dados](./images/product.png)
-
-
-### 🔗 Relacionamentos principais
-- **restaurants** ⮕ **products** → Relação 1:N (um restaurante oferece vários produtos)  
-- **categories** ⮕ **products** → Relação 1:N (uma categoria pode agrupar vários produtos)  
-
----
-
-## 📋 Order Service Database (`quickbite-order-db`)
-
-![Modelo de Dados](./images/order.png)
-
-### 🔗 Relacionamentos principais
-- **orders** ⮕ **order_items** → Relação 1:N (um pedido contém vários itens)  
-- **orders** ⮕ **order_status_history** → Relação 1:N (um pedido possui histórico de mudanças de status)  
-
-
-
+Acesse: http://localhost:8081/api/auth/test
