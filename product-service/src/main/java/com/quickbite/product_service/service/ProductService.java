@@ -1,13 +1,16 @@
 package com.quickbite.product_service.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
 import com.quickbite.product_service.entity.Category;
 import com.quickbite.product_service.entity.Product;
+import com.quickbite.product_service.entity.Restaurant;
 import com.quickbite.product_service.exception.BusinessRuleViolationException;
 import com.quickbite.product_service.exception.DataValidationException;
 import com.quickbite.product_service.exception.ResourceNotFoundException;
+import com.quickbite.product_service.mapper.ProductCreateMapper;
+import com.quickbite.product_service.mapper.ProductPatchMapper;
+import com.quickbite.product_service.mapper.ProductResponseMapper;
 import com.quickbite.product_service.repository.CategoryRepository;
 import com.quickbite.product_service.repository.ProductRepository;
 import jakarta.transaction.Transactional;
@@ -17,7 +20,6 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +28,9 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final RestaurantService restaurantService;
     private final CategoryRepository categoryRepository;
-    private final ObjectMapper objectMapper;
+    private final ProductPatchMapper patchMapper;
+    private final ProductCreateMapper productCreateMapper;
+    private final ProductResponseMapper productResponseMapper;
 
     private void validateProductRequest(ProductRequest request) {
         if (request.getRestaurantId() == null || request.getRestaurantId() <= 0) {
@@ -76,11 +80,9 @@ public class ProductService {
 
     public List<ProductResponse> getAllAvailableProducts() {
         try {
-            return productRepository.findByIsAvailableTrue()
-                .stream()
-                .filter(Product::getIsAvailable)
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+            return productResponseMapper.toResponseList(
+                productRepository.findByIsAvailableTrue()
+            );
         } catch (Exception e) {
             throw new BusinessRuleViolationException("Error retrieving available products", e);
         }
@@ -96,17 +98,16 @@ public class ProductService {
                 "Product not found with id: " + id
             ));
 
-        return mapToResponse(product);
+        return productResponseMapper.toResponse(product);
     }
 
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
         validateProductRequest(request);
 
-        restaurantService.getRestaurantById(request.getRestaurantId());
+        Restaurant restaurant = restaurantService.getRestaurantEntity(request.getRestaurantId());
 
         Category category = null;
-
         if (request.getCategoryId() != null) {
             category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -114,85 +115,36 @@ public class ProductService {
                 ));
         }
 
-        try {
-            Product product = Product.builder()
-                .restaurant(restaurantService.getRestaurantEntity(request.getRestaurantId()))
-                .category(category)
-                .name(request.getName().trim())
-                .description(request.getDescription() != null ? request.getDescription().trim() : null)
-                .price(request.getPrice())
-                .comparePrice(request.getComparePrice())
-                .costPrice(request.getCostPrice())
-                .imageUrl(request.getImageUrl())
-                .ingredients(request.getIngredients())
-                .allergens(request.getAllergens())
-                .isAvailable(request.getIsAvailable() != null ? request.getIsAvailable() : true)
-                .isFeatured(request.getIsFeatured() != null ? request.getIsFeatured() : false)
-                .preparationTime(request.getPreparationTime())
-                .calories(request.getCalories())
-                .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
-                .build();
+        Product product = productCreateMapper.toEntity(request);
+        product.setRestaurant(restaurant);
+        product.setCategory(category);
 
-            Product savedProduct = productRepository.save(product);
-            return mapToResponse(savedProduct);
-        } catch (Exception e) {
-            throw new BusinessRuleViolationException("Error creating product", e);
-        }
+        Product saved = productRepository.save(product);
+        return productResponseMapper.toResponse(saved);
     }
 
     @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
-        if (id == null || id <= 0) {
-            throw new DataValidationException("Invalid product ID");
-        }
-
         validateProductRequest(request);
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
-        restaurantService.getRestaurantById(request.getRestaurantId());
+        Restaurant restaurant = restaurantService.getRestaurantEntity(request.getRestaurantId());
+        product.setRestaurant(restaurant);
 
         if (request.getCategoryId() != null) {
-            categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
+            Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "Category not found with id: " + request.getCategoryId())
+                );
+            product.setCategory(category);
         }
 
-        try {
-            product.setRestaurant(restaurantService.getRestaurantEntity(request.getRestaurantId()));
-            product.setCategory(request.getCategoryId() != null ?
-                categoryRepository.findById(request.getCategoryId()).orElse(null) : null);
-            product.setName(request.getName());
-            product.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
-            product.setPrice(request.getPrice());
-            product.setComparePrice(request.getComparePrice());
-            product.setCostPrice(request.getCostPrice());
-            product.setImageUrl(request.getImageUrl());
-            product.setIngredients(request.getIngredients());
-            product.setAllergens(request.getAllergens());
-            product.setIsAvailable(request.getIsAvailable());
-            product.setIsFeatured(request.getIsFeatured());
-            product.setPreparationTime(request.getPreparationTime());
-            product.setCalories(request.getCalories());
-            product.setSortOrder(request.getSortOrder());
+        patchMapper.updateProductFromRequest(request, product);
 
-            if (request.getIsAvailable() != null) {
-                product.setIsAvailable(request.getIsAvailable());
-            }
-
-            if (request.getIsAvailable() != null) {
-                product.setIsFeatured(request.getIsFeatured());
-            }
-
-            product.setPreparationTime(request.getPreparationTime());
-            product.setCalories(request.getCalories());
-            product.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : product.getSortOrder());
-
-            Product updatedProduct = productRepository.save(product);
-            return mapToResponse(updatedProduct);
-        } catch (Exception e) {
-            throw new BusinessRuleViolationException("Error updating product", e);
-        }
+        Product updated = productRepository.save(product);
+        return productResponseMapper.toResponse(updated);
     }
 
     @Transactional
@@ -214,10 +166,9 @@ public class ProductService {
 
     public List<ProductResponse> getFeaturedProducts() {
         try {
-            return productRepository.findByIsFeaturedTrueAndIsAvailableTrue()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+            return productResponseMapper.toResponseList(
+                productRepository.findByIsFeaturedTrueAndIsAvailableTrue()
+            );
         } catch (Exception e) {
             throw new BusinessRuleViolationException("Error retrieving featured products", e);
         }
@@ -241,12 +192,9 @@ public class ProductService {
         }
 
         try {
-            return productRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
-                .stream()
-                .filter(p -> p.getPrice().doubleValue() >= minPrice
-                    && p.getPrice().doubleValue() <= maxPrice)
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+            return productResponseMapper.toResponseList(
+                productRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
+            );
         } catch (Exception e) {
             throw new BusinessRuleViolationException("Error retrieving products by price rage", e);
         }
@@ -257,73 +205,30 @@ public class ProductService {
             throw new DataValidationException("Valid restaurant ID is required");
         }
 
-        return productRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        return productResponseMapper.toResponseList(
+            productRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
+        );
     }
 
     public List<ProductResponse> searchProducts(String name) {
-        return productRepository.findByNameContainingIgnoreCaseAndIsAvailableTrue(name)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        return productResponseMapper.toResponseList(
+            productRepository.findByNameContainingIgnoreCaseAndIsAvailableTrue(name)
+        );
     }
 
     public List<ProductResponse> getProductsByRestaurant(Long restaurantId, Long categoryId) {
-        return productRepository.findByRestaurantIdAndCategoryIdAndIsAvailableTrue(restaurantId, categoryId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        return productResponseMapper.toResponseList(
+            productRepository.findByRestaurantIdAndCategoryIdAndIsAvailableTrue(restaurantId, categoryId)
+        );
     }
 
     public List<ProductResponse> getProductsByCategory(Long categoryId) {
-        return productRepository.findByCategoryIdAndIsAvailableTrue(categoryId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        return productResponseMapper.toResponseList(
+            productRepository.findByCategoryIdAndIsAvailableTrue(categoryId)
+        );
     }
 
     public Long countProductsByRestaurant(Long restaurantId) {
         return productRepository.countByRestaurantIdAndIsAvailableTrue(restaurantId);
-    }
-
-    private ProductResponse mapToResponse(Product product) {
-        ProductResponse response = new ProductResponse();
-
-        response.setId(product.getId());
-        response.setRestaurantId(product.getRestaurant().getId());
-        response.setRestaurantName(product.getRestaurant().getName());
-
-        if (product.getCategory() != null) {
-            response.setCategoryId(product.getCategory().getId());
-            response.setCategoryName(product.getCategory().getName());
-        }
-
-        response.setName(product.getName());
-        response.setDescription(product.getDescription());
-        response.setPrice(product.getPrice());
-        response.setComparePrice(product.getComparePrice());
-        response.setCostPrice(product.getCostPrice());
-        response.setImageUrl(product.getImageUrl());
-        response.setIngredients(product.getIngredients());
-        response.setAllergens(product.getAllergens());
-        response.setIsAvailable(product.getIsAvailable());
-        response.setIsFeatured(product.getIsFeatured());
-        response.setPreparationTime(product.getPreparationTime());
-        response.setCalories(product.getCalories());
-        response.setSortOrder(product.getSortOrder());
-        response.setCreatedAt(product.getCreatedAt());
-        response.setUpdatedAt(product.getUpdatedAt());
-
-        return response;
-    }
-
-    private String convertToJson(Object object) {
-        try {
-            return objectMapper.writeValueAsString(object);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Error converting object to JSON", e);
-        }
     }
 }

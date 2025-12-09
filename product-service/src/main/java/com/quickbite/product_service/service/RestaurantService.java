@@ -1,12 +1,14 @@
 package com.quickbite.product_service.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.product_service.dto.RestaurantRequest;
 import com.quickbite.product_service.dto.RestaurantResponse;
 import com.quickbite.product_service.entity.Restaurant;
 import com.quickbite.product_service.exception.BusinessRuleViolationException;
 import com.quickbite.product_service.exception.DataValidationException;
 import com.quickbite.product_service.exception.ResourceNotFoundException;
+import com.quickbite.product_service.mapper.RestaurantCreateMapper;
+import com.quickbite.product_service.mapper.RestaurantPatchMapper;
+import com.quickbite.product_service.mapper.RestaurantResponseMapper;
 import com.quickbite.product_service.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,14 +17,15 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
-    private final ObjectMapper objectMapper;
+    private final RestaurantCreateMapper restaurantCreateMapper;
+    private final RestaurantPatchMapper restaurantPatchMapper;
+    private final RestaurantResponseMapper restaurantResponseMapper;
 
     public void validateRestaurantRequest(RestaurantRequest request) {
         if (request.getOwnerId() == null || request.getOwnerId() <= 0) {
@@ -93,24 +96,22 @@ public class RestaurantService {
     }
 
     public List<RestaurantResponse> getAllActiveRestaurant() {
-        return restaurantRepository.findByIsActiveTrue()
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        return restaurantResponseMapper.toResponseList(
+            restaurantRepository.findByIsActiveTrue()
+        );
     }
 
     public RestaurantResponse getRestaurantById(Long id) {
         Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
 
-        return mapToResponse(restaurant);
+        return restaurantResponseMapper.toResponse(restaurant);
     }
 
     public List<RestaurantResponse> getRestaurantByOwner(Long ownerId) {
-        return restaurantRepository.findByOwnerId(ownerId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        return restaurantResponseMapper.toResponseList(
+            restaurantRepository.findByOwnerId(ownerId)
+        );
     }
 
     @Transactional
@@ -122,101 +123,38 @@ public class RestaurantService {
                 "' already exists for this owner");
         }
 
-        try {
-            Restaurant restaurant = Restaurant.builder()
-                .ownerId(request.getOwnerId())
-                .name(request.getName().trim())
-                .description(request.getDescription() != null ? request.getDescription().trim() : null)
-                .address(request.getAddress())
-                .phone(request.getPhone())
-                .email(request.getEmail())
-                .logoUrl(request.getLogoUrl())
-                .bannerUrl(request.getBannerUrl())
-                .cuisineType(request.getCuisineType())
-                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
-                .openingHours(request.getOpeningHours())
-                .deliveryTimeRange(request.getDeliveryTimeRange())
-                .minimumOrderAmount(request.getMinimumOrderAmount() != null ?
-                    request.getMinimumOrderAmount() : BigDecimal.ZERO)
-                .build();
+        Restaurant restaurant = restaurantCreateMapper.toEntity(request);
+        restaurant.setIsActive(true);
+        restaurant.setName(request.getName().trim());
 
-            Restaurant savedRestaurant = restaurantRepository.save(restaurant);
-            return mapToResponse(savedRestaurant);
-        } catch (Exception e) {
-            throw new BusinessRuleViolationException("Error creating restaurant", e);
-        }
+        Restaurant saved = restaurantRepository.save(restaurant);
+        return restaurantResponseMapper.toResponse(saved);
     }
 
     @Transactional
     public RestaurantResponse updateRestaurant(Long id, RestaurantRequest request) {
-        if (id == null || id <= 0) {
-            throw new DataValidationException("Invalid restaurant ID");
-        }
-
         validateRestaurantRequest(request);
 
         Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
 
-        String name = request.getName().trim();
-
-        if (!request.getName().equals(name)) {
-            throw new BusinessRuleViolationException("Restaurant name cannot contain leading or trailing spaces");
+        if (restaurantRepository.existsByNameAndOwnerId(request.getName().trim(), request.getOwnerId())) {
+            throw new BusinessRuleViolationException("Restaurant name already exists for this owner");
         }
 
-        if (restaurantRepository.existsByNameAndOwnerId(name, request.getOwnerId())) {
-            throw new BusinessRuleViolationException(
-                "Restaurant with name '" + request.getName() + "' already exists for this owner"
-            );
-        }
+        restaurantPatchMapper.updateRestaurantFromRequest(request, restaurant);
 
-        try {
-            restaurant.setName(request.getName().trim());
-            restaurant.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
-            restaurant.setAddress(request.getAddress());
-            restaurant.setPhone(request.getPhone());
-            restaurant.setEmail(request.getEmail());
-            restaurant.setLogoUrl(request.getLogoUrl());
-            restaurant.setBannerUrl(request.getBannerUrl());
-            restaurant.setCuisineType(request.getCuisineType());
-            restaurant.setIsActive(request.getIsActive());
-            restaurant.setOpeningHours(request.getOpeningHours());
-            restaurant.setDeliveryTimeRange(request.getDeliveryTimeRange());
-            restaurant.setMinimumOrderAmount(request.getMinimumOrderAmount());
-
-            if (request.getIsActive() != null) {
-                restaurant.setIsActive(request.getIsActive());
-            }
-
-            restaurant.setOpeningHours(request.getOpeningHours());
-            restaurant.setDeliveryTimeRange(request.getDeliveryTimeRange());
-
-            if (request.getMinimumOrderAmount() != null) {
-                restaurant.setMinimumOrderAmount(request.getMinimumOrderAmount());
-            }
-
-            Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
-            return mapToResponse(updatedRestaurant);
-        } catch (Exception e) {
-            throw new BusinessRuleViolationException("Error updating restaurant", e);
-        }
+        Restaurant updated = restaurantRepository.save(restaurant);
+        return restaurantResponseMapper.toResponse(updated);
     }
 
     @Transactional
     public void deleteRestaurant(Long id) {
-        if (id == null || id <= 0) {
-            throw new DataValidationException("Invalid restaurant ID");
-        }
-
         Restaurant restaurant = restaurantRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
 
-        try {
-            restaurant.setIsActive(false);
-            restaurantRepository.save(restaurant);
-        } catch (Exception e) {
-            throw new BusinessRuleViolationException("Error deleting restaurant", e);
-        }
+        restaurant.setIsActive(false);
+        restaurantRepository.save(restaurant);
     }
 
     public List<RestaurantResponse> searchRestaurants(String name) {
@@ -225,10 +163,9 @@ public class RestaurantService {
         }
 
         try {
-            return restaurantRepository.searchActiveRestaurantsByName(name)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+            return restaurantResponseMapper.toResponseList(
+                restaurantRepository.searchActiveRestaurantsByName(name)
+            );
         } catch (Exception e) {
             throw new BusinessRuleViolationException("Error searching restaurants", e);
         }
@@ -240,10 +177,9 @@ public class RestaurantService {
         }
 
         try {
-            return restaurantRepository.findByCuisineTypeAndIsActiveTrue(cuisineType)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+            return restaurantResponseMapper.toResponseList(
+                restaurantRepository.findByCuisineTypeAndIsActiveTrue(cuisineType)
+            );
         } catch (Exception e) {
             throw new BusinessRuleViolationException("Error retrieving restaurants by cuisine type");
         }
@@ -255,10 +191,9 @@ public class RestaurantService {
         }
 
         try {
-            return restaurantRepository.findActiveRestaurantsWithMinRating(minRating)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+            return restaurantResponseMapper.toResponseList(
+                restaurantRepository.findActiveRestaurantsWithMinRating(minRating)
+            );
         } catch (Exception e) {
             throw new BusinessRuleViolationException("Error retrieving restaurants by minimum rating", e);
         }
@@ -267,27 +202,5 @@ public class RestaurantService {
     public Restaurant getRestaurantEntity(Long id) {
         return restaurantRepository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
-    }
-
-    private RestaurantResponse mapToResponse(Restaurant restaurant) {
-        RestaurantResponse response = objectMapper.convertValue(restaurant, RestaurantResponse.class);
-
-        if (restaurant.getAddress() != null) {
-            response.setAddress(restaurant.getAddress());
-        }
-
-        if (restaurant.getOpeningHours() != null) {
-            response.setOpeningHours(restaurant.getOpeningHours());
-        }
-
-        return response;
-    }
-
-    public String convertToJson(Object object) {
-        try {
-            return objectMapper.writeValueAsString(object);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Error converting object in json", e);
-        }
     }
 }
