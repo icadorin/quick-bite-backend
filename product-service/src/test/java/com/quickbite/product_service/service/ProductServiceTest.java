@@ -9,6 +9,8 @@ import com.quickbite.product_service.entity.Product;
 import com.quickbite.product_service.entity.Restaurant;
 import com.quickbite.product_service.exception.DataValidationException;
 import com.quickbite.product_service.exception.ResourceNotFoundException;
+import com.quickbite.product_service.mapper.ProductCreateMapper;
+import com.quickbite.product_service.mapper.ProductResponseMapper;
 import com.quickbite.product_service.repository.CategoryRepository;
 import com.quickbite.product_service.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +40,12 @@ public class ProductServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private ProductCreateMapper productCreateMapper;
+
+    @Mock
+    private ProductResponseMapper productResponseMapper;
 
     @InjectMocks
     private ProductService productService;
@@ -97,24 +105,22 @@ public class ProductServiceTest {
 
     @Test
     void createProduct_ShouldCreateProductSuccessfully() {
-        RestaurantResponse restaurantResponse = RestaurantResponse.builder()
-            .id(sampleRestaurant.getId())
-            .name(sampleRestaurant.getName())
-            .isActive(true)
-            .build();
-
-        when(restaurantService.getRestaurantById(TestConstants.VALID_RESTAURANT_ID))
-            .thenReturn(restaurantResponse);
         when(restaurantService.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID)).thenReturn(sampleRestaurant);
         when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID)).thenReturn(Optional.of(sampleCategory));
+
+        when(productCreateMapper.toEntity(validProductRequest)).thenReturn(activeProduct);
+        when(productResponseMapper.toResponse(activeProduct)).thenReturn(productResponse);
         when(productRepository.save(any(Product.class))).thenReturn(activeProduct);
 
         ProductResponse result = productService.createProduct(validProductRequest);
 
         assertNotNull(result);
-        verify(restaurantService).getRestaurantById(TestConstants.VALID_RESTAURANT_ID);
+        assertEquals(TestConstants.VALID_PRODUCT_ID, result.getId());
+        verify(restaurantService).getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID);
         verify(categoryRepository).findById(TestConstants.VALID_CATEGORY_ID);
         verify(productRepository).save(any(Product.class));
+        verify(productCreateMapper).toEntity(validProductRequest);
+        verify(productResponseMapper).toResponse(activeProduct);
     }
 
     @Test
@@ -152,9 +158,10 @@ public class ProductServiceTest {
 
     @Test
     void createProduct_ShouldThrowExceptionWhenRestaurantNotFound() {
-        when(restaurantService.getRestaurantById(TestConstants.VALID_RESTAURANT_ID))
-            .thenThrow(new ResourceNotFoundException(TestConstants.RESTAURANT_NOT_FOUND_MESSAGE
-                + TestConstants.VALID_RESTAURANT_ID));
+        when(restaurantService.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID))
+            .thenThrow(new ResourceNotFoundException(
+                TestConstants.RESTAURANT_NOT_FOUND_MESSAGE + TestConstants.VALID_RESTAURANT_ID
+            ));
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
             () -> productService.createProduct(validProductRequest));
@@ -167,12 +174,14 @@ public class ProductServiceTest {
     @Test
     void getProductById_ShouldReturnProductWhenExists() {
         when(productRepository.findById(TestConstants.VALID_PRODUCT_ID)).thenReturn(Optional.of(activeProduct));
+        when(productResponseMapper.toResponse(activeProduct)).thenReturn(productResponse);
 
         ProductResponse result = productService.getProductById(TestConstants.VALID_PRODUCT_ID);
 
         assertNotNull(result);
         assertEquals(TestConstants.VALID_PRODUCT_ID, result.getId());
         verify(productRepository).findById(TestConstants.VALID_PRODUCT_ID);
+        verify(productResponseMapper).toResponse(activeProduct);
     }
 
     @Test
@@ -190,25 +199,37 @@ public class ProductServiceTest {
     @Test
     void getFeaturedProducts_ShouldReturnFeaturedProducts() {
         List<Product> featuredProducts = List.of(activeProduct);
+        List<ProductResponse> productResponses  = List.of(productResponse);
+
         when(productRepository.findByIsFeaturedTrueAndIsAvailableTrue()).thenReturn(featuredProducts);
+        when(productResponseMapper.toResponseList(featuredProducts)).thenReturn(productResponses);
 
         List<ProductResponse> result = productService.getFeaturedProducts();
 
         assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
         verify(productRepository).findByIsFeaturedTrueAndIsAvailableTrue();
+        verify(productResponseMapper).toResponseList(featuredProducts);
     }
 
     @Test
     void getProductsByPriceRange_ShouldReturnProductsWhenValidRange() {
         List<Product> products = List.of(activeProduct);
+        List<ProductResponse> productResponses = List.of(productResponse);
+
         when(productRepository.findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(products);
+        when(productResponseMapper.toResponseList(products)).thenReturn(productResponses);
 
-        List<ProductResponse> result = productService.getProductsByPriceRange(TestConstants.VALID_RESTAURANT_ID,
-            TestConstants.MIN_PRICE, TestConstants.MAX_PRICE);
+        List<ProductResponse> result = productService.getProductsByPriceRange(
+            TestConstants.VALID_RESTAURANT_ID,
+            TestConstants.MIN_PRICE,
+            TestConstants.MAX_PRICE
+        );
 
         assertFalse(result.isEmpty());
         verify(productRepository).findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID);
+        verify(productResponseMapper).toResponseList(products);
     }
 
     @Test
@@ -236,13 +257,17 @@ public class ProductServiceTest {
     @Test
     void getProductsByRestaurant_ShouldReturnProductsWhenRestaurantExists() {
         List<Product> products = List.of(activeProduct);
+        List<ProductResponse> productResponses = List.of(productResponse);
+
         when(productRepository.findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(products);
+        when(productResponseMapper.toResponseList(products)).thenReturn(productResponses);
 
         List<ProductResponse> result = productService.getProductsByRestaurant(TestConstants.VALID_RESTAURANT_ID);
 
         assertFalse(result.isEmpty());
         verify(productRepository).findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID);
+        verify(productResponseMapper).toResponseList(products);
     }
 
     @Test

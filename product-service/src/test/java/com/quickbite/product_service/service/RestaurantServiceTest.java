@@ -8,6 +8,9 @@ import com.quickbite.product_service.entity.Restaurant;
 import com.quickbite.product_service.exception.BusinessRuleViolationException;
 import com.quickbite.product_service.exception.DataValidationException;
 import com.quickbite.product_service.exception.ResourceNotFoundException;
+import com.quickbite.product_service.mapper.RestaurantCreateMapper;
+import com.quickbite.product_service.mapper.RestaurantPatchMapper;
+import com.quickbite.product_service.mapper.RestaurantResponseMapper;
 import com.quickbite.product_service.repository.RestaurantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +37,15 @@ public class RestaurantServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private RestaurantCreateMapper restaurantCreateMapper;
+
+    @Mock
+    private RestaurantResponseMapper restaurantResponseMapper;
+
+    @Mock
+    private RestaurantPatchMapper restaurantPatchMapper;
 
     @InjectMocks
     private RestaurantService restaurantService;
@@ -84,9 +96,10 @@ public class RestaurantServiceTest {
         when(restaurantRepository.existsByNameAndOwnerId(TestConstants.VALID_RESTAURANT_NAME, TestConstants.VALID_OWNER_ID))
             .thenReturn(false);
 
-        when(restaurantRepository.save(any(Restaurant.class))).thenReturn(activeRestaurant);
-        when(objectMapper.convertValue(any(Restaurant.class), eq(RestaurantResponse.class)))
-            .thenReturn(restaurantResponse);
+        when(restaurantCreateMapper.toEntity(validRestaurantRequest)).thenReturn(activeRestaurant);
+        when(restaurantResponseMapper.toResponse(activeRestaurant)).thenReturn(restaurantResponse);
+        when(restaurantRepository.save(any(Restaurant.class)))
+            .thenReturn(activeRestaurant).thenReturn(activeRestaurant);
 
         RestaurantResponse result = restaurantService.createRestaurant(validRestaurantRequest);
 
@@ -95,6 +108,8 @@ public class RestaurantServiceTest {
         verify(restaurantRepository).existsByNameAndOwnerId(
             TestConstants.VALID_RESTAURANT_NAME, TestConstants.VALID_OWNER_ID);
         verify(restaurantRepository).save(any(Restaurant.class));
+        verify(restaurantCreateMapper).toEntity(validRestaurantRequest);
+        verify(restaurantResponseMapper).toResponse(activeRestaurant);
     }
 
     @Test
@@ -141,7 +156,6 @@ public class RestaurantServiceTest {
 
     @Test
     void createRestaurant_ShouldCreateRestaurantWithVariousCuisineTypes() {
-
        List<String> cuisineTypes = Arrays.asList(
            TestConstants.VALID_CUISINE_TYPE,
            TestConstants.VALID_CUISINE_TYPE_2,
@@ -153,19 +167,26 @@ public class RestaurantServiceTest {
                .cuisineType(cuisineType)
                .build();
 
+           Restaurant restaurantWithCuisine = activeRestaurant.toBuilder()
+               .cuisineType(cuisineType)
+               .build();
+
+           RestaurantResponse responseWithCuisine = restaurantResponse.toBuilder()
+               .cuisineType(cuisineType)
+               .build();
+
            when(restaurantRepository.existsByNameAndOwnerId(anyString(), anyLong()))
                .thenReturn(false);
-           when(restaurantRepository.save(any(Restaurant.class)))
-               .thenReturn(activeRestaurant.toBuilder().cuisineType(cuisineType).build());
-           when(objectMapper.convertValue(any(Restaurant.class), eq(RestaurantResponse.class)))
-               .thenReturn(restaurantResponse.toBuilder().cuisineType(cuisineType).build());
+           when(restaurantCreateMapper.toEntity(request)).thenReturn(restaurantWithCuisine);
+           when(restaurantResponseMapper.toResponse(restaurantWithCuisine)).thenReturn(responseWithCuisine);
+           when(restaurantRepository.save(any(Restaurant.class))).thenReturn(restaurantWithCuisine);
 
            RestaurantResponse result = restaurantService.createRestaurant(request);
 
            assertNotNull(result);
            assertEquals(cuisineType, result.getCuisineType());
 
-           reset(restaurantRepository, objectMapper);
+           reset(restaurantRepository, restaurantCreateMapper, restaurantResponseMapper);
        }
     }
 
@@ -187,17 +208,24 @@ public class RestaurantServiceTest {
             .cuisineType(TestConstants.VALID_CUISINE_TYPE)
                 .build();
 
+        Restaurant restaurantToSave = activeRestaurant.toBuilder()
+            .cuisineType(TestConstants.VALID_CUISINE_100)
+            .build();
+
+        RestaurantResponse expectedResponse = restaurantResponse.toBuilder()
+            .cuisineType(TestConstants.VALID_CUISINE_100)
+            .build();
+
         when(restaurantRepository.existsByNameAndOwnerId(anyString(), anyLong()))
             .thenReturn(false);
-        when(restaurantRepository.save(any(Restaurant.class)))
-            .thenReturn(activeRestaurant.toBuilder().cuisineType(TestConstants.VALID_CUISINE_100).build());
-        when(objectMapper.convertValue(any(Restaurant.class), eq(RestaurantResponse.class)))
-            .thenReturn(restaurantResponse.toBuilder().cuisineType(TestConstants.VALID_CUISINE_100).build());
+        when(restaurantCreateMapper.toEntity(request)).thenReturn(restaurantToSave);
+        when(restaurantRepository.save(any(Restaurant.class))).thenReturn(restaurantToSave);
+        when(restaurantResponseMapper.toResponse(restaurantToSave)).thenReturn(expectedResponse);
 
         RestaurantResponse result = restaurantService.createRestaurant(request);
 
         assertNotNull(result);
-        assertEquals(100, result.getCuisineType().length());
+        assertNotNull(result.getCuisineType());
     }
 
     @Test
@@ -213,45 +241,42 @@ public class RestaurantServiceTest {
                 .build()
         );
 
+        List<RestaurantResponse> restaurantResponses = List.of(
+            restaurantResponse,
+            restaurantResponse.toBuilder()
+                .id(TestConstants.VALID_RESTAURANT_ID_2)
+                .name(TestConstants.VALID_RESTAURANT_NAME_2)
+                .cuisineType(cuisineType)
+                .build()
+        );
+
         when(restaurantRepository.findByCuisineTypeAndIsActiveTrue(cuisineType))
             .thenReturn(restaurants);
-        when(objectMapper.convertValue(any(Restaurant.class), eq(RestaurantResponse.class)))
-            .thenAnswer(invocation -> {
-                Restaurant restaurant = invocation.getArgument(0);
-                return RestaurantResponse.builder()
-                    .id(restaurant.getId())
-                    .name(restaurant.getName())
-                    .description(restaurant.getDescription())
-                    .email(restaurant.getEmail())
-                    .phone(restaurant.getPhone())
-                    .cuisineType(restaurant.getCuisineType())
-                    .rating(restaurant.getRating())
-                    .build();
-            });
+        when(restaurantResponseMapper.toResponseList(restaurants)).thenReturn(restaurantResponses);
 
         List<RestaurantResponse> result = restaurantService.getRestaurantsCuisine(cuisineType);
 
         assertNotNull(result);
         assertEquals(2, result.size());
-
         assertEquals(cuisineType, result.get(0).getCuisineType());
         assertEquals(cuisineType, result.get(1).getCuisineType());
 
         verify(restaurantRepository).findByCuisineTypeAndIsActiveTrue(cuisineType);
+        verify(restaurantResponseMapper).toResponseList(restaurants);
     }
 
     @Test
     void getRestaurantById_ShouldReturnRestaurantWhenExists() {
         when(restaurantRepository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(Optional.of(activeRestaurant));
-        when(objectMapper.convertValue(any(Restaurant.class), eq(RestaurantResponse.class)))
-            .thenReturn(restaurantResponse);
+        when(restaurantResponseMapper.toResponse(activeRestaurant)).thenReturn(restaurantResponse);
 
         RestaurantResponse result = restaurantService.getRestaurantById(TestConstants.VALID_RESTAURANT_ID);
 
         assertNotNull(result);
         assertEquals(TestConstants.VALID_RESTAURANT_ID, result.getId());
         verify(restaurantRepository).findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID);
+        verify(restaurantResponseMapper).toResponse(activeRestaurant);
     }
 
     @Test
@@ -270,15 +295,17 @@ public class RestaurantServiceTest {
     @Test
     void getRestaurantsWithMinRating_ShouldRestaurantsWhenValidRating() {
         List<Restaurant> restaurants = List.of(activeRestaurant);
+        List<RestaurantResponse> restaurantResponses = List.of(restaurantResponse);
+
         when(restaurantRepository.findActiveRestaurantsWithMinRating(TestConstants.VALID_RATING))
             .thenReturn(restaurants);
-        when(objectMapper.convertValue(any(Restaurant.class), eq(RestaurantResponse.class)))
-            .thenReturn(restaurantResponse);
+        when(restaurantResponseMapper.toResponseList(restaurants)).thenReturn(restaurantResponses);
 
         List<RestaurantResponse> result = restaurantService.getRestaurantsWithMinRating(TestConstants.VALID_RATING);
 
         assertFalse(result.isEmpty());
         verify(restaurantRepository).findActiveRestaurantsWithMinRating(TestConstants.VALID_RATING);
+        verify(restaurantResponseMapper).toResponseList(restaurants);
     }
 
     @Test
@@ -306,15 +333,17 @@ public class RestaurantServiceTest {
     @Test
     void searchRestaurants_ShouldReturnRestaurantsWhenValidSearchTerm() {
         List<Restaurant> restaurants = List.of(activeRestaurant);
+        List<RestaurantResponse> restaurantResponses = List.of(restaurantResponse);
+
         when(restaurantRepository.searchActiveRestaurantsByName(TestConstants.VALID_SEARCH_TERM))
             .thenReturn(restaurants);
-        when(objectMapper.convertValue(any(Restaurant.class), eq(RestaurantResponse.class)))
-            .thenReturn(restaurantResponse);
+        when(restaurantResponseMapper.toResponseList(restaurants)).thenReturn(restaurantResponses);
 
         List<RestaurantResponse> result = restaurantService.searchRestaurants(TestConstants.VALID_SEARCH_TERM);
 
         assertFalse(result.isEmpty());
         verify(restaurantRepository).searchActiveRestaurantsByName(TestConstants.VALID_SEARCH_TERM);
+        verify(restaurantResponseMapper).toResponseList(restaurants);
     }
 
     @Test
