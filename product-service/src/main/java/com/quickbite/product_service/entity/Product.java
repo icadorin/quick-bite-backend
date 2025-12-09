@@ -17,7 +17,7 @@ import java.util.Map;
 @Table(name = "products")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class Product {
 
     @Id
