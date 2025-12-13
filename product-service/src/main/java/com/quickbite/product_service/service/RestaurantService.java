@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -26,74 +25,6 @@ public class RestaurantService {
     private final RestaurantCreateMapper restaurantCreateMapper;
     private final RestaurantPatchMapper restaurantPatchMapper;
     private final RestaurantResponseMapper restaurantResponseMapper;
-
-    public void validateRestaurantRequest(RestaurantRequest request) {
-        if (request.getOwnerId() == null || request.getOwnerId() <= 0) {
-            throw new DataValidationException("Valid owner ID is required");
-        }
-
-        if (!StringUtils.hasText(request.getName())) {
-            throw new DataValidationException("Restaurant name is required");
-        }
-
-        if (request.getName().length() > 255) {
-            throw new DataValidationException("Restaurant name must not exceed 255 characters");
-        }
-
-        if (request.getDescription() != null && request.getDescription().length() > 1000) {
-            throw new DataValidationException("Description must not exceed 1000 characters");
-        }
-
-        if (request.getEmail() != null) {
-            if (request.getEmail().length() > 255) {
-                throw new DataValidationException("Email must not exceed 255 characters");
-            }
-
-            if (!isValidEmail(request.getEmail())) {
-                throw new DataValidationException("Email must be valid");
-            }
-        }
-
-        if (request.getPhone() != null) {
-            if (request.getPhone().length() > 20) {
-                throw new DataValidationException("Phone must not exceed 20 characters");
-            }
-
-            if (!isValidPhone(request.getPhone())) {
-                throw new DataValidationException("Phone number must be valid");
-            }
-        }
-
-        if (request.getLogoUrl() != null && request.getLogoUrl().length() > 500) {
-            throw new DataValidationException("Banner URL must not exceed 500 characters");
-        }
-
-        if (request.getBannerUrl() != null && request.getBannerUrl().length() > 500) {
-            throw new DataValidationException("Banner URL must not exceed 500 characters");
-        }
-
-        if (request.getCuisineType() != null && request.getCuisineType().length() > 100) {
-            throw new DataValidationException("Cuisine type must not exceed 100 characters");
-        }
-
-        if (request.getDeliveryTimeRange() != null && request.getDeliveryTimeRange().length() > 20) {
-            throw new DataValidationException("Delivery time range must not exceed 20 characters");
-        }
-
-        if (request.getMinimumOrderAmount() != null && request.getMinimumOrderAmount().compareTo(BigDecimal.ZERO) < 0) {
-            throw new DataValidationException("Minimum order amount must be zero or positive");
-        }
-    }
-
-    private boolean isValidEmail(String email) {
-        String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
-        return email.matches(emailRegex);
-    }
-
-    private boolean isValidPhone(String phone) {
-        String phoneRegex = "^[+]?[1-9]\\d{0,15}$";
-        return phone.matches(phoneRegex);
-    }
 
     public List<RestaurantResponse> getAllActiveRestaurant() {
         return restaurantResponseMapper.toResponseList(
@@ -116,7 +47,6 @@ public class RestaurantService {
 
     @Transactional
     public RestaurantResponse createRestaurant(RestaurantRequest request) {
-        validateRestaurantRequest(request);
 
         if (restaurantRepository.existsByNameAndOwnerId(request.getName().trim(), request.getOwnerId())) {
             throw new BusinessRuleViolationException("Restaurant with name '" + request.getName() +
@@ -127,13 +57,11 @@ public class RestaurantService {
         restaurant.setIsActive(true);
         restaurant.setName(request.getName().trim());
 
-        Restaurant saved = restaurantRepository.save(restaurant);
-        return restaurantResponseMapper.toResponse(saved);
+        return restaurantResponseMapper.toResponse(restaurantRepository.save(restaurant));
     }
 
     @Transactional
     public RestaurantResponse updateRestaurant(Long id, RestaurantRequest request) {
-        validateRestaurantRequest(request);
 
         Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
@@ -144,8 +72,7 @@ public class RestaurantService {
 
         restaurantPatchMapper.updateRestaurantFromRequest(request, restaurant);
 
-        Restaurant updated = restaurantRepository.save(restaurant);
-        return restaurantResponseMapper.toResponse(updated);
+        return restaurantResponseMapper.toResponse(restaurantRepository.save(restaurant));
     }
 
     @Transactional

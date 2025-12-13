@@ -12,6 +12,8 @@ import com.quickbite.product_service.mapper.RestaurantCreateMapper;
 import com.quickbite.product_service.mapper.RestaurantPatchMapper;
 import com.quickbite.product_service.mapper.RestaurantResponseMapper;
 import com.quickbite.product_service.repository.RestaurantRepository;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +28,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,8 +55,13 @@ public class RestaurantServiceTest {
     private Restaurant activeRestaurant;
     private RestaurantResponse restaurantResponse;
 
+    private Validator validator;
+
     @BeforeEach
     void setUp() {
+
+        validator = Validation.buildDefaultValidatorFactory().getValidator();
+
         validRestaurantRequest = RestaurantRequest.builder()
             .ownerId(TestConstants.VALID_OWNER_ID)
             .name(TestConstants.VALID_RESTAURANT_NAME)
@@ -129,32 +135,6 @@ public class RestaurantServiceTest {
     }
 
     @Test
-    void createRestaurant_ShouldThrowValidationExceptionWhenEmailIsInvalid() {
-        RestaurantRequest invalidRequest = validRestaurantRequest.toBuilder()
-            .email(TestConstants.INVALID_EMAIL)
-            .build();
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-            () -> restaurantService.createRestaurant(invalidRequest));
-
-        assertEquals(TestConstants.INVALID_EMAIL_MESSAGE, exception.getMessage());
-        verify(restaurantRepository, never()).existsByNameAndOwnerId(anyString(), any());
-    }
-
-    @Test
-    void createRestaurant_ShouldThrowValidationExceptionWhenPhoneIsInvalid() {
-        RestaurantRequest invalidRequest = validRestaurantRequest.toBuilder()
-            .phone(TestConstants.INVALID_PHONE)
-            .build();
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-            () -> restaurantService.createRestaurant(invalidRequest));
-
-        assertEquals(TestConstants.INVALID_PHONE_MESSAGE, exception.getMessage());
-        verify(restaurantRepository, never()).existsByNameAndOwnerId(anyString(), any());
-    }
-
-    @Test
     void createRestaurant_ShouldCreateRestaurantWithVariousCuisineTypes() {
        List<String> cuisineTypes = Arrays.asList(
            TestConstants.VALID_CUISINE_TYPE,
@@ -188,44 +168,6 @@ public class RestaurantServiceTest {
 
            reset(restaurantRepository, restaurantCreateMapper, restaurantResponseMapper);
        }
-    }
-
-    @Test
-    void createRestaurant_ShouldThrowExceptionWhenCuisineTypeExceedsMaxLength() {
-        RestaurantRequest invalidRequest = validRestaurantRequest.toBuilder()
-            .cuisineType(TestConstants.INVALID_CUISINE_TYPE )
-            .build();
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-            () -> restaurantService.createRestaurant(invalidRequest));
-
-        assertEquals(TestConstants.CUISINE_TOO_LONG_MESSAGE, exception.getMessage());
-    }
-
-    @Test
-    void createRestaurant_ShouldAcceptValidCuisineTypeLength() {
-        RestaurantRequest request = validRestaurantRequest.toBuilder()
-            .cuisineType(TestConstants.VALID_CUISINE_TYPE)
-                .build();
-
-        Restaurant restaurantToSave = activeRestaurant.toBuilder()
-            .cuisineType(TestConstants.VALID_CUISINE_100)
-            .build();
-
-        RestaurantResponse expectedResponse = restaurantResponse.toBuilder()
-            .cuisineType(TestConstants.VALID_CUISINE_100)
-            .build();
-
-        when(restaurantRepository.existsByNameAndOwnerId(anyString(), anyLong()))
-            .thenReturn(false);
-        when(restaurantCreateMapper.toEntity(request)).thenReturn(restaurantToSave);
-        when(restaurantRepository.save(any(Restaurant.class))).thenReturn(restaurantToSave);
-        when(restaurantResponseMapper.toResponse(restaurantToSave)).thenReturn(expectedResponse);
-
-        RestaurantResponse result = restaurantService.createRestaurant(request);
-
-        assertNotNull(result);
-        assertNotNull(result.getCuisineType());
     }
 
     @Test
@@ -353,5 +295,35 @@ public class RestaurantServiceTest {
 
         assertEquals(TestConstants.SEARCH_TERM_TOO_SHORT_MESSAGE, exception.getMessage());
         verify(restaurantRepository, never()).searchActiveRestaurantsByName(anyString());
+    }
+
+    @Test
+    void shouldFail_WhenEmailIsInvalid() {
+        RestaurantRequest request = RestaurantRequest.builder()
+            .ownerId(TestConstants.VALID_OWNER_ID)
+            .name(TestConstants.VALID_RESTAURANT_NAME)
+            .email(TestConstants.INVALID_EMAIL)
+            .phone(TestConstants.VALID_PHONE)
+            .cuisineType(TestConstants.VALID_CUISINE_TYPE)
+            .build();
+
+        var violations = validator.validate(request);
+
+        assertFalse(violations.isEmpty());
+    }
+
+    @Test
+    void shouldFail_WhenCuisineTypeExceedMaxLength() {
+        RestaurantRequest request = RestaurantRequest.builder()
+            .ownerId(TestConstants.VALID_OWNER_ID)
+            .name(TestConstants.VALID_RESTAURANT_NAME)
+            .email(TestConstants.VALID_EMAIL)
+            .phone(TestConstants.VALID_PHONE)
+            .cuisineType(TestConstants.INVALID_CUISINE_TYPE)
+            .build();
+
+        var violations = validator.validate(request);
+
+        assertFalse(violations.isEmpty());
     }
 }
