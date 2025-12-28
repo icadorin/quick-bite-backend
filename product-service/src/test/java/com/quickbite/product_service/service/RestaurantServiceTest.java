@@ -99,8 +99,10 @@ public class RestaurantServiceTest {
 
     @Test
     void createRestaurant_ShouldCreateRestaurantSuccessfully() {
-        when(restaurantRepository.existsByNameAndOwnerId(TestConstants.VALID_RESTAURANT_NAME, TestConstants.VALID_OWNER_ID))
-            .thenReturn(false);
+        when(restaurantRepository.existsByNameAndOwnerId(
+            TestConstants.VALID_RESTAURANT_NAME,
+            TestConstants.VALID_OWNER_ID
+        )).thenReturn(false);
 
         when(restaurantCreateMapper.toEntity(validRestaurantRequest)).thenReturn(activeRestaurant);
         when(restaurantResponseMapper.toResponse(activeRestaurant)).thenReturn(restaurantResponse);

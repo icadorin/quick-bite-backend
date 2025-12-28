@@ -138,7 +138,11 @@ public class AuthServiceTest {
         assertEquals("access-token", response.getAccessToken());
         assertEquals("Bearer", response.getTokenType());
         assertEquals(3600L, response.getExpiresIn());
-        assertEquals(newUser, response.getUser());
+        assertEquals(newUser.getId(), response.getUser().getId());
+        assertEquals(newUser.getEmail(), response.getUser().getEmail());
+        assertEquals(newUser.getFullName(), response.getUser().getName());
+        assertEquals(newUser.getRole().name(), response.getUser().getRole());
+
 
         verify(userRepository).findByEmail("new@test.com");
         verify(passwordEncoder).encode("password123");
@@ -323,7 +327,11 @@ public class AuthServiceTest {
         assertNotNull(response);
         assertEquals(accessToken, response.getAccessToken());
         assertNotNull(response.getRefreshToken());
-        assertEquals(activeUser, response.getUser());
+        assertNotNull(response.getUser());
+        assertEquals(activeUser.getId(), response.getUser().getId());
+        assertEquals(activeUser.getEmail(), response.getUser().getEmail());
+        assertEquals(activeUser.getFullName(), response.getUser().getName());
+        assertEquals(activeUser.getRole().name(), response.getUser().getRole());
 
         verify(authenticationManager).authenticate(
             new UsernamePasswordAuthenticationToken(validEmail, validPassword)
@@ -512,6 +520,7 @@ public class AuthServiceTest {
 
         when(refreshTokenRepository.findByToken(TestConstants.VALID_REFRESH_TOKEN)).thenReturn(Optional.of(validRefreshToken));
         when(jwtService.generateToken(activeUser)).thenReturn(TestConstants.NEW_ACCESS_TOKEN);
+        when(jwtService.getTokenExpirationInSeconds()).thenReturn(TestConstants.TOKEN_EXPIRATION);
 
         AuthResponse response = authService.refreshToken(TestConstants.VALID_REFRESH_TOKEN);
 

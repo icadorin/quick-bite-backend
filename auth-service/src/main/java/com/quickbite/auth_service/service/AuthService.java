@@ -7,6 +7,7 @@ import com.quickbite.auth_service.entity.RefreshToken;
 import com.quickbite.auth_service.entity.User;
 import com.quickbite.auth_service.entity.UserProfile;
 import com.quickbite.auth_service.exception.*;
+import com.quickbite.auth_service.mapper.UserMapper;
 import com.quickbite.auth_service.repository.RefreshTokenRepository;
 import com.quickbite.auth_service.repository.UserProfileRepository;
 import com.quickbite.auth_service.repository.UserRepository;
@@ -72,7 +73,13 @@ public class AuthService {
             String refreshToken = generateRefreshToken(user);
 
             log.info("Login realizado com sucesso: {}", email);
-            return new AuthResponse(accessToken, refreshToken, user);
+            return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtService.getTokenExpirationInSeconds())
+                .user(UserMapper.toResponse(user))
+                .build();
         } catch (BadCredentialsException e) {
             log.warn("Credenciais inválidas para: {}", email);
             throw new AuthException(AuthConstants.INVALID_CREDENTIALS);
@@ -215,7 +222,13 @@ public class AuthService {
         String newRefreshToken = generateRefreshToken(user);
 
         log.info("Token atualizado com sucesso para usuário: {}", user.getEmail());
-        return new AuthResponse(newAccessToken, newRefreshToken, user);
+        return AuthResponse.builder()
+            .accessToken(newAccessToken)
+            .refreshToken(newRefreshToken)
+            .tokenType("Bearer")
+            .expiresIn(jwtService.getTokenExpirationInSeconds())
+            .user(UserMapper.toResponse(user))
+            .build();
     }
 
     private AuthResponse buildAuthResponse(String accessToken, String refreshToken, User user) {
@@ -224,7 +237,7 @@ public class AuthService {
             .refreshToken(refreshToken)
             .tokenType("Bearer")
             .expiresIn(jwtService.getTokenExpirationInSeconds())
-            .user(user)
+            .user(UserMapper.toResponse(user))
             .build();
     }
 

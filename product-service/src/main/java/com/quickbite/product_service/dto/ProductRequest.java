@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class ProductRequest {
 
     @NotNull(message = "Restaurant ID is required")
@@ -19,14 +19,14 @@ public class ProductRequest {
     private Long categoryId;
 
     @NotBlank(message = "Name is required")
-    @Size(min = 2, max = 255, message = "Name must be between 2 and 255 characters")
+    @Size(max = 255, message = "Product name must not exceed 255 characters")
     private String name;
 
     @Size(max = 1000, message = "Description must not exceed 1000 characters")
     private String description;
 
     @NotNull(message = "Price is required")
-    @Positive(message = "Price must be positive")
+    @Positive(message = "Product price must be greater than zero")
     @Digits(integer = 10, fraction = 2, message = "Price must have up to 10 integer digits and 2" +
         "fractions digits")
     private BigDecimal price;

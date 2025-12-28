@@ -11,5 +11,5 @@ public class RestaurantResponse {
     private String phone;
     private String email;
     private Boolean isActive;
-    private String deliveryTimeRage;
+    private String deliveryTimeRange;
 }

@@ -38,7 +38,7 @@ public class RestaurantRequest {
     @Size(max = 500, message = "Banner URL must not exceed 500 characters")
     private String bannerUrl;
 
-    @Size(max = 100, message = "Cusine type must not exceed 100 characters")
+    @Size(max = 100, message = "Cuisine type must not exceed 100 characters")
     private String cuisineType;
 
     @Builder.Default
