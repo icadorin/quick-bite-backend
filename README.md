@@ -1,21 +1,67 @@
-# QuickBite
+# 🍔 QuickBite — Plataforma Fullstack (Backend-First) de Delivery
 
-## 📚 Doc
- Acompanhe o processo de desenvolvimento e aprendizado do projeto: [QuickBite Docs](https://israelcadorin.vercel.app/quickbite)
+QuickBite é uma **plataforma fullstack de delivery de comida**, desenvolvida com **arquitetura de microsserviços**, com foco principal em **backend e sistemas distribuídos**, simulando desafios reais encontrados em ambientes corporativos.
 
-## ⚙️ Resumo
+O frontend tem como objetivo **consumir e validar as APIs**, enquanto o backend concentra as decisões arquiteturais, regras de negócio e comunicação entre serviços.
 
- Implementação de uma plataforma backend para sistema de delivery de comida.
+O projeto foi construído com foco em:
 
-🍔 QuickBite - Backend Monorepo que contém toda a arquitetura de microsserviços para a plataforma QuickBite.
+- Arquitetura backend escalável  
+- Separação de responsabilidades  
+- Comunicação síncrona e assíncrona  
+- Decisões arquiteturais documentadas  
+- Boas práticas de desenvolvimento backend  
+- Integração entre frontend e APIs REST  
 
-🏗️ Arquitetura
-O sistema é construído com uma arquitetura de microsserviços, utilizando Spring Boot e Spring Cloud, conectando-se a serviços em nuvem.
+📚 **Documentação**  
+https://israelcadorin.vercel.app/quickbite
 
-## 🔄 Fluxo de Requisições
+---
 
-```bash
-Cliente → API Gateway (8081) → Microsserviços (8082-8086)
+## 📌 Status das Implementações
+
+- ✅ APIs REST com Spring Boot *(em evolução contínua)*  
+- ✅ API Gateway  
+- ✅ Autenticação JWT  
+- ✅ Integração com PostgreSQL  
+- 🧪 Kafka *(microserviço criado, integração em desenvolvimento)*  
+- 🧪 Redis *(planejado para cache e otimização de performance)*  
+- 🚧 Frontend simples para consumo das APIs *(em desenvolvimento)*  
+
+---
+
+## 🛠️ Stack Tecnológica
+
+### 🔙 Backend (foco principal)
+- **Java 21**
+- **Spring Boot**
+- **Spring Cloud**
+- **Spring Security (JWT)**
+- **PostgreSQL**
+- **Kafka**
+- **Redis**
+- **Maven**
+
+### 🎨 Frontend
+- **React**
+- **TypeScript**
+- **Node.js**
+- **Vite**
+- **Axios / Fetch API**
+
+### ☁️ Infraestrutura & DevOps
+- **Git**
+- **Neon.tech** *(PostgreSQL)*
+- **Upstash** *(Kafka e Redis)*
+
+---
+
+## 🏗️ Arquitetura
+
+O sistema é composto por múltiplos **microsserviços independentes**, desenvolvidos com **Spring Boot**, integrados via **Spring Cloud** e consumidos por um **frontend React**.
+
+```text
+Frontend → API Gateway (8081) → Microsserviços (8082–8086)
 ```
 
 ## ☁️ Infraestrutura na Nuvem
