@@ -1,5 +1,7 @@
 package com.quickbite.product_service.constants;
 
+import java.math.BigDecimal;
+
 public class TestConstants {
 
     public static final Long VALID_CATEGORY_ID = 1L;
@@ -18,6 +20,7 @@ public class TestConstants {
 
     public static final String VALID_RESTAURANT_NAME = "Test Restaurant";
     public static final String VALID_RESTAURANT_NAME_2 = "Another Italian Restaurant";
+    public static final String BLANK_RESTAURANT_NAME = " ";
     public static final String UPDATED_RESTAURANT_NAME = "Updated Restaurant";
 
     public static final String VALID_DESCRIPTION = "Test Description";
@@ -32,9 +35,9 @@ public class TestConstants {
     public static final Double VALID_COMPARE_PRICE = 39.99;
     public static final Double VALID_COST_PRICE = 15.99;
 
-    public static final Double MIN_PRICE = 10.0;
-    public static final Double MAX_PRICE = 50.0;
-    public static final Double INVALID_MIN_PRICE = 60.0;
+    public static final BigDecimal MIN_PRICE = new BigDecimal("10.00");
+    public static final BigDecimal MAX_PRICE = new BigDecimal("50.00");
+    public static final BigDecimal INVALID_MIN_PRICE = new BigDecimal("60.00");
     public static final Double NEGATIVE_PRICE = -10.0;
 
     public static final Integer VALID_PREPARATION_TIME = 30;
@@ -64,6 +67,7 @@ public class TestConstants {
 
     public static final String VALID_SEARCH_TERM = "test";
     public static final String SEARCH_TERM_SHORT = "a";
+    public static final String SEARCH_TERM_CHEESE = "cheese";
 
     public static final String CATEGORY_NOT_FOUND_MESSAGE = "Category not found with id: ";
     public static final String PRODUCT_NOT_FOUND_MESSAGE = "Product not found with id: ";

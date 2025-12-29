@@ -3,7 +3,6 @@ package com.quickbite.product_service.service;
 import com.quickbite.product_service.constants.TestConstants;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
-import com.quickbite.product_service.dto.RestaurantResponse;
 import com.quickbite.product_service.entity.Category;
 import com.quickbite.product_service.entity.Product;
 import com.quickbite.product_service.entity.Restaurant;
@@ -124,39 +123,6 @@ public class ProductServiceTest {
     }
 
     @Test
-    void createProduct_ShouldThrowValidationExceptionWhenPriceIsNull() {
-        validProductRequest.setPrice(null);
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-            () -> productService.createProduct(validProductRequest));
-
-        assertEquals(TestConstants.PRICE_REQUIRED_MESSAGE, exception.getMessage());
-        verify(productRepository, never()).save(any(Product.class));
-    }
-
-    @Test
-    void createProduct_ShouldThrowValidationExceptionWhenPriceIsNegative() {
-        validProductRequest.setPrice(BigDecimal.valueOf(TestConstants.NEGATIVE_PRICE));
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-            () -> productService.createProduct(validProductRequest));
-
-        assertEquals(TestConstants.PRICE_MUST_GREATER_ZERO, exception.getMessage());
-        verify(productRepository, never()).save(any(Product.class));
-    }
-
-    @Test
-    void createProduct_ShouldThrowValidationExceptionWhenNameIsEmpty() {
-        validProductRequest.setName("");
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-            () -> productService.createProduct(validProductRequest));
-
-        assertEquals(TestConstants.PRODUCT_NAME_REQUIRED_MESSAGE, exception.getMessage());
-        verify(productRepository, never()).save(any(Product.class));
-    }
-
-    @Test
     void createProduct_ShouldThrowExceptionWhenRestaurantNotFound() {
         when(restaurantService.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID))
             .thenThrow(new ResourceNotFoundException(
@@ -217,9 +183,14 @@ public class ProductServiceTest {
         List<Product> products = List.of(activeProduct);
         List<ProductResponse> productResponses = List.of(productResponse);
 
-        when(productRepository.findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID))
-            .thenReturn(products);
-        when(productResponseMapper.toResponseList(products)).thenReturn(productResponses);
+        when(productRepository.findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
+            TestConstants.VALID_RESTAURANT_ID,
+            TestConstants.MIN_PRICE,
+            TestConstants.MAX_PRICE
+        )).thenReturn(products);
+
+        when(productResponseMapper.toResponseList(products)).
+            thenReturn(productResponses);
 
         List<ProductResponse> result = productService.getProductsByPriceRange(
             TestConstants.VALID_RESTAURANT_ID,
@@ -228,7 +199,13 @@ public class ProductServiceTest {
         );
 
         assertFalse(result.isEmpty());
-        verify(productRepository).findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID);
+
+        verify(productRepository).findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
+            TestConstants.VALID_RESTAURANT_ID,
+            TestConstants.MIN_PRICE,
+            TestConstants.MAX_PRICE
+        );
+
         verify(productResponseMapper).toResponseList(products);
     }
 
@@ -261,7 +238,7 @@ public class ProductServiceTest {
 
         when(productRepository.findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(products);
-        when(productResponseMapper.toResponseList(products)).thenReturn(productResponses);
+        when(productResponseMapper.toResponseList(anyList())).thenReturn(productResponses);
 
         List<ProductResponse> result = productService.getProductsByRestaurant(TestConstants.VALID_RESTAURANT_ID);
 

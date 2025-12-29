@@ -20,7 +20,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByNameContainingIgnoreCaseAndIsAvailableTrue(String name);
 
-    void findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
+    List<Product> findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
         Long restaurantId,
         BigDecimal minPrice,
         BigDecimal maxPrice
