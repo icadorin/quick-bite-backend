@@ -42,20 +42,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
-    @ExceptionHandler({BusinessRuleViolationException.class, DataValidationException.class})
-    public ResponseEntity<ErrorResponse> handleBusinessRuleViolation(RuntimeException ex) {
-        ErrorResponse error = ErrorResponse.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-            .message(ex.getMessage())
-            .errorCode("BUSINESS_RULE_VIOLATION")
-            .build();
-
-        logger.warn("Business rule violation: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
     @ExceptionHandler(DataValidationException.class)
     public ResponseEntity<ErrorResponse> handleDataValidation(DataValidationException ex) {
         ErrorResponse error = ErrorResponse.builder()
@@ -67,7 +53,7 @@ public class GlobalExceptionHandler {
             .build();
 
         logger.warn("Data validation error: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.badRequest().body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -133,8 +119,8 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.BAD_REQUEST.value())
-            .error(HttpStatus.BAD_GATEWAY.getReasonPhrase())
-            .message("Malformed JSON request ir invalid data format")
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message("Malformed JSON request or invalid data format")
             .errorCode("MALFORMED_JSON")
             .build();
 
@@ -148,8 +134,8 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.BAD_REQUEST.value())
-            .error(HttpStatus.BAD_GATEWAY.getReasonPhrase())
-            .message(String.format("Parameter '%s' sould be of type %s",
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message(String.format("Parameter '%s' should be of type %s",
                 ex.getName(), ex.getRequiredType().getSimpleName()))
             .errorCode("PARAMETER_TYPE_MISMATCH")
             .build();
@@ -163,7 +149,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.BAD_REQUEST.value())
-            .error(HttpStatus.BAD_GATEWAY.getReasonPhrase())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
             .message(String.format("Required parameter '%s' is missing", ex.getParameterName()))
             .errorCode("MISSING_PARAMETER")
             .build();
