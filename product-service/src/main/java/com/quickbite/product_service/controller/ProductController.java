@@ -1,11 +1,13 @@
 package com.quickbite.product_service.controller;
 
+import com.quickbite.product_service.dto.PriceRangeRequest;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
 import com.quickbite.product_service.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Validated
 public class ProductController {
 
     private final ProductService productService;
@@ -69,10 +72,14 @@ public class ProductController {
     @GetMapping("/restaurant/{restaurantId}/price-range")
     public ResponseEntity<List<ProductResponse>> getProductsByPriceRange(
         @PathVariable Long restaurantId,
-        @RequestParam Double minPrice,
-        @RequestParam Double maxPrice
-    ) {
-        return ResponseEntity.ok(productService.getProductsByPriceRange(restaurantId, minPrice, maxPrice));
+        @Valid PriceRangeRequest priceRange
+        ) {
+        return ResponseEntity.ok(
+            productService.getProductsByPriceRange(
+                restaurantId,
+                priceRange.minPrice(),
+                priceRange.maxPrice()
+        ));
     }
 
     @GetMapping("/restaurant/{restaurantId}/count")

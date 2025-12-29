@@ -1,14 +1,18 @@
 package com.quickbite.product_service.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.Map;
 
 @Data
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductRequest {
 
     @NotNull(message = "Restaurant ID is required")
@@ -18,7 +22,7 @@ public class ProductRequest {
     @Positive(message = "Category ID must be positive")
     private Long categoryId;
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "Product name is required")
     @Size(max = 255, message = "Product name must not exceed 255 characters")
     private String name;
 
