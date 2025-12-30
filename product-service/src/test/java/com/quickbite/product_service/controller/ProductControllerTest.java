@@ -49,7 +49,7 @@ public class ProductControllerTest {
 
     @WithMockUser(username = "user")
     @Test
-    void shouldReturn400WhenNameIsBlank() throws Exception {
+    void shouldReturn400_whenNameIsBlank() throws Exception {
         ProductRequest request = ProductRequest.builder()
             .name(TestConstants.BLANK_RESTAURANT_NAME)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
@@ -67,7 +67,7 @@ public class ProductControllerTest {
 
     @WithMockUser(username = "user")
     @Test
-    void shouldCreateProductWhenNameIsValid() throws Exception {
+    void shouldCreateProduct_whenNameIsValid() throws Exception {
         ProductRequest request = ProductRequest.builder()
             .name(TestConstants.VALID_PRODUCT_NAME)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))

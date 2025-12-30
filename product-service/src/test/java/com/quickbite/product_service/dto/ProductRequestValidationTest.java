@@ -25,7 +25,7 @@ public class ProductRequestValidationTest {
     }
 
     @Test
-    void shouldFailWhenNameIsBlank() {
+    void shouldFail_whenNameIsBlank() {
         ProductRequest request = ProductRequest.builder()
             .name("")
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
@@ -37,7 +37,7 @@ public class ProductRequestValidationTest {
     }
 
     @Test
-    void shouldFailWhenPriceIsNull() {
+    void shouldFail_whenPriceIsNull() {
         ProductRequest request = ProductRequest.builder()
             .name(TestConstants.VALID_PRODUCT_NAME)
             .restaurantId(TestConstants.VALID_RESTAURANT_ID)
@@ -48,7 +48,7 @@ public class ProductRequestValidationTest {
     }
 
     @Test
-    void shouldPassWhenRequestIsValid() {
+    void shouldPass_whenRequestIsValid() {
         ProductRequest request = ProductRequest.builder()
             .name(TestConstants.VALID_PRODUCT_NAME)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))

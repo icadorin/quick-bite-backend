@@ -103,7 +103,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void createProduct_ShouldCreateProductSuccessfully() {
+    void createProduct_shouldCreateSuccessfully() {
         when(restaurantService.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID)).thenReturn(sampleRestaurant);
         when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID)).thenReturn(Optional.of(sampleCategory));
 
@@ -123,7 +123,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void createProduct_ShouldThrowExceptionWhenRestaurantNotFound() {
+    void createProduct_shouldThrow_whenRestaurantNotFound() {
         when(restaurantService.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID))
             .thenThrow(new ResourceNotFoundException(
                 TestConstants.RESTAURANT_NOT_FOUND_MESSAGE + TestConstants.VALID_RESTAURANT_ID
@@ -138,7 +138,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void getProductById_ShouldReturnProductWhenExists() {
+    void getProductById_shouldReturnProduct_whenExists() {
         when(productRepository.findById(TestConstants.VALID_PRODUCT_ID)).thenReturn(Optional.of(activeProduct));
         when(productResponseMapper.toResponse(activeProduct)).thenReturn(productResponse);
 
@@ -151,7 +151,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void getProductById_ShouldThrowExceptionWhenProductNotFound() {
+    void getProductById_shouldThrow_whenNotFound() {
         when(productRepository.findById(TestConstants.NON_EXISTENT_ID)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
@@ -163,7 +163,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void getFeaturedProducts_ShouldReturnFeaturedProducts() {
+    void getFeaturedProducts_shouldReturnFeaturedProducts() {
         List<Product> featuredProducts = List.of(activeProduct);
         List<ProductResponse> productResponses  = List.of(productResponse);
 
@@ -179,7 +179,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void getProductsByPriceRange_ShouldReturnProductsWhenValidRange() {
+    void getProductsByPriceRange_shouldReturnProducts_whenRangeIsValid() {
         List<Product> products = List.of(activeProduct);
         List<ProductResponse> productResponses = List.of(productResponse);
 
@@ -210,7 +210,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void getProductsByPriceRange_ShouldThrowExceptionWhenInvalidRange() {
+    void getProductsByPriceRange_shouldThrow_whenRangeIsInvalid() {
         DataValidationException exception = assertThrows(DataValidationException.class,
             () -> productService.getProductsByPriceRange(
                 TestConstants.VALID_RESTAURANT_ID, TestConstants.INVALID_MIN_PRICE, TestConstants.MAX_PRICE
@@ -221,7 +221,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void deleteProduct_ShouldSoftDeleteProductSuccessfully() {
+    void deleteProduct_shouldSoftDeleteSuccessfully() {
         when(productRepository.findById(TestConstants.VALID_PRODUCT_ID)).thenReturn(Optional.of(activeProduct));
         when(productRepository.save(any(Product.class))).thenReturn(activeProduct);
 
@@ -232,7 +232,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void getProductsByRestaurant_ShouldReturnProductsWhenRestaurantExists() {
+    void getProductsByRestaurant_shouldReturnProducts_whenRestaurantExists() {
         List<Product> products = List.of(activeProduct);
         List<ProductResponse> productResponses = List.of(productResponse);
 
@@ -248,7 +248,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void getProductsByRestaurant_ShouldThrowExceptionWhenRestaurantIdInvalid() {
+    void getProductsByRestaurant_shouldThrow_whenRestaurantIdIsInvalid() {
         DataValidationException exception = assertThrows(DataValidationException.class,
             () -> productService.getProductsByRestaurant(TestConstants.INVALID_ID));
 

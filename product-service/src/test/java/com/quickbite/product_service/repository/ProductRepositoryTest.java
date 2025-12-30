@@ -27,7 +27,7 @@ public class ProductRepositoryTest {
     private TestEntityManager entityManager;
 
     @Test
-    void shouldReturnOnlyAvailableProductsWithActiveRestaurantAndMatchingName() {
+    void shouldReturnOnlyAvailableProducts_whenRestaurantIsActiveAndNameMatches() {
         Restaurant activeRestaurant = Restaurant.builder()
             .name(TestConstants.VALID_RESTAURANT_NAME)
             .isActive(true)
