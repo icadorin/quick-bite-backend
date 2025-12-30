@@ -43,6 +43,11 @@ public class TestConstants {
     public static final Integer VALID_PREPARATION_TIME = 30;
     public static final Integer VALID_CALORIES = 500;
     public static final Integer VALID_SORT_ORDER = 1;
+    public static final Integer ZERO_SORT_ORDER = 0;
+    public static final Integer NEGATIVE_SORT_ORDER = -1;
+
+    public static final Long NO_ASSOCIATED_PRODUCTS = 0L;
+    public static final Long HAS_ASSOCIATED_PRODUCTS = 2L;
 
     public static final String VALID_EMAIL = "restaurant@test.com";
     public static final String VALID_PHONE = "+5511999999999";
