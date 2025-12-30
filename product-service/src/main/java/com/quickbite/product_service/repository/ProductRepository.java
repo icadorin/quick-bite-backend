@@ -38,4 +38,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
       AND LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))
     """)
     List<Product> searchAvailableProductsByName(@Param("name") String name);
+
+    Long countByCategoryIdAndIsAvailableTrue(Long categoryId);
 }
