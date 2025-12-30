@@ -8,7 +8,10 @@ import org.mapstruct.*;
 public interface RestaurantPatchMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "name", expression = "java(request.getName() != null ? request.getName().trim() : null)")
+    @Mapping(
+        target = "name",
+        expression = "java(request.getName() != null ? request.getName().trim() : null)"
+    )
     @Mapping(
         target = "description",
         expression = "java(request.getDescription() != null ? request.getDescription().trim() : null)"
