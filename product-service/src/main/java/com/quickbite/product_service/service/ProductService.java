@@ -125,22 +125,14 @@ public class ProductService {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
-        try {
-            product.setIsAvailable(false);
-            productRepository.save(product);
-        } catch (Exception e) {
-            throw new BusinessRuleViolationException("Error deleting product", e);
-        }
+        product.setIsAvailable(false);
+        productRepository.save(product);
     }
 
     public List<ProductResponse> getFeaturedProducts() {
-        try {
-            return productResponseMapper.toResponseList(
-                productRepository.findByIsFeaturedTrueAndIsAvailableTrue()
-            );
-        } catch (Exception e) {
-            throw new BusinessRuleViolationException("Error retrieving featured products", e);
-        }
+        return productResponseMapper.toResponseList(
+            productRepository.findByIsFeaturedTrueAndIsAvailableTrue()
+        );
     }
 
     public List<ProductResponse> getProductsByPriceRange(
