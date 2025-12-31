@@ -252,7 +252,7 @@ public class ProductServiceTest {
         DataValidationException exception = assertThrows(DataValidationException.class,
             () -> productService.getProductsByRestaurant(TestConstants.INVALID_ID));
 
-        assertEquals(TestConstants.RESTAURANT_ID_REQUIRED_MESSAGE, exception.getMessage());
+        assertEquals(TestConstants.INVALID_RESTAURANT_ID_MESSAGE, exception.getMessage());
         verify(productRepository, never()).findByRestaurantIdAndIsAvailableTrue(any());
     }
 }
