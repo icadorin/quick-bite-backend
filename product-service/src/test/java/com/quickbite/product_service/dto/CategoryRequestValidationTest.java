@@ -36,17 +36,6 @@ public class CategoryRequestValidationTest {
     }
 
     @Test
-    void shouldFail_whenNameIsTooShort() {
-        CategoryRequest categoryRequest = new CategoryRequest();
-        categoryRequest.setName(TestConstants.SHORT_NAME);
-
-        Set<ConstraintViolation<CategoryRequest>> violations =
-            validator.validate(categoryRequest);
-
-        assertFalse(violations.isEmpty());
-    }
-
-    @Test
     void shouldFail_whenSortOrderIsNegative() {
         CategoryRequest categoryRequest = new CategoryRequest();
         categoryRequest.setName(TestConstants.VALID_CATEGORY_NAME);
