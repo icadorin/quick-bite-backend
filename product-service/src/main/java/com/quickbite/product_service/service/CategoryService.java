@@ -34,12 +34,12 @@ public class CategoryService {
     }
 
     public CategoryResponse getCategoryById(Long id) {
-        if (id == null || id <= 0) {
-            throw new DataValidationException("Invalid category ID");
-        }
+        validateId(id, "category");
 
         Category category = categoryRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Category not found with id: " + id
+            ));
 
         return responseMapper.toResponse(category);
     }
@@ -49,14 +49,27 @@ public class CategoryService {
         String trimmedName = request.getName().trim();
 
         if (categoryRepository.existsByName(trimmedName)) {
-            throw new BusinessRuleViolationException("Category with name '" + trimmedName + "' already exists");
+            throw new BusinessRuleViolationException(
+                "Category with name '" + trimmedName + "' already exists"
+            );
         }
 
         Category category = createMapper.toEntity(request);
         category.setName(trimmedName);
-        category.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
-        category.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
-        category.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0);
+        category.setDescription(
+            request.getDescription() != null
+                ? request.getDescription().trim()
+                : null
+        );
+        category.setIsActive(
+            request.getIsActive() != null
+                ? request.getIsActive()
+                : true);
+        category.setSortOrder(
+            request.getSortOrder() != null
+                ? request.getSortOrder()
+                : 0
+        );
 
         Category savedCategory = categoryRepository.save(category);
         return responseMapper.toResponse(savedCategory);
@@ -64,17 +77,18 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
-        if (id == null || id < 0) {
-            throw new DataValidationException("Invalid category ID");
-        }
+        validateId(id, "category");
 
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
 
         String trimmedName = request.getName().trim();
 
-        if (!category.getName().equals(trimmedName) && categoryRepository.existsByName(trimmedName)) {
-            throw new BusinessRuleViolationException("Category with name '" + trimmedName + "' already exists");
+        if (!category.getName().equals(trimmedName) &&
+            categoryRepository.existsByName(trimmedName)) {
+            throw new BusinessRuleViolationException(
+                "Category with name '" + trimmedName + "' already exists"
+            );
         }
 
         patchMapper.updateCategoryFromRequest(request, category);
@@ -84,14 +98,15 @@ public class CategoryService {
 
     @Transactional
     public void deleteCategory(Long id) {
-        if (id == null || id <= 0) {
-            throw new DataValidationException("Invalid category ID");
-        }
+        validateId(id, "category");
 
         Category category = categoryRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Category not found with id: " + id
+            ));
 
         Long productCount = productRepository.countByCategoryIdAndIsAvailableTrue(id);
+
         if (productCount > 0) {
             throw new BusinessRuleViolationException(
                 "Cannot delete category with associated products. There are " + productCount
@@ -110,5 +125,13 @@ public class CategoryService {
 
         List<Category> categories = categoryRepository.searchActiveCategoriesByName(name);
         return responseMapper.toResponseList(categories);
+    }
+
+    private void validateId(Long id, String fieldName) {
+        if (id == null || id <= 0) {
+            throw new DataValidationException(
+                "Invalid " + fieldName + " ID"
+            );
+        }
     }
 }

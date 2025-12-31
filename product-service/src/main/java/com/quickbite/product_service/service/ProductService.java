@@ -32,23 +32,6 @@ public class ProductService {
     private final ProductCreateMapper productCreateMapper;
     private final ProductResponseMapper productResponseMapper;
 
-    private void validatePricingRules(ProductRequest request) {
-
-        if (request.getComparePrice() != null &&
-            request.getPrice().compareTo(request.getComparePrice()) >= 0) {
-            throw new BusinessRuleViolationException(
-                "Compare price should be greater than current price"
-            );
-        }
-
-        if (request.getComparePrice() != null &&
-            request.getPrice().compareTo(request.getCostPrice()) <= 0) {
-            throw new BusinessRuleViolationException(
-                "Price should be greater than cost price"
-            );
-        }
-    }
-
     public List<ProductResponse> getAllAvailableProducts() {
         return productResponseMapper.toResponseList(
             productRepository.findByIsAvailableTrue()
@@ -56,9 +39,7 @@ public class ProductService {
     }
 
     public ProductResponse getProductById(Long id) {
-        if (id == null || id <= 0) {
-            throw new DataValidationException("Invalid product ID");
-        }
+        validateId(id, "product");
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -76,6 +57,7 @@ public class ProductService {
             restaurantService.getRestaurantEntity(request.getRestaurantId());
 
         Category category = null;
+
         if (request.getCategoryId() != null) {
             category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -97,7 +79,9 @@ public class ProductService {
         validatePricingRules(request);
 
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Product not found with id: " + id
+            ));
 
         Restaurant restaurant = restaurantService.getRestaurantEntity(request.getRestaurantId());
         product.setRestaurant(restaurant);
@@ -118,12 +102,12 @@ public class ProductService {
 
     @Transactional
     public void deleteProduct(Long id) {
-        if (id == null || id <= 0) {
-            throw new DataValidationException("Invalid product ID");
-        }
+        validateId(id, "product");
 
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Product not found with id: " + id
+            ));
 
         product.setIsAvailable(false);
         productRepository.save(product);
@@ -167,9 +151,7 @@ public class ProductService {
     }
 
     public List<ProductResponse> getProductsByRestaurant(Long restaurantId) {
-        if (restaurantId == null || restaurantId <= 0) {
-            throw new DataValidationException("Valid restaurant ID is required");
-        }
+        validateId(restaurantId, "restaurant");
 
         return productResponseMapper.toResponseList(
             productRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
@@ -184,7 +166,10 @@ public class ProductService {
 
     public List<ProductResponse> getProductsByRestaurant(Long restaurantId, Long categoryId) {
         return productResponseMapper.toResponseList(
-            productRepository.findByRestaurantIdAndCategoryIdAndIsAvailableTrue(restaurantId, categoryId)
+            productRepository.findByRestaurantIdAndCategoryIdAndIsAvailableTrue(
+                restaurantId,
+                categoryId
+            )
         );
     }
 
@@ -196,5 +181,30 @@ public class ProductService {
 
     public Long countProductsByRestaurant(Long restaurantId) {
         return productRepository.countByRestaurantIdAndIsAvailableTrue(restaurantId);
+    }
+
+    private void validatePricingRules(ProductRequest request) {
+
+        if (request.getComparePrice() != null &&
+            request.getPrice().compareTo(request.getComparePrice()) >= 0) {
+            throw new BusinessRuleViolationException(
+                "Compare price should be greater than current price"
+            );
+        }
+
+        if (request.getComparePrice() != null &&
+            request.getPrice().compareTo(request.getCostPrice()) <= 0) {
+            throw new BusinessRuleViolationException(
+                "Price should be greater than cost price"
+            );
+        }
+    }
+
+    private void validateId(Long id, String fieldName) {
+        if (id == null || id <= 0) {
+            throw new DataValidationException(
+                "Invalid " +  fieldName + " ID"
+            );
+        }
     }
 }
