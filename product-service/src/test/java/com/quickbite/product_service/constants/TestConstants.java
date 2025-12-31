@@ -67,7 +67,6 @@ public class TestConstants {
     public static final String VALID_CUISINE_100 = "A".repeat(100);
     public static final String INVALID_CUISINE_TYPE = "A".repeat(101);
 
-    public static final String SHORT_NAME = "A";
     public static final String LONG_NAME = "A".repeat(256);
 
     public static final String VALID_SEARCH_TERM = "test";
@@ -93,6 +92,9 @@ public class TestConstants {
     public static final String INVALID_RATING_MESSAGE =
         "Minimum rating must be between 0 and 5";
 
+    public static final String INVALID_RESTAURANT_ID_MESSAGE =
+        "Invalid restaurant ID";
+
     public static final String SEARCH_TERM_TOO_SHORT_MESSAGE =
         "Search term must be at least 2 characters long";
 
@@ -101,6 +103,9 @@ public class TestConstants {
 
     public static final String CATEGORY_NAME_REQUIRED_MESSAGE =
         "Category name is required";
+
+    public static final String RESTAURANT_NAME_REQUIRED_MESSAGE =
+        "Restaurant name is required";
 
     public static final String NAME_TOO_LONG_MESSAGE =
         "Category name must not exceed 100 characters";

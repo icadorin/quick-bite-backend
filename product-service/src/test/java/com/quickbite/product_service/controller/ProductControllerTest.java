@@ -63,7 +63,7 @@ public class ProductControllerTest {
             .content(body))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.details.name")
-                .value(TestConstants.PRODUCT_NAME_REQUIRED_MESSAGE));
+            .value(TestConstants.PRODUCT_NAME_REQUIRED_MESSAGE));
     }
 
     @WithMockUser(username = "user")
