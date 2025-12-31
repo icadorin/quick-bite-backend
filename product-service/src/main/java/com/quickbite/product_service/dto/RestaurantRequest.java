@@ -15,8 +15,8 @@ public class RestaurantRequest {
     @Positive(message = "Owner ID must be positive")
     private Long ownerId;
 
-    @NotBlank(message = "Name is required")
-    @Size(min = 2, max = 255, message = "Name must be between 2 and 255 characters")
+    @NotBlank(message = "Restaurant name is required")
+    @Size(max = 255, message = "Restaurant name must not exceed 255 characters")
     private String name;
 
     @Size(max = 1000, message = "Description must not exceed 1000 characters")
@@ -40,9 +40,6 @@ public class RestaurantRequest {
 
     @Size(max = 100, message = "Cuisine type must not exceed 100 characters")
     private String cuisineType;
-
-    @Builder.Default
-    private Boolean isActive = true;
 
     private Map<String, Object> openingHours;
 

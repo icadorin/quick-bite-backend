@@ -19,7 +19,7 @@ public class RestaurantController {
 
     @GetMapping
     public ResponseEntity<List<RestaurantResponse>> getAllActiveRestaurants() {
-        return ResponseEntity.ok(restaurantService.getAllActiveRestaurant());
+        return ResponseEntity.ok(restaurantService.getAllActiveRestaurants());
     }
 
     @GetMapping("/{id}")
@@ -29,7 +29,7 @@ public class RestaurantController {
 
     @GetMapping("/owner/{ownerId}")
     public ResponseEntity<List<RestaurantResponse>> getRestaurantByOwner(@PathVariable Long ownerId) {
-        return ResponseEntity.ok(restaurantService.getRestaurantByOwner(ownerId));
+        return ResponseEntity.ok(restaurantService.getRestaurantsByOwner(ownerId));
     }
 
     @PostMapping
@@ -58,7 +58,7 @@ public class RestaurantController {
 
     @GetMapping("/cuisine/{cuisineType}")
     public ResponseEntity<List<RestaurantResponse>> getRestaurantByCuisine(@PathVariable String cuisineType){
-        return ResponseEntity.ok(restaurantService.getRestaurantsCuisine(cuisineType));
+        return ResponseEntity.ok(restaurantService.getRestaurantsByCuisine(cuisineType));
     }
 
     @GetMapping("/rating/{minRating}")
