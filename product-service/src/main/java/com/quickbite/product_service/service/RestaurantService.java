@@ -77,18 +77,11 @@ public class RestaurantService {
                 "Restaurant not found with id: " + id
             ));
 
-        boolean nameExists = restaurantRepository
-            .existsByNameAndOwnerIdAndIdNot(
-                request.getName(),
-                request.getOwnerId(),
-                id
-            );
-
-        if (nameExists) {
-            throw new BusinessRuleViolationException(
-                "Restaurant name already exists for this owner"
-            );
-        }
+        validateUniqueRestaurantName(
+            request.getName(),
+            request.getOwnerId(),
+            id
+        );
 
         restaurantPatchMapper.updateRestaurantFromRequest(request, restaurant);
 

@@ -17,12 +17,14 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Validated
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -57,12 +59,13 @@ public class ProductService {
             restaurantService.getRestaurantEntity(request.getRestaurantId());
 
         Category category = null;
-
         if (request.getCategoryId() != null) {
             category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                    "Category not found with id: " + request.getCategoryId()
-                ));
+                .orElseThrow(() ->
+                    new ResourceNotFoundException(
+                        "Category not found with id: " + request.getCategoryId()
+                    )
+                );
         }
 
         Product product = productCreateMapper.toEntity(request);
@@ -124,22 +127,7 @@ public class ProductService {
         BigDecimal minPrice,
         BigDecimal maxPrice
     ) {
-        if (restaurantId == null || restaurantId <= 0) {
-            throw new DataValidationException("Valid restaurant ID is required");
-        }
-
-        if (minPrice == null || maxPrice == null) {
-            throw new DataValidationException("Both MinPrice and MaxPrice are required");
-        }
-
-        if (minPrice.compareTo(BigDecimal.ZERO) < 0 ||
-            maxPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new DataValidationException("Price must be positive");
-        }
-
-        if (minPrice.compareTo(maxPrice) > 0) {
-            throw new DataValidationException("minPrice must be less than or equal to maxPrice");
-        }
+        validatePriceRange(minPrice, maxPrice);
 
         return productResponseMapper.toResponseList(
             productRepository.findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
@@ -165,6 +153,9 @@ public class ProductService {
     }
 
     public List<ProductResponse> getProductsByRestaurant(Long restaurantId, Long categoryId) {
+        validateId(restaurantId, "restaurant");
+        validateId(categoryId, "category");
+
         return productResponseMapper.toResponseList(
             productRepository.findByRestaurantIdAndCategoryIdAndIsAvailableTrue(
                 restaurantId,
@@ -184,7 +175,6 @@ public class ProductService {
     }
 
     private void validatePricingRules(ProductRequest request) {
-
         if (request.getComparePrice() != null &&
             request.getPrice().compareTo(request.getComparePrice()) >= 0) {
             throw new BusinessRuleViolationException(
@@ -205,6 +195,21 @@ public class ProductService {
             throw new DataValidationException(
                 "Invalid " +  fieldName + " ID"
             );
+        }
+    }
+
+    private void validatePriceRange(BigDecimal minPrice,  BigDecimal maxPrice) {
+        if (minPrice == null || maxPrice == null) {
+            throw new DataValidationException("Price range values must not be null");
+        }
+
+        if (minPrice.compareTo(BigDecimal.ZERO) < 0 ||
+            maxPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new DataValidationException("Price values must be zero or positive");
+        }
+
+        if (minPrice.compareTo(maxPrice) > 0) {
+            throw new DataValidationException("minPrice must be less than or equal to maxPrice");
         }
     }
 }

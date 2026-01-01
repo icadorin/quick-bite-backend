@@ -14,12 +14,13 @@ import com.quickbite.product_service.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Validated
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
@@ -34,7 +35,7 @@ public class CategoryService {
     }
 
     public CategoryResponse getCategoryById(Long id) {
-        validateId(id, "category");
+        validateId(id);
 
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -77,7 +78,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
-        validateId(id, "category");
+        validateId(id);
 
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
@@ -98,7 +99,7 @@ public class CategoryService {
 
     @Transactional
     public void deleteCategory(Long id) {
-        validateId(id, "category");
+        validateId(id);
 
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
@@ -109,8 +110,8 @@ public class CategoryService {
 
         if (productCount > 0) {
             throw new BusinessRuleViolationException(
-                "Cannot delete category with associated products. There are " + productCount
-                + "product in this category."
+                "Cannot delete category with associated products. " +
+                    "There are " + productCount + " products associated with this category."
             );
         }
 
@@ -118,20 +119,28 @@ public class CategoryService {
         categoryRepository.save(category);
     }
 
-    public List<CategoryResponse> searchCategories(String name) {
-        if (!StringUtils.hasText(name) || name.trim().length() < 2) {
-            throw new DataValidationException("Search term must be at least 2 characters long");
-        }
+    public List<CategoryResponse> searchCategories(String searchTerm) {
+        validateSearchTerm(searchTerm);
 
-        List<Category> categories = categoryRepository.searchActiveCategoriesByName(name);
+        List<Category> categories =
+            categoryRepository.searchActiveCategoriesByName(searchTerm);
+
         return responseMapper.toResponseList(categories);
     }
 
-    private void validateId(Long id, String fieldName) {
+    private void validateId(Long id) {
         if (id == null || id <= 0) {
-            throw new DataValidationException(
-                "Invalid " + fieldName + " ID"
-            );
+            throw new DataValidationException("Invalid category ID");
+        }
+    }
+
+    private void validateSearchTerm(String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            throw new DataValidationException("Search term must not be empty");
+        }
+
+        if (searchTerm.length() < 3) {
+            throw new DataValidationException("Search term must be at least 3 characters");
         }
     }
 }
