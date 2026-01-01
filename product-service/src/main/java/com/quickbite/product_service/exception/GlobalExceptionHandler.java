@@ -213,5 +213,21 @@ public class GlobalExceptionHandler {
         logger.error("Unexpected error occurred: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    @ExceptionHandler(BusinessRuleViolationException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessRuleViolation(
+        BusinessRuleViolationException ex
+    ) {
+        ErrorResponse error = ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+            .error(HttpStatus.UNPROCESSABLE_ENTITY.getReasonPhrase())
+            .message(ex.getMessage())
+            .errorCode("BUSINESS_RULE_VIOLATION")
+            .build();
+
+        logger.warn("Business rule violation: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
+    }
 }
 
