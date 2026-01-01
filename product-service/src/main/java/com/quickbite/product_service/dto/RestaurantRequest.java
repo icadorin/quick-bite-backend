@@ -24,7 +24,10 @@ public class RestaurantRequest {
 
     private Map<String, Object> address;
 
-    @Pattern(regexp = "^[\\+]?[1-9][\\d]{0,15}$", message = "Phone number must be valid")
+    @Pattern(
+        regexp = "^\\+?[1-9]\\d{0,15}$",
+        message = "Phone number must be valid"
+    )
     @Size(max = 20, message = "Phone must not exceed 20 characters")
     private String phone;
 

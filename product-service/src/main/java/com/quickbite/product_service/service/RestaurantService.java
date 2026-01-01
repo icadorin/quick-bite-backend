@@ -101,7 +101,7 @@ public class RestaurantService {
     public void deleteRestaurant(Long id) {
         validateId(id, "restaurant");
 
-        Restaurant restaurant = restaurantRepository.findById(id)
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Restaurant not found with id: " + id
             ));
@@ -111,18 +111,26 @@ public class RestaurantService {
     }
 
     public List<RestaurantResponse> searchRestaurants(String name) {
+        validateRequiredText(name, "Search name");
+
         return restaurantResponseMapper.toResponseList(
             restaurantRepository.searchActiveRestaurantsByName(name)
         );
     }
 
     public List<RestaurantResponse> getRestaurantsByCuisine(String cuisineType) {
+        validateRequiredText(cuisineType, "Cuisine type");
+
         return restaurantResponseMapper.toResponseList(
             restaurantRepository.findByCuisineTypeAndIsActiveTrue(cuisineType)
         );
     }
 
     public List<RestaurantResponse> getRestaurantsWithMinRating(Double minRating) {
+        if (minRating == null || minRating < 0) {
+            throw new DataValidationException("Minimum rating must be zero or positive");
+        }
+
         return restaurantResponseMapper.toResponseList(
             restaurantRepository.findActiveRestaurantsWithMinRating(minRating)
         );
@@ -160,6 +168,14 @@ public class RestaurantService {
         if (id == null || id <= 0) {
             throw new DataValidationException(
                 "Invalid " + fieldName + " ID"
+            );
+        }
+    }
+
+    private void validateRequiredText(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new DataValidationException(
+                fieldName + " must not be blank"
             );
         }
     }

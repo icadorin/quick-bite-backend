@@ -13,7 +13,12 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     List<Category> findByIsActiveTrueOrderBySortOrderAsc();
 
-    @Query("SELECT c FROM Category c WHERE c.isActive = true AND LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    @Query("""
+        SELECT c
+        FROM Category c
+        WHERE c.isActive = true
+            AND LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))
+    """)
     List<Category> searchActiveCategoriesByName(@Param("name") String name);
 
     boolean existsByName(String name);

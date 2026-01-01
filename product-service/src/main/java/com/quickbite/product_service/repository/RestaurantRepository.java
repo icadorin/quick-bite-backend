@@ -17,10 +17,20 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     List<Restaurant> findByOwnerIdAndIsActiveTrue(Long ownerId);
 
-    @Query("SELECT r FROM Restaurant r WHERE r.isActive = true AND LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    @Query("""
+        SELECT r
+        FROM Restaurant r
+        WHERE r.isActive = true
+            AND LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))
+    """)
     List<Restaurant> searchActiveRestaurantsByName(@Param("name") String name);
 
-    @Query("SELECT r FROM Restaurant r WHERE r.isActive = true AND r.rating >= :minRating")
+    @Query("""
+        SELECT r
+        FROM Restaurant r
+        WHERE r.isActive = true
+        AND r.rating >= :minRating
+    """)
     List<Restaurant> findActiveRestaurantsWithMinRating(@Param("minRating") Double minRating);
 
     Optional<Restaurant> findByIdAndIsActiveTrue(Long id);
