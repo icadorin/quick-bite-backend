@@ -83,7 +83,7 @@ public class ProductControllerTest {
         mockMvc.perform(post("/api/products")
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
-            .andExpect(status().isOk());
+            .andExpect(status().isCreated());
 
         verify(productService, times(1)).createProduct(any());
     }

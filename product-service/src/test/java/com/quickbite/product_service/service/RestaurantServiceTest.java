@@ -191,7 +191,7 @@ public class RestaurantServiceTest {
 
     @Test
     void deleteRestaurant_shouldDeleteSuccessfully() {
-        when(restaurantRepository.findById(TestConstants.VALID_RESTAURANT_ID))
+        when(restaurantRepository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(Optional.of(activeRestaurant));
 
         restaurantService.deleteRestaurant(TestConstants.VALID_RESTAURANT_ID);
