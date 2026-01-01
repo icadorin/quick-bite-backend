@@ -5,7 +5,10 @@ import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
 import com.quickbite.product_service.service.ProductService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,17 +29,33 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getProductById(@PathVariable Long id) {
+    public ResponseEntity<ProductResponse> getProductById(
+        @PathVariable @Positive Long id
+    ) {
         return ResponseEntity.ok(productService.getProductById(id));
     }
 
     @GetMapping("/restaurant/{restaurantId}")
-    public ResponseEntity<List<ProductResponse>> getProductsByRestaurant(@PathVariable Long restaurantId) {
+    public ResponseEntity<List<ProductResponse>> getProductsByRestaurant(
+        @PathVariable @Positive Long restaurantId
+    ) {
         return ResponseEntity.ok(productService.getProductsByRestaurant(restaurantId));
     }
 
+    @GetMapping("/restaurant/{restaurantId}/category/{categoryId}")
+    public ResponseEntity<List<ProductResponse>> getProductsByRestaurantAndCategory(
+        @PathVariable @Positive Long restaurantId,
+        @PathVariable @Positive Long categoryId
+    ) {
+        return ResponseEntity.ok(
+            productService.getProductsByRestaurant(restaurantId, categoryId)
+        );
+    }
+
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ProductResponse>> getProductsByCategory(@PathVariable Long categoryId) {
+    public ResponseEntity<List<ProductResponse>> getProductsByCategory(
+        @PathVariable @Positive Long categoryId
+    ) {
         return ResponseEntity.ok(productService.getProductsByCategory(categoryId));
     }
 
@@ -46,33 +65,43 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(productService.createProduct(request));
+    public ResponseEntity<ProductResponse> createProduct(
+        @Valid @RequestBody ProductRequest request
+    ) {
+        ProductResponse response = productService.createProduct(request);
+
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
-        @PathVariable Long id,
+        @PathVariable @Positive Long id,
         @Valid @RequestBody ProductRequest request
     ) {
         return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(
+        @PathVariable @Positive Long id
+    ) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ProductResponse>> searchProducts(@RequestParam String name) {
+    public ResponseEntity<List<ProductResponse>> searchProducts(
+        @RequestParam @Size(min = 2) String name
+    ) {
         return ResponseEntity.ok(productService.searchProducts(name));
     }
 
     @GetMapping("/restaurant/{restaurantId}/price-range")
     public ResponseEntity<List<ProductResponse>> getProductsByPriceRange(
-        @PathVariable Long restaurantId,
-        @Valid PriceRangeRequest priceRange
+        @PathVariable @Positive Long restaurantId,
+        @Valid @ModelAttribute PriceRangeRequest priceRange
         ) {
         return ResponseEntity.ok(
             productService.getProductsByPriceRange(
@@ -83,7 +112,11 @@ public class ProductController {
     }
 
     @GetMapping("/restaurant/{restaurantId}/count")
-    public ResponseEntity<Long> countProductsByRestaurant(@PathVariable Long restaurantId) {
-        return ResponseEntity.ok(productService.countProductsByRestaurant(restaurantId));
+    public ResponseEntity<Long> countProductsByRestaurant(
+        @PathVariable @Positive Long restaurantId
+    ) {
+        return ResponseEntity.ok(
+            productService.countProductsByRestaurant(restaurantId)
+        );
     }
 }
