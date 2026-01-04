@@ -1,13 +1,14 @@
 package com.quickbite.auth_service.service;
 
 import com.quickbite.auth_service.entity.User;
+import com.quickbite.auth_service.exception.JwtValidationException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
+import io.jsonwebtoken.JwtException;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -29,8 +30,8 @@ public class JwtService {
     private String issuer;
 
     private SecretKey getSigningKey() {
-        byte[] KeyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(KeyBytes);
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(User user) {
@@ -49,24 +50,23 @@ public class JwtService {
             .compact();
     }
 
-    public boolean validateToken(String token) {
+    /**
+     * @throws JwtException when token is invalid
+     * @throws JwtValidationException when token is expired or issuer is invalid
+     */
+    public void validateToken(String token) {
         try {
             Claims claims = extractAllClaims(token);
 
             if (isTokenExpired(claims)) {
-                log.warn("Token expirado para usuário: {}", claims.getSubject());
-                return false;
+                throw new JwtValidationException("Token has expired");
             }
 
             if (!issuer.equals(claims.getIssuer())) {
-                log.warn("Token com issuer inválido: {}", claims.getIssuer());
-                return false;
+                throw new JwtValidationException("Invalid token issuer");
             }
-
-            return true;
-        } catch (Exception e) {
-            log.debug("Falha na validação do token: {}", e.getMessage());
-            return false;
+        } catch (JwtException e) {
+            throw new JwtValidationException("Invalid token");
         }
     }
 
@@ -75,15 +75,20 @@ public class JwtService {
     }
 
     public Long getUserIdFromToken(String token) {
-        return extractClaim(token, claim -> claim.get("userId", Long.class));
+        return extractClaim(token, claim ->
+            claim.get("userId", Long.class)
+        );
     }
 
     public Long getTokenExpirationInSeconds() {
         return expiration / MILLISECONDS_TO_SECONDS;
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
+    private <T> T extractClaim(
+        String token,
+        Function<Claims, T> claimsResolver
+    ) {
+        Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
@@ -98,9 +103,4 @@ public class JwtService {
     private boolean isTokenExpired(Claims claims) {
         return claims.getExpiration().before(new Date());
     }
-
-    private Date getExpirationDateFromToken(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
 }
