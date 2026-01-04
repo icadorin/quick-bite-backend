@@ -10,18 +10,20 @@ import java.time.LocalDateTime;
 @Table(name = "refresh_tokens")
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 public class RefreshToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(unique = true, nullable = true, length = 500)
+    @Column(name = "token_value", unique = true, length = 500)
     private String token;
 
     @Column(name = "expires_at", nullable = false)
@@ -40,5 +42,9 @@ public class RefreshToken {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    public boolean isExpired() {
+        return expiresAt.isBefore(LocalDateTime.now());
     }
 }
