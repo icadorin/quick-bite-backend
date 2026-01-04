@@ -7,7 +7,8 @@ import com.quickbite.auth_service.entity.RefreshToken;
 import com.quickbite.auth_service.entity.User;
 import com.quickbite.auth_service.entity.UserProfile;
 import com.quickbite.auth_service.exception.*;
-import com.quickbite.auth_service.mapper.UserMapper;
+import com.quickbite.auth_service.mapper.UserCreateMapper;
+import com.quickbite.auth_service.mapper.UserResponseMapper;
 import com.quickbite.auth_service.repository.RefreshTokenRepository;
 import com.quickbite.auth_service.repository.UserProfileRepository;
 import com.quickbite.auth_service.repository.UserRepository;
@@ -36,6 +37,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final UserCreateMapper userCreateMapper;
+    private final UserResponseMapper userResponseMapper;
 
     @Transactional
     public LoginResponse register(RegisterRequest request) {
@@ -108,11 +111,8 @@ public class AuthService {
     }
 
     private User createUser(RegisterRequest request) {
-        User user = User.builder()
-            .email(request.getEmail())
-            .passwordHash(passwordEncoder.encode(request.getPassword()))
-            .fullName(request.getFullName())
-            .build();
+        User user = userCreateMapper.toEntity(request);
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         return userRepository.save(user);
     }
@@ -136,7 +136,7 @@ public class AuthService {
             .refreshToken(refreshToken)
             .tokenType("Bearer")
             .expiresIn(jwtService.getTokenExpirationInSeconds())
-            .user(UserMapper.toResponse(user))
+            .user(userResponseMapper.toResponse(user))
             .build();
     }
 
