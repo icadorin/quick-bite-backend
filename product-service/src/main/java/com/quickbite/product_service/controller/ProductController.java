@@ -68,11 +68,9 @@ public class ProductController {
     public ResponseEntity<ProductResponse> createProduct(
         @Valid @RequestBody ProductRequest request
     ) {
-        ProductResponse response = productService.createProduct(request);
-
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(response);
+            .body(productService.createProduct(request));
     }
 
     @PutMapping("/{id}")

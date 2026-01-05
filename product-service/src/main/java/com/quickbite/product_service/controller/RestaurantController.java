@@ -43,10 +43,9 @@ public class RestaurantController {
     public ResponseEntity<RestaurantResponse> createRestaurant(
         @Valid @RequestBody RestaurantRequest request
     ) {
-        RestaurantResponse response = restaurantService.createRestaurant(request);
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(response);
+            .body(restaurantService.createRestaurant(request));
     }
 
     @PutMapping("/{id}")
