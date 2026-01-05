@@ -29,7 +29,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
         SELECT r
         FROM Restaurant r
         WHERE r.isActive = true
-        AND r.rating >= :minRating
+            AND r.rating >= :minRating
     """)
     List<Restaurant> findActiveRestaurantsWithMinRating(@Param("minRating") Double minRating);
 
