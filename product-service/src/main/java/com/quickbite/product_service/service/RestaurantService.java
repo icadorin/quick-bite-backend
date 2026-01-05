@@ -22,12 +22,12 @@ import java.util.List;
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
-    private final RestaurantCreateMapper restaurantCreateMapper;
-    private final RestaurantPatchMapper restaurantPatchMapper;
-    private final RestaurantResponseMapper restaurantResponseMapper;
+    private final RestaurantCreateMapper createMapper;
+    private final RestaurantPatchMapper patchMapper;
+    private final RestaurantResponseMapper responseMapper;
 
     public List<RestaurantResponse> getAllActiveRestaurants() {
-        return restaurantResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             restaurantRepository.findByIsActiveTrue()
         );
     }
@@ -40,13 +40,13 @@ public class RestaurantService {
                 "Restaurant not found with id: " + id
             ));
 
-        return restaurantResponseMapper.toResponse(restaurant);
+        return responseMapper.toResponse(restaurant);
     }
 
     public List<RestaurantResponse> getRestaurantsByOwner(Long ownerId) {
         validateId(ownerId, "owner");
 
-        return restaurantResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             restaurantRepository.findByOwnerIdAndIsActiveTrue(ownerId)
         );
     }
@@ -60,10 +60,10 @@ public class RestaurantService {
             null
         );
 
-        Restaurant restaurant = restaurantCreateMapper.toEntity(request);
+        Restaurant restaurant = createMapper.toEntity(request);
         restaurant.setIsActive(true);
 
-        return restaurantResponseMapper.toResponse(
+        return responseMapper.toResponse(
             restaurantRepository.save(restaurant)
         );
     }
@@ -83,9 +83,9 @@ public class RestaurantService {
             id
         );
 
-        restaurantPatchMapper.updateRestaurantFromRequest(request, restaurant);
+        patchMapper.updateRestaurantFromRequest(request, restaurant);
 
-        return restaurantResponseMapper.toResponse(
+        return responseMapper.toResponse(
             restaurantRepository.save(restaurant)
         );
     }
@@ -106,7 +106,7 @@ public class RestaurantService {
     public List<RestaurantResponse> searchRestaurants(String name) {
         validateRequiredText(name, "Search name");
 
-        return restaurantResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             restaurantRepository.searchActiveRestaurantsByName(name)
         );
     }
@@ -114,7 +114,7 @@ public class RestaurantService {
     public List<RestaurantResponse> getRestaurantsByCuisine(String cuisineType) {
         validateRequiredText(cuisineType, "Cuisine type");
 
-        return restaurantResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             restaurantRepository.findByCuisineTypeAndIsActiveTrue(cuisineType)
         );
     }
@@ -124,7 +124,7 @@ public class RestaurantService {
             throw new DataValidationException("Minimum rating must be zero or positive");
         }
 
-        return restaurantResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             restaurantRepository.findActiveRestaurantsWithMinRating(minRating)
         );
     }

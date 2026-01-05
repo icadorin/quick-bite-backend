@@ -31,11 +31,11 @@ public class ProductService {
     private final RestaurantService restaurantService;
     private final CategoryRepository categoryRepository;
     private final ProductPatchMapper patchMapper;
-    private final ProductCreateMapper productCreateMapper;
-    private final ProductResponseMapper productResponseMapper;
+    private final ProductCreateMapper createMapper;
+    private final ProductResponseMapper responseMapper;
 
     public List<ProductResponse> getAllAvailableProducts() {
-        return productResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             productRepository.findByIsAvailableTrue()
         );
     }
@@ -48,7 +48,7 @@ public class ProductService {
                 "Product not found with id: " + id
             ));
 
-        return productResponseMapper.toResponse(product);
+        return responseMapper.toResponse(product);
     }
 
     @Transactional
@@ -68,11 +68,11 @@ public class ProductService {
                 );
         }
 
-        Product product = productCreateMapper.toEntity(request);
+        Product product = createMapper.toEntity(request);
         product.setRestaurant(restaurant);
         product.setCategory(category);
 
-        return productResponseMapper.toResponse(
+        return responseMapper.toResponse(
             productRepository.save(product)
         );
     }
@@ -100,7 +100,7 @@ public class ProductService {
         patchMapper.updateProductFromRequest(request, product);
 
         Product updated = productRepository.save(product);
-        return productResponseMapper.toResponse(updated);
+        return responseMapper.toResponse(updated);
     }
 
     @Transactional
@@ -117,7 +117,7 @@ public class ProductService {
     }
 
     public List<ProductResponse> getFeaturedProducts() {
-        return productResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             productRepository.findByIsFeaturedTrueAndIsAvailableTrue()
         );
     }
@@ -129,7 +129,7 @@ public class ProductService {
     ) {
         validatePriceRange(minPrice, maxPrice);
 
-        return productResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             productRepository.findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
                 restaurantId,
                 minPrice,
@@ -141,13 +141,13 @@ public class ProductService {
     public List<ProductResponse> getProductsByRestaurant(Long restaurantId) {
         validateId(restaurantId, "restaurant");
 
-        return productResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             productRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
         );
     }
 
     public List<ProductResponse> searchProducts(String name) {
-        return productResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             productRepository.findByNameContainingIgnoreCaseAndIsAvailableTrue(name)
         );
     }
@@ -156,7 +156,7 @@ public class ProductService {
         validateId(restaurantId, "restaurant");
         validateId(categoryId, "category");
 
-        return productResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             productRepository.findByRestaurantIdAndCategoryIdAndIsAvailableTrue(
                 restaurantId,
                 categoryId
@@ -165,7 +165,7 @@ public class ProductService {
     }
 
     public List<ProductResponse> getProductsByCategory(Long categoryId) {
-        return productResponseMapper.toResponseList(
+        return responseMapper.toResponseList(
             productRepository.findByCategoryIdAndIsAvailableTrue(categoryId)
         );
     }
