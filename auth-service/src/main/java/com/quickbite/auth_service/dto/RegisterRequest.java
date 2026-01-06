@@ -2,6 +2,7 @@ package com.quickbite.auth_service.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,16 +20,18 @@ public class RegisterRequest {
     private String fullName;
 
     @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @Email(message = "Email must be valid")
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must have as least 6 characters")
+    @Size(min = 6, message = "Password must have at least 6 characters")
     private String password;
 
+    @Pattern(
+        regexp = "^\\+?[0-9]{10,15}$",
+        message = "Phone number must be valid"
+    )
     private String phone;
-    private String address;
 
-    @Builder.Default
-    private String role = "CUSTOMER";
+    private String address;
 }
