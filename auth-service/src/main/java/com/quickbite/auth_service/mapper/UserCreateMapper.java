@@ -10,6 +10,7 @@ public interface UserCreateMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "role", constant = "CUSTOMER")
     @Mapping(target = "status", constant = "ACTIVE")
     User toEntity(RegisterRequest request);
 }

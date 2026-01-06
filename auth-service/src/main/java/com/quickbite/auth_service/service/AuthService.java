@@ -112,7 +112,10 @@ public class AuthService {
 
     private User createUser(RegisterRequest request) {
         User user = userCreateMapper.toEntity(request);
+
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRole(User.UserRole.CUSTOMER);
+        user.setStatus(User.UserStatus.ACTIVE);
 
         return userRepository.save(user);
     }
