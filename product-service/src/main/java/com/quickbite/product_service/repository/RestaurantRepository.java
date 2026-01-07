@@ -17,6 +17,16 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     List<Restaurant> findByOwnerIdAndIsActiveTrue(Long ownerId);
 
+    Optional<Restaurant> findByIdAndIsActiveTrue(Long id);
+
+    boolean existsByNameAndOwnerId(String name, Long ownerId);
+
+    boolean existsByNameAndOwnerIdAndIdNot(
+        String name,
+        Long ownerId,
+        Long id
+    );
+
     @Query("""
         SELECT r
         FROM Restaurant r
@@ -32,14 +42,4 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             AND r.rating >= :minRating
     """)
     List<Restaurant> findActiveRestaurantsWithMinRating(@Param("minRating") Double minRating);
-
-    Optional<Restaurant> findByIdAndIsActiveTrue(Long id);
-
-    boolean existsByNameAndOwnerId(String name, Long ownerId);
-
-    boolean existsByNameAndOwnerIdAndIdNot(
-        String name,
-        Long ownerId,
-        Long id
-    );
 }

@@ -20,24 +20,24 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByNameContainingIgnoreCaseAndIsAvailableTrue(String name);
 
+    List<Product> findByIsFeaturedTrueAndIsAvailableTrue();
+
+    Long countByRestaurantIdAndIsAvailableTrue(Long restaurantId);
+
+    Long countByCategoryIdAndIsAvailableTrue(Long categoryId);
+
     List<Product> findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
         Long restaurantId,
         BigDecimal minPrice,
         BigDecimal maxPrice
     );
 
-    List<Product> findByIsFeaturedTrueAndIsAvailableTrue();
-
-    Long countByRestaurantIdAndIsAvailableTrue(Long restaurantId);
-
     @Query("""
-    SELECT p
-    FROM Product p
-    WHERE p.isAvailable = true
-      AND p.restaurant.isActive = true
-      AND LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))
+        SELECT p
+        FROM Product p
+        WHERE p.isAvailable = true
+          AND p.restaurant.isActive = true
+          AND LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))
     """)
     List<Product> searchAvailableProductsByName(@Param("name") String name);
-
-    Long countByCategoryIdAndIsAvailableTrue(Long categoryId);
 }
