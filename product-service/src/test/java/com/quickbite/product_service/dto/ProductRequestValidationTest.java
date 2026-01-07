@@ -5,23 +5,28 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.math.BigDecimal;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static com.quickbite.product_service.support.ValidationTestHelper.assertHasViolationOnField;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ProductRequestValidationTest {
 
-    private Validator validator;
+    private static Validator validator;
+    private static ValidatorFactory factory;
 
-    @BeforeEach
-    void setUp() {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    @BeforeAll
+    static void setUp() {
+        factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
+    }
+
+    @AfterAll
+    static void tearDown() {
+        factory.close();
     }
 
     @Test
@@ -33,7 +38,8 @@ public class ProductRequestValidationTest {
             .build();
 
         Set<ConstraintViolation<ProductRequest>> violations = validator.validate(request);
-        assertFalse(violations.isEmpty());
+
+        assertHasViolationOnField(violations, "name");
     }
 
     @Test
@@ -44,7 +50,8 @@ public class ProductRequestValidationTest {
             .build();
 
         Set<ConstraintViolation<ProductRequest>> violations = validator.validate(request);
-        assertFalse(violations.isEmpty());
+
+        assertHasViolationOnField(violations, "price");
     }
 
     @Test
@@ -56,6 +63,7 @@ public class ProductRequestValidationTest {
             .build();
 
         Set<ConstraintViolation<ProductRequest>> violations = validator.validate(request);
+
         assertTrue(violations.isEmpty());
     }
 }

@@ -4,16 +4,31 @@ import com.quickbite.product_service.constants.TestConstants;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
+import static com.quickbite.product_service.support.ValidationTestHelper.assertHasViolationOnField;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RestaurantRequestValidationTest {
 
-    private final Validator validator =
-        Validation.buildDefaultValidatorFactory().getValidator();
+    private static Validator validator;
+    private static ValidatorFactory factory;
+
+    @BeforeAll
+    static void setUp() {
+        factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+    @AfterAll
+    static void tearDown() {
+        factory.close();
+    }
 
     @Test
     void shouldFail_whenOwnerIdIsNull() {
@@ -24,12 +39,7 @@ public class RestaurantRequestValidationTest {
         Set<ConstraintViolation<RestaurantRequest>> violations =
             validator.validate(request);
 
-        assertTrue(
-            violations.stream()
-                .anyMatch(v ->
-                    v.getPropertyPath().toString().equals("ownerId")
-                )
-        );
+        assertHasViolationOnField(violations, "ownerId");
     }
 
     @Test
@@ -42,12 +52,7 @@ public class RestaurantRequestValidationTest {
         Set<ConstraintViolation<RestaurantRequest>> violations =
             validator.validate(request);
 
-        assertTrue(
-            violations.stream()
-                .anyMatch(v ->
-                    v.getPropertyPath().toString().equals("ownerId")
-                )
-        );
+        assertHasViolationOnField(violations, "ownerId");
     }
 
     @Test
@@ -60,12 +65,7 @@ public class RestaurantRequestValidationTest {
         Set<ConstraintViolation<RestaurantRequest>> violations =
             validator.validate(request);
 
-        assertTrue(
-            violations.stream()
-                .anyMatch(v ->
-                    v.getPropertyPath().toString().equals("name")
-                )
-        );
+        assertHasViolationOnField(violations, "name");
     }
 
     @Test
@@ -79,12 +79,7 @@ public class RestaurantRequestValidationTest {
         Set<ConstraintViolation<RestaurantRequest>> violations =
             validator.validate(request);
 
-        assertTrue(
-            violations.stream()
-                .anyMatch(v ->
-                    v.getPropertyPath().toString().equals("email")
-                )
-        );
+        assertHasViolationOnField(violations, "email");
     }
 
     @Test
@@ -98,15 +93,11 @@ public class RestaurantRequestValidationTest {
         Set<ConstraintViolation<RestaurantRequest>> violations =
             validator.validate(request);
 
-        assertTrue(violations.stream()
-            .anyMatch(v ->
-                v.getPropertyPath().toString().equals("phone")
-            )
-        );
+        assertHasViolationOnField(violations, "phone");
     }
 
     @Test
-    void shouldPass_whenRequestIsInvalid() {
+    void shouldPass_whenRequestIsValid() {
         RestaurantRequest request = RestaurantRequest.builder()
             .ownerId(TestConstants.VALID_OWNER_ID)
             .name(TestConstants.VALID_RESTAURANT_NAME)

@@ -85,7 +85,10 @@ class RestaurantControllerTest {
         when(restaurantService.getRestaurantById(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(RestaurantResponse.builder().build());
 
-        mockMvc.perform(get("/api/restaurants/{id}", TestConstants.VALID_RESTAURANT_ID))
+        mockMvc.perform(
+                get("/api/restaurants/{id}",
+                TestConstants.VALID_RESTAURANT_ID)
+            )
             .andExpect(status().isOk());
 
         verify(restaurantService).getRestaurantById(TestConstants.VALID_RESTAURANT_ID);
