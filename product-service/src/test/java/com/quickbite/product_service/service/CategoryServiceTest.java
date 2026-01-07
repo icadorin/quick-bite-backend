@@ -54,12 +54,13 @@ public class CategoryServiceTest {
 
     @BeforeEach
     void setUp() {
-        validRequest = new CategoryRequest();
-        validRequest.setName(TestConstants.VALID_CATEGORY_NAME);
-        validRequest.setDescription(TestConstants.VALID_DESCRIPTION);
-        validRequest.setImageUrl(TestConstants.VALID_IMAGE_URL);
-        validRequest.setSortOrder(TestConstants.VALID_SORT_ORDER);
-        validRequest.setIsActive(true);
+        validRequest = CategoryRequest.builder()
+            .name(TestConstants.VALID_CATEGORY_NAME)
+            .description(TestConstants.VALID_DESCRIPTION)
+            .imageUrl(TestConstants.VALID_IMAGE_URL)
+            .sortOrder(TestConstants.VALID_SORT_ORDER)
+            .isActive(true)
+            .build();
 
         activeCategory = Category.builder()
             .id(TestConstants.VALID_CATEGORY_ID)
@@ -72,26 +73,34 @@ public class CategoryServiceTest {
             .updatedAt(LocalDateTime.now())
             .build();
 
-        categoryResponse = new CategoryResponse();
-        categoryResponse.setId(TestConstants.VALID_CATEGORY_ID);
-        categoryResponse.setName(TestConstants.VALID_CATEGORY_NAME);
-        categoryResponse.setDescription(TestConstants.VALID_DESCRIPTION);
-        categoryResponse.setImageUrl(TestConstants.VALID_IMAGE_URL);
-        categoryResponse.setSortOrder(TestConstants.VALID_SORT_ORDER);
-        categoryResponse.setIsActive(true);
+        categoryResponse = CategoryResponse.builder()
+            .id(TestConstants.VALID_CATEGORY_ID)
+            .name(TestConstants.VALID_CATEGORY_NAME)
+            .description(TestConstants.VALID_DESCRIPTION)
+            .imageUrl(TestConstants.VALID_IMAGE_URL)
+            .sortOrder(TestConstants.VALID_SORT_ORDER)
+            .isActive(true)
+            .build();
     }
 
     @Test
     void createCategory_shouldCreateSuccessfully() {
-        when(categoryRepository.existsByName(TestConstants.VALID_CATEGORY_NAME)).thenReturn(false);
-        when(createMapper.toEntity(validRequest)).thenReturn(activeCategory);
-        when(categoryRepository.save(activeCategory)).thenReturn(activeCategory);
-        when(responseMapper.toResponse(activeCategory)).thenReturn(categoryResponse);      
+        when(categoryRepository.existsByName(TestConstants.VALID_CATEGORY_NAME))
+            .thenReturn(false);
+        when(createMapper.toEntity(validRequest))
+            .thenReturn(activeCategory);
+        when(categoryRepository.save(activeCategory))
+            .thenReturn(activeCategory);
+        when(responseMapper.toResponse(activeCategory))
+            .thenReturn(categoryResponse);
 
         CategoryResponse result = categoryService.createCategory(validRequest);
 
-        assertNotNull(result);
-        assertEquals(TestConstants.VALID_CATEGORY_NAME, result.getName());
+        assertAll(
+            () -> assertNotNull(result),
+            () -> assertEquals(TestConstants.VALID_CATEGORY_NAME, result.getName())
+        );
+
         verify(createMapper).toEntity(validRequest);
         verify(categoryRepository).save(activeCategory);
     }
@@ -111,22 +120,26 @@ public class CategoryServiceTest {
         );
 
         assertEquals(expectedMessage, ex.getMessage());
-        verify(categoryRepository, never()).save(any(Category.class));
+
+        verify(categoryRepository).existsByName(TestConstants.VALID_CATEGORY_NAME);
+        verify(categoryRepository, never()).save(any());
     }
 
     @Test
     void getCategoryById_shouldReturnCategory_whenExists() {
         when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID))
             .thenReturn(Optional.of(activeCategory));
-        when(responseMapper.toResponse(activeCategory)).thenReturn(categoryResponse);
+        when(responseMapper.toResponse(activeCategory))
+            .thenReturn(categoryResponse);
 
         CategoryResponse result = 
             categoryService.getCategoryById(TestConstants.VALID_CATEGORY_ID);
 
-        assertNotNull(result);
-        verify(categoryRepository).findById(TestConstants.VALID_CATEGORY_ID);
-    }
+        assertEquals(categoryResponse, result);
 
+        verify(categoryRepository).findById(TestConstants.VALID_CATEGORY_ID);
+        verify(responseMapper).toResponse(activeCategory);
+    }
 
     @Test
     void getCategoryById_shouldThrow_whenNotFound() {
@@ -136,6 +149,8 @@ public class CategoryServiceTest {
         assertThrows(
             ResourceNotFoundException.class,
             () -> categoryService.getCategoryById(TestConstants.NON_EXISTENT_ID));
+
+        verify(categoryRepository).findById(TestConstants.NON_EXISTENT_ID);
     }
 
     @Test
@@ -147,8 +162,11 @@ public class CategoryServiceTest {
 
         List<CategoryResponse> result = categoryService.getAllCategories();
 
-        assertEquals(1, result.size());
+        assertFalse(result.isEmpty());
+        assertEquals(categoryResponse, result.getFirst());
+
         verify(categoryRepository).findByIsActiveTrueOrderBySortOrderAsc();
+        verify(responseMapper).toResponseList(any());
     }
 
     @Test
@@ -160,8 +178,10 @@ public class CategoryServiceTest {
             .thenReturn(Optional.of(activeCategory));
         when(categoryRepository.existsByName(TestConstants.UPDATED_CATEGORY_NAME))
             .thenReturn(false);
-        when(categoryRepository.save(activeCategory)).thenReturn(activeCategory);
-        when(responseMapper.toResponse(activeCategory)).thenReturn(categoryResponse);
+        when(categoryRepository.save(activeCategory))
+            .thenReturn(activeCategory);
+        when(responseMapper.toResponse(activeCategory))
+            .thenReturn(categoryResponse);
 
         doNothing().when(patchMapper)
             .updateCategoryFromRequest(updateRequest, activeCategory);
@@ -169,10 +189,12 @@ public class CategoryServiceTest {
         CategoryResponse result =
             categoryService.updateCategory(TestConstants.VALID_CATEGORY_ID, updateRequest);
 
-        assertNotNull(result);
+        assertEquals(categoryResponse, result);
+
+        verify(patchMapper).updateCategoryFromRequest(updateRequest, activeCategory);
+        verify(categoryRepository).save(activeCategory);
         verify(patchMapper).updateCategoryFromRequest(updateRequest, activeCategory);
     }
-
 
     @Test
     void deleteCategory_shouldSoftDeleteSuccessfully() {
@@ -184,9 +206,10 @@ public class CategoryServiceTest {
         categoryService.deleteCategory(TestConstants.VALID_CATEGORY_ID);
 
         assertFalse(activeCategory.getIsActive());
+
+        verify(categoryRepository).findById(TestConstants.VALID_CATEGORY_ID);
         verify(categoryRepository).save(activeCategory);
     }
-
 
     @Test
     void deleteCategory_shouldThrow_whenHasAssociatedProducts() {
@@ -200,6 +223,9 @@ public class CategoryServiceTest {
             () -> categoryService.deleteCategory(TestConstants.VALID_CATEGORY_ID)
         );
 
+        verify(categoryRepository).findById(TestConstants.VALID_CATEGORY_ID);
+        verify(productRepository)
+            .countByCategoryIdAndIsAvailableTrue(TestConstants.VALID_CATEGORY_ID);
         verify(categoryRepository, never()).save(any());
     }
 
@@ -212,7 +238,9 @@ public class CategoryServiceTest {
 
         List<CategoryResponse> result =
             categoryService.searchCategories(TestConstants.VALID_SEARCH_TERM);
-        assertEquals(1, result.size());
+
+        assertFalse(result.isEmpty());
+        assertEquals(categoryResponse, result.getFirst());
     }
 
     @Test

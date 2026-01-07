@@ -41,10 +41,10 @@ public class ProductServiceTest {
     private CategoryRepository categoryRepository;
 
     @Mock
-    private ProductCreateMapper productCreateMapper;
+    private ProductCreateMapper createMapper;
 
     @Mock
-    private ProductResponseMapper productResponseMapper;
+    private ProductResponseMapper responseMapper;
 
     @InjectMocks
     private ProductService productService;
@@ -104,22 +104,27 @@ public class ProductServiceTest {
 
     @Test
     void createProduct_shouldCreateSuccessfully() {
-        when(restaurantService.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID)).thenReturn(sampleRestaurant);
-        when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID)).thenReturn(Optional.of(sampleCategory));
+        when(restaurantService.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID))
+            .thenReturn(sampleRestaurant);
+        when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID))
+            .thenReturn(Optional.of(sampleCategory));
 
-        when(productCreateMapper.toEntity(validProductRequest)).thenReturn(activeProduct);
-        when(productResponseMapper.toResponse(activeProduct)).thenReturn(productResponse);
-        when(productRepository.save(any(Product.class))).thenReturn(activeProduct);
+        when(createMapper.toEntity(validProductRequest))
+            .thenReturn(activeProduct);
+        when(responseMapper.toResponse(activeProduct))
+            .thenReturn(productResponse);
+        when(productRepository.save(any(Product.class)))
+            .thenReturn(activeProduct);
 
         ProductResponse result = productService.createProduct(validProductRequest);
 
-        assertNotNull(result);
-        assertEquals(TestConstants.VALID_PRODUCT_ID, result.getId());
+        assertEquals(productResponse, result);
+
         verify(restaurantService).getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID);
         verify(categoryRepository).findById(TestConstants.VALID_CATEGORY_ID);
         verify(productRepository).save(any(Product.class));
-        verify(productCreateMapper).toEntity(validProductRequest);
-        verify(productResponseMapper).toResponse(activeProduct);
+        verify(createMapper).toEntity(validProductRequest);
+        verify(responseMapper).toResponse(activeProduct);
     }
 
     @Test
@@ -129,37 +134,54 @@ public class ProductServiceTest {
                 TestConstants.RESTAURANT_NOT_FOUND_MESSAGE + TestConstants.VALID_RESTAURANT_ID
             ));
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-            () -> productService.createProduct(validProductRequest));
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class,
+            () -> productService.createProduct(validProductRequest)
+        );
 
-        assertEquals(TestConstants.RESTAURANT_NOT_FOUND_MESSAGE + TestConstants.VALID_RESTAURANT_ID,
-            exception.getMessage());
-        verify(productRepository, never()).save(any(Product.class));
+        assertEquals(
+            TestConstants.RESTAURANT_NOT_FOUND_MESSAGE + TestConstants.VALID_RESTAURANT_ID,
+            exception.getMessage()
+        );
+
+        verify(restaurantService).getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID);
+        verify(productRepository, never()).save(any());
+        verify(createMapper, never()).toEntity(any());
     }
 
     @Test
     void getProductById_shouldReturnProduct_whenExists() {
-        when(productRepository.findById(TestConstants.VALID_PRODUCT_ID)).thenReturn(Optional.of(activeProduct));
-        when(productResponseMapper.toResponse(activeProduct)).thenReturn(productResponse);
+        when(productRepository.findById(TestConstants.VALID_PRODUCT_ID))
+            .thenReturn(Optional.of(activeProduct));
+        when(responseMapper.toResponse(activeProduct))
+            .thenReturn(productResponse);
 
-        ProductResponse result = productService.getProductById(TestConstants.VALID_PRODUCT_ID);
+        ProductResponse result =
+            productService.getProductById(TestConstants.VALID_PRODUCT_ID);
 
-        assertNotNull(result);
-        assertEquals(TestConstants.VALID_PRODUCT_ID, result.getId());
+        assertEquals(productResponse, result);
+
         verify(productRepository).findById(TestConstants.VALID_PRODUCT_ID);
-        verify(productResponseMapper).toResponse(activeProduct);
+        verify(responseMapper).toResponse(activeProduct);
     }
 
     @Test
     void getProductById_shouldThrow_whenNotFound() {
-        when(productRepository.findById(TestConstants.NON_EXISTENT_ID)).thenReturn(Optional.empty());
+        when(productRepository.findById(TestConstants.NON_EXISTENT_ID))
+            .thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-            () -> productService.getProductById(TestConstants.NON_EXISTENT_ID));
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class,
+            () -> productService.getProductById(TestConstants.NON_EXISTENT_ID)
+        );
 
-        assertEquals(TestConstants.PRODUCT_NOT_FOUND_MESSAGE + TestConstants.NON_EXISTENT_ID,
-            exception.getMessage());
+        assertEquals(
+            TestConstants.PRODUCT_NOT_FOUND_MESSAGE + TestConstants.NON_EXISTENT_ID,
+            exception.getMessage()
+        );
+
         verify(productRepository).findById(TestConstants.NON_EXISTENT_ID);
+        verify(responseMapper, never()).toResponse(any());
     }
 
     @Test
@@ -167,15 +189,17 @@ public class ProductServiceTest {
         List<Product> featuredProducts = List.of(activeProduct);
         List<ProductResponse> productResponses  = List.of(productResponse);
 
-        when(productRepository.findByIsFeaturedTrueAndIsAvailableTrue()).thenReturn(featuredProducts);
-        when(productResponseMapper.toResponseList(featuredProducts)).thenReturn(productResponses);
+        when(productRepository.findByIsFeaturedTrueAndIsAvailableTrue())
+            .thenReturn(featuredProducts);
+        when(responseMapper.toResponseList(featuredProducts))
+            .thenReturn(productResponses);
 
         List<ProductResponse> result = productService.getFeaturedProducts();
 
-        assertFalse(result.isEmpty());
-        assertEquals(1, result.size());
+        assertEquals(productResponses, result);
+
         verify(productRepository).findByIsFeaturedTrueAndIsAvailableTrue();
-        verify(productResponseMapper).toResponseList(featuredProducts);
+        verify(responseMapper).toResponseList(featuredProducts);
     }
 
     @Test
@@ -189,7 +213,7 @@ public class ProductServiceTest {
             TestConstants.MAX_PRICE
         )).thenReturn(products);
 
-        when(productResponseMapper.toResponseList(products)).
+        when(responseMapper.toResponseList(products)).
             thenReturn(productResponses);
 
         List<ProductResponse> result = productService.getProductsByPriceRange(
@@ -198,7 +222,7 @@ public class ProductServiceTest {
             TestConstants.MAX_PRICE
         );
 
-        assertFalse(result.isEmpty());
+        assertEquals(productResponses, result);
 
         verify(productRepository).findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
             TestConstants.VALID_RESTAURANT_ID,
@@ -206,24 +230,31 @@ public class ProductServiceTest {
             TestConstants.MAX_PRICE
         );
 
-        verify(productResponseMapper).toResponseList(products);
+        verify(responseMapper).toResponseList(products);
     }
 
     @Test
     void getProductsByPriceRange_shouldThrow_whenRangeIsInvalid() {
-        DataValidationException exception = assertThrows(DataValidationException.class,
+        DataValidationException exception = assertThrows(
+            DataValidationException.class,
             () -> productService.getProductsByPriceRange(
-                TestConstants.VALID_RESTAURANT_ID, TestConstants.INVALID_MIN_PRICE, TestConstants.MAX_PRICE
-            ));
+                TestConstants.VALID_RESTAURANT_ID,
+                TestConstants.INVALID_MIN_PRICE, TestConstants.MAX_PRICE
+            )
+        );
 
         assertEquals(TestConstants.INVALID_PRICE_RANGE_MESSAGE, exception.getMessage());
-        verify(productRepository, never()).findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(any(), any(), any());
+
+        verify(productRepository, never())
+            .findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(any(), any(), any());
     }
 
     @Test
     void deleteProduct_shouldSoftDeleteSuccessfully() {
-        when(productRepository.findById(TestConstants.VALID_PRODUCT_ID)).thenReturn(Optional.of(activeProduct));
-        when(productRepository.save(any(Product.class))).thenReturn(activeProduct);
+        when(productRepository.findById(TestConstants.VALID_PRODUCT_ID))
+            .thenReturn(Optional.of(activeProduct));
+        when(productRepository.save(any(Product.class)))
+            .thenReturn(activeProduct);
 
         productService.deleteProduct(TestConstants.VALID_PRODUCT_ID);
 
@@ -238,21 +269,28 @@ public class ProductServiceTest {
 
         when(productRepository.findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(products);
-        when(productResponseMapper.toResponseList(anyList())).thenReturn(productResponses);
+        when(responseMapper.toResponseList(anyList()))
+            .thenReturn(productResponses);
 
-        List<ProductResponse> result = productService.getProductsByRestaurant(TestConstants.VALID_RESTAURANT_ID);
+        List<ProductResponse> result =
+            productService.getProductsByRestaurant(TestConstants.VALID_RESTAURANT_ID);
 
-        assertFalse(result.isEmpty());
+        assertEquals(productResponses, result);
+
         verify(productRepository).findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID);
-        verify(productResponseMapper).toResponseList(products);
+        verify(responseMapper).toResponseList(products);
     }
 
     @Test
     void getProductsByRestaurant_shouldThrow_whenRestaurantIdIsInvalid() {
-        DataValidationException exception = assertThrows(DataValidationException.class,
-            () -> productService.getProductsByRestaurant(TestConstants.INVALID_ID));
+        DataValidationException exception = assertThrows(
+            DataValidationException.class,
+            () -> productService.getProductsByRestaurant(TestConstants.INVALID_ID)
+        );
 
         assertEquals(TestConstants.INVALID_RESTAURANT_ID_MESSAGE, exception.getMessage());
+
         verify(productRepository, never()).findByRestaurantIdAndIsAvailableTrue(any());
+        verify(responseMapper, never()).toResponseList(any());
     }
 }
