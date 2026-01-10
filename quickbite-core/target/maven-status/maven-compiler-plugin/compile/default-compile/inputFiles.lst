@@ -1,0 +1,10 @@
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\dto\ErrorResponse.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\AuthException.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\BusinessRuleViolationException.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\DatabaseException.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\DataValidationException.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\InvalidUserStatusException.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\JwtValidationException.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\ResourceNotFoundException.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\TokenException.java
+C:\Users\israel\Desktop\quick-bite-backend\quickbite-core\src\main\java\com\quickbite\core\exception\UserAlreadyExistsException.java

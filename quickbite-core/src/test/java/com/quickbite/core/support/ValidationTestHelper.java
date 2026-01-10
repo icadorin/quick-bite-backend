@@ -1,10 +1,7 @@
-package com.quickbite.product_service.support;
-
+package com.quickbite.core.support;
 
 import jakarta.validation.ConstraintViolation;
-
 import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ValidationTestHelper {

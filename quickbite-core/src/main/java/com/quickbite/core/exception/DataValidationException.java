@@ -1,6 +1,7 @@
-package com.quickbite.product_service.exception;
+package com.quickbite.core.exception;
 
 public class DataValidationException extends RuntimeException {
+
     public DataValidationException(String message) {
         super(message);
     }

@@ -1,0 +1,11 @@
+com\quickbite\core\dto\ErrorResponse.class
+com\quickbite\core\dto\ErrorResponse$ErrorResponseBuilder.class
+com\quickbite\core\exception\TokenException.class
+com\quickbite\core\exception\DataValidationException.class
+com\quickbite\core\exception\InvalidUserStatusException.class
+com\quickbite\core\exception\UserAlreadyExistsException.class
+com\quickbite\core\exception\BusinessRuleViolationException.class
+com\quickbite\core\exception\JwtValidationException.class
+com\quickbite\core\exception\ResourceNotFoundException.class
+com\quickbite\core\exception\AuthException.class
+com\quickbite\core\exception\DatabaseException.class
