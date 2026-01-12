@@ -1,5 +1,6 @@
 package com.quickbite.product_service.config;
 
+import com.quickbite.product_service.constants.PublicEndPoints;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,12 +18,12 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/products/**",
-                    "/restaurants/**",
-                    "/api/products/**",
-                    "/api/restaurants/**",
-                    "/actuator/health",
-                    "/error"
+                    PublicEndPoints.PRODUCTS,
+                    PublicEndPoints.RESTAURANTS,
+                    PublicEndPoints.API_PRODUCTS,
+                    PublicEndPoints.API_RESTAURANTS,
+                    PublicEndPoints.ACTUATOR_HEALTH,
+                    PublicEndPoints.ERROR
                 ).permitAll()
                 .anyRequest().authenticated()
             );
