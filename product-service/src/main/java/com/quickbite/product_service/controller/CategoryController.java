@@ -1,5 +1,6 @@
 package com.quickbite.product_service.controller;
 
+import com.quickbite.product_service.constants.ApiPaths;
 import com.quickbite.product_service.dto.CategoryRequest;
 import com.quickbite.product_service.dto.CategoryResponse;
 import com.quickbite.product_service.service.CategoryService;
@@ -8,59 +9,57 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping(ApiPaths.CATEGORIES)
 @RequiredArgsConstructor
 public class CategoryController {
 
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategories());
+    public List<CategoryResponse> getAllCategories() {
+        return categoryService.getAllCategories();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CategoryResponse> getCategoryById(
+    @GetMapping(ApiPaths.BY_ID)
+    public CategoryResponse getCategoryById(
         @PathVariable @Positive Long id
     ) {
-        return ResponseEntity.ok(categoryService.getCategoryById(id));
+        return categoryService.getCategoryById(id);
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<CategoryResponse>> searchCategories(
+    @GetMapping(ApiPaths.SEARCH)
+    public List<CategoryResponse> searchCategories(
         @RequestParam @Size(min = 2) String name
     ) {
-        return ResponseEntity.ok(categoryService.searchCategories(name));
+        return categoryService.searchCategories(name);
     }
 
     @PostMapping
-    public ResponseEntity<CategoryResponse> createCategory(
+    @ResponseStatus(HttpStatus.CREATED)
+    public CategoryResponse createCategory(
         @Valid @RequestBody CategoryRequest request
     ) {
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(categoryService.createCategory(request));
+        return categoryService.createCategory(request);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponse> updateCategory(
+    @PutMapping(ApiPaths.BY_ID)
+    public CategoryResponse updateCategory(
             @PathVariable @Positive Long id,
             @Valid @RequestBody CategoryRequest request
     ) {
-        return ResponseEntity.ok(categoryService.updateCategory(id, request));
+        return categoryService.updateCategory(id, request);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(
+    @DeleteMapping(ApiPaths.BY_ID)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCategory(
         @PathVariable @Positive Long id
     ) {
         categoryService.deleteCategory(id);
-        return ResponseEntity.noContent().build();
     }
 }

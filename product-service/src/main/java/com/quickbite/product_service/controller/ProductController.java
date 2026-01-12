@@ -1,5 +1,6 @@
 package com.quickbite.product_service.controller;
 
+import com.quickbite.product_service.constants.ApiPaths;
 import com.quickbite.product_service.dto.PriceRangeRequest;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping(ApiPaths.PRODUCTS)
 @RequiredArgsConstructor
 @Validated
 public class ProductController {
@@ -24,64 +25,62 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAllAvailableProducts() {
-        return ResponseEntity.ok(productService.getAllAvailableProducts());
+    public List<ProductResponse> getAllAvailableProducts() {
+        return productService.getAllAvailableProducts();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getProductById(
+    @GetMapping(ApiPaths.BY_ID)
+    public ProductResponse getProductById(
         @PathVariable @Positive Long id
     ) {
-        return ResponseEntity.ok(productService.getProductById(id));
+        return productService.getProductById(id);
     }
 
     @GetMapping("/restaurant/{restaurantId}")
-    public ResponseEntity<List<ProductResponse>> getProductsByRestaurant(
+    public List<ProductResponse> getProductsByRestaurant(
         @PathVariable @Positive Long restaurantId
     ) {
-        return ResponseEntity.ok(productService.getProductsByRestaurant(restaurantId));
+        return productService.getProductsByRestaurant(restaurantId);
     }
 
     @GetMapping("/restaurant/{restaurantId}/category/{categoryId}")
-    public ResponseEntity<List<ProductResponse>> getProductsByRestaurantAndCategory(
+    public List<ProductResponse> getProductsByRestaurantAndCategory(
         @PathVariable @Positive Long restaurantId,
         @PathVariable @Positive Long categoryId
     ) {
-        return ResponseEntity.ok(
-            productService.getProductsByRestaurant(restaurantId, categoryId)
-        );
+        return productService.getProductsByRestaurant(restaurantId, categoryId);
     }
 
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ProductResponse>> getProductsByCategory(
+    public List<ProductResponse> getProductsByCategory(
         @PathVariable @Positive Long categoryId
     ) {
-        return ResponseEntity.ok(productService.getProductsByCategory(categoryId));
+        return productService.getProductsByCategory(categoryId);
     }
 
     @GetMapping("/featured")
-    public ResponseEntity<List<ProductResponse>> getFeaturedProducts() {
-        return ResponseEntity.ok(productService.getFeaturedProducts());
+    public List<ProductResponse> getFeaturedProducts() {
+        return productService.getFeaturedProducts();
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductResponse createProduct(
         @Valid @RequestBody ProductRequest request
     ) {
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(productService.createProduct(request));
+        return productService.createProduct(request);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> updateProduct(
+    @PutMapping(ApiPaths.BY_ID)
+    public ProductResponse updateProduct(
         @PathVariable @Positive Long id,
         @Valid @RequestBody ProductRequest request
     ) {
-        return ResponseEntity.ok(productService.updateProduct(id, request));
+        return productService.updateProduct(id, request);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(ApiPaths.BY_ID)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteProduct(
         @PathVariable @Positive Long id
     ) {
@@ -89,32 +88,29 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<ProductResponse>> searchProducts(
+    @GetMapping(ApiPaths.SEARCH)
+    public List<ProductResponse> searchProducts(
         @RequestParam @Size(min = 2) String name
     ) {
-        return ResponseEntity.ok(productService.searchProducts(name));
+        return productService.searchProducts(name);
     }
 
     @GetMapping("/restaurant/{restaurantId}/price-range")
-    public ResponseEntity<List<ProductResponse>> getProductsByPriceRange(
+    public List<ProductResponse> getProductsByPriceRange(
         @PathVariable @Positive Long restaurantId,
         @Valid @ModelAttribute PriceRangeRequest priceRange
-        ) {
-        return ResponseEntity.ok(
-            productService.getProductsByPriceRange(
-                restaurantId,
-                priceRange.minPrice(),
-                priceRange.maxPrice()
-        ));
+    ) {
+        return productService.getProductsByPriceRange(
+            restaurantId,
+            priceRange.minPrice(),
+            priceRange.maxPrice()
+        );
     }
 
     @GetMapping("/restaurant/{restaurantId}/count")
-    public ResponseEntity<Long> countProductsByRestaurant(
+    public Long countProductsByRestaurant(
         @PathVariable @Positive Long restaurantId
     ) {
-        return ResponseEntity.ok(
-            productService.countProductsByRestaurant(restaurantId)
-        );
+        return productService.countProductsByRestaurant(restaurantId);
     }
 }
