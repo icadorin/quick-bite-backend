@@ -1,27 +1,27 @@
 package com.quickbite.product_service.entity;
 
+import com.quickbite.core.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Map;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "restaurants")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class Restaurant {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class Restaurant extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(name = "owner_id", nullable = false)
@@ -74,21 +74,4 @@ public class Restaurant {
     @Column(name = "total_reviews")
     @Builder.Default
     private Integer totalReviews = 0;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }
