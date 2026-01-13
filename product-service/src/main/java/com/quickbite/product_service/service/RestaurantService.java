@@ -1,11 +1,11 @@
 package com.quickbite.product_service.service;
 
+import com.quickbite.core.exception.BusinessRuleViolationException;
+import com.quickbite.core.exception.DataValidationException;
+import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.product_service.dto.RestaurantRequest;
 import com.quickbite.product_service.dto.RestaurantResponse;
 import com.quickbite.product_service.entity.Restaurant;
-import com.quickbite.product_service.exception.BusinessRuleViolationException;
-import com.quickbite.product_service.exception.DataValidationException;
-import com.quickbite.product_service.exception.ResourceNotFoundException;
 import com.quickbite.product_service.mapper.RestaurantCreateMapper;
 import com.quickbite.product_service.mapper.RestaurantPatchMapper;
 import com.quickbite.product_service.mapper.RestaurantResponseMapper;
@@ -14,11 +14,13 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Validated
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;

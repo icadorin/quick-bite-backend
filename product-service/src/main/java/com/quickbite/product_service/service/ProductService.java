@@ -1,13 +1,13 @@
 package com.quickbite.product_service.service;
 
+import com.quickbite.core.exception.BusinessRuleViolationException;
+import com.quickbite.core.exception.DataValidationException;
+import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
 import com.quickbite.product_service.entity.Category;
 import com.quickbite.product_service.entity.Product;
 import com.quickbite.product_service.entity.Restaurant;
-import com.quickbite.product_service.exception.BusinessRuleViolationException;
-import com.quickbite.product_service.exception.DataValidationException;
-import com.quickbite.product_service.exception.ResourceNotFoundException;
 import com.quickbite.product_service.mapper.ProductCreateMapper;
 import com.quickbite.product_service.mapper.ProductPatchMapper;
 import com.quickbite.product_service.mapper.ProductResponseMapper;
