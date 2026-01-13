@@ -1,12 +1,10 @@
 package com.quickbite.core.exception;
 
-public class AuthException extends RuntimeException {
+import com.quickbite.core.api.ApiError;
 
-    public AuthException(String message) {
-        super(message);
-    }
+public abstract class AuthException extends BaseBusinessException {
 
-    public AuthException(String message, Throwable cause) {
-        super(message, cause);
+    protected AuthException(String code, String message) {
+        super(new ApiError(code, message));
     }
 }

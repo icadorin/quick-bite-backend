@@ -1,8 +1,10 @@
 package com.quickbite.core.exception;
 
-public class JwtValidationException extends RuntimeException {
+import com.quickbite.core.api.ApiError;
+
+public class JwtValidationException extends BaseBusinessException {
 
     public JwtValidationException(String message) {
-        super(message);
+        super(new ApiError("JWT_VALIDATION_ERROR", message));
     }
 }

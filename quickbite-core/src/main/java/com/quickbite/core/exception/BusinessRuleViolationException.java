@@ -1,12 +1,10 @@
 package com.quickbite.core.exception;
 
-public class BusinessRuleViolationException extends RuntimeException {
+import com.quickbite.core.api.ApiError;
+
+public class BusinessRuleViolationException extends BaseBusinessException {
 
     public BusinessRuleViolationException(String message) {
-        super(message);
-    }
-
-    public BusinessRuleViolationException(String message, Throwable cause) {
-        super(message);
+        super(new ApiError("BUSINESS_RULE_VIOLATION", message));
     }
 }

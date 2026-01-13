@@ -1,12 +1,10 @@
 package com.quickbite.core.exception;
 
-public class DataValidationException extends RuntimeException {
+import com.quickbite.core.api.ApiError;
+
+public class DataValidationException extends BaseBusinessException {
 
     public DataValidationException(String message) {
-        super(message);
-    }
-
-    public DataValidationException(String message, Throwable cause) {
-        super(message, cause);
+        super(new ApiError("DATA_VALIDATION_ERROR", message));
     }
 }

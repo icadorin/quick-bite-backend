@@ -1,12 +1,15 @@
 package com.quickbite.core.exception;
 
-public class DatabaseException extends RuntimeException {
+import com.quickbite.core.api.ApiError;
+
+public class DatabaseException extends BaseBusinessException {
 
     public DatabaseException(String message) {
-        super(message);
+        super(new ApiError("DATABASE_ERROR", message));
     }
 
     public DatabaseException(String message, Throwable cause) {
-        super(message, cause);
+        super(new ApiError("DATABASE_ERROR", message));
+        initCause(cause);
     }
 }
