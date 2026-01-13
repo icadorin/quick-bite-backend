@@ -1,12 +1,12 @@
 package com.quickbite.product_service.service;
 
+import com.quickbite.core.exception.BusinessRuleViolationException;
+import com.quickbite.core.exception.DataValidationException;
+import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.product_service.constants.TestConstants;
 import com.quickbite.product_service.dto.CategoryRequest;
 import com.quickbite.product_service.dto.CategoryResponse;
 import com.quickbite.product_service.entity.Category;
-import com.quickbite.product_service.exception.BusinessRuleViolationException;
-import com.quickbite.product_service.exception.DataValidationException;
-import com.quickbite.product_service.exception.ResourceNotFoundException;
 import com.quickbite.product_service.mapper.CategoryCreateMapper;
 import com.quickbite.product_service.mapper.CategoryPatchMapper;
 import com.quickbite.product_service.mapper.CategoryResponseMapper;
@@ -19,7 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,8 +68,6 @@ public class CategoryServiceTest {
             .imageUrl(TestConstants.VALID_IMAGE_URL)
             .sortOrder(TestConstants.VALID_SORT_ORDER)
             .isActive(true)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
             .build();
 
         categoryResponse = CategoryResponse.builder()

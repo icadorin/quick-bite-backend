@@ -1,13 +1,13 @@
 package com.quickbite.product_service.service;
 
+import com.quickbite.core.exception.DataValidationException;
+import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.product_service.constants.TestConstants;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
 import com.quickbite.product_service.entity.Category;
 import com.quickbite.product_service.entity.Product;
 import com.quickbite.product_service.entity.Restaurant;
-import com.quickbite.product_service.exception.DataValidationException;
-import com.quickbite.product_service.exception.ResourceNotFoundException;
 import com.quickbite.product_service.mapper.ProductCreateMapper;
 import com.quickbite.product_service.mapper.ProductResponseMapper;
 import com.quickbite.product_service.repository.CategoryRepository;
@@ -21,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,8 +85,6 @@ public class ProductServiceTest {
             .description(TestConstants.VALID_DESCRIPTION)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
             .isAvailable(true)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
             .build();
 
         productResponse = ProductResponse.builder()
@@ -277,7 +274,8 @@ public class ProductServiceTest {
 
         assertEquals(productResponses, result);
 
-        verify(productRepository).findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID);
+        verify(productRepository)
+            .findByRestaurantIdAndIsAvailableTrue(TestConstants.VALID_RESTAURANT_ID);
         verify(responseMapper).toResponseList(products);
     }
 
