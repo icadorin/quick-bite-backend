@@ -10,11 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -24,26 +22,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @WebMvcTest(CategoryController.class)
-@Import(CategoryControllerTest.TestConfig.class)
 @AutoConfigureMockMvc(addFilters = false)
 public class CategoryControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @MockitoBean
     private CategoryService categoryService;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        CategoryService categoryService() {
-            return mock(CategoryService.class);
-        }
-    }
 
     @WithMockUser
     @Test
@@ -53,11 +42,12 @@ public class CategoryControllerTest {
             .build();
 
         mockMvc.perform(post("/api/categories")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+            )
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.details.name")
-            .value(TestConstants.CATEGORY_NAME_REQUIRED_MESSAGE));
+                .value(TestConstants.CATEGORY_NAME_REQUIRED_MESSAGE));
     }
 
     @WithMockUser
@@ -67,14 +57,25 @@ public class CategoryControllerTest {
             .name(TestConstants.VALID_CATEGORY_NAME)
             .build();
 
-        when(categoryService.createCategory(any()))
-            .thenReturn(new CategoryResponse());
+        CategoryResponse response = CategoryResponse.builder()
+            .id(TestConstants.VALID_CATEGORY_ID)
+            .name(TestConstants.VALID_CATEGORY_NAME)
+            .build();
+
+        when(categoryService.createCategory(any(CategoryRequest.class)))
+            .thenReturn(response);
 
         mockMvc.perform(post("/api/categories")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isCreated());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+            )
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id")
+                .value(TestConstants.VALID_CATEGORY_ID))
+            .andExpect(jsonPath("$.name")
+                .value(TestConstants.VALID_CATEGORY_NAME));
 
-        verify(categoryService).createCategory(any());
+        verify(categoryService, times(1))
+            .createCategory(any(CategoryRequest.class));
     }
 }

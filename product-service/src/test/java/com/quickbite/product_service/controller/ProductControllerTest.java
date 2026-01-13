@@ -9,11 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -25,27 +23,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductController.class)
-@Import(ProductControllerTest.TestConfig.class)
 @AutoConfigureMockMvc(addFilters = false)
 public class ProductControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @MockitoBean
     private ProductService productService;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @TestConfiguration
-    static class TestConfig {
-
-        @Bean
-        ProductService productService() {
-            return mock(ProductService.class);
-        }
-    }
 
     @WithMockUser(username = "user")
     @Test
@@ -59,11 +47,12 @@ public class ProductControllerTest {
         String body = objectMapper.writeValueAsString(request);
 
         mockMvc.perform(post("/api/products")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+            )
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.details.name")
-            .value(TestConstants.PRODUCT_NAME_REQUIRED_MESSAGE));
+                .value(TestConstants.PRODUCT_NAME_REQUIRED_MESSAGE));
     }
 
     @WithMockUser(username = "user")
@@ -81,8 +70,9 @@ public class ProductControllerTest {
             .thenReturn(new ProductResponse());
 
         mockMvc.perform(post("/api/products")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+            )
             .andExpect(status().isCreated());
 
         verify(productService, times(1)).createProduct(any());

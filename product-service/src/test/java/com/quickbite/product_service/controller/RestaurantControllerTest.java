@@ -9,11 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -23,26 +21,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RestaurantController.class)
-@Import(RestaurantControllerTest.TestConfig.class)
 @AutoConfigureMockMvc(addFilters = false)
 class RestaurantControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @MockitoBean
     private RestaurantService restaurantService;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        RestaurantService restaurantService() {
-            return mock(RestaurantService.class);
-        }
-    }
 
     @WithMockUser
     @Test
@@ -53,11 +42,12 @@ class RestaurantControllerTest {
             .build();
 
         mockMvc.perform(post("/api/restaurants")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+            )
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.details.name")
-            .value(TestConstants.RESTAURANT_NAME_REQUIRED_MESSAGE));
+                .value(TestConstants.RESTAURANT_NAME_REQUIRED_MESSAGE));
     }
 
     @WithMockUser
@@ -72,8 +62,9 @@ class RestaurantControllerTest {
             .thenReturn(RestaurantResponse.builder().build());
 
         mockMvc.perform(post("/api/restaurants")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+            )
             .andExpect(status().isCreated());
 
         verify(restaurantService).createRestaurant(any());
