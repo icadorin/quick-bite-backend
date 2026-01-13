@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static com.quickbite.product_service.support.ValidationTestHelper.assertHasViolationOnField;
+import static com.quickbite.core.support.ValidationTestHelper.assertHasViolationOnField;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RestaurantRequestValidationTest {

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.*;
 import java.math.BigDecimal;
 import java.util.Set;
 
-import static com.quickbite.product_service.support.ValidationTestHelper.assertHasViolationOnField;
+import static com.quickbite.core.support.ValidationTestHelper.assertHasViolationOnField;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ProductRequestValidationTest {
@@ -37,7 +37,8 @@ public class ProductRequestValidationTest {
             .restaurantId(TestConstants.VALID_RESTAURANT_ID)
             .build();
 
-        Set<ConstraintViolation<ProductRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<ProductRequest>> violations =
+            validator.validate(request);
 
         assertHasViolationOnField(violations, "name");
     }
@@ -49,7 +50,8 @@ public class ProductRequestValidationTest {
             .restaurantId(TestConstants.VALID_RESTAURANT_ID)
             .build();
 
-        Set<ConstraintViolation<ProductRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<ProductRequest>> violations =
+            validator.validate(request);
 
         assertHasViolationOnField(violations, "price");
     }
@@ -62,7 +64,8 @@ public class ProductRequestValidationTest {
             .restaurantId(TestConstants.VALID_RESTAURANT_ID)
             .build();
 
-        Set<ConstraintViolation<ProductRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<ProductRequest>> violations =
+            validator.validate(request);
 
         assertTrue(violations.isEmpty());
     }
