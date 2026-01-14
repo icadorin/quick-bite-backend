@@ -15,7 +15,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [all, auth-service, product-service]
         include:
           - service: all
             maven-args: clean verify -B -T 1C
@@ -55,14 +54,3 @@ jobs:
           echo "🎉 ${{ matrix.name-suffix }} tests passed!"
           echo "📦 Build completed successfully"
           echo "🚀 CI is green for ${{ matrix.service }}!"
-
-      # Salva logs ou artifacts em caso de falha
-      - name: Upload failure logs (if failed)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: failure-logs-${{ matrix.service }}
-          path: |
-            **/target/surefire-reports/*
-            **/target/*.log
-          retention-days: 7
