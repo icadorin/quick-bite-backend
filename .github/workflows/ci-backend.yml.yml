@@ -1,0 +1,68 @@
+name: CI - Backend (Monorepo Maven)
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build & Test (${{ matrix.name-suffix }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [all, auth-service, product-service]
+        include:
+          - service: all
+            maven-args: clean verify -B -T 1C
+            name-suffix: All Services
+          - service: auth-service
+            maven-args: clean verify -pl auth-service -am -B -T 1C
+            name-suffix: Auth Service only
+          - service: product-service
+            maven-args: clean verify -pl product-service -am -B -T 1C
+            name-suffix: Product Service only
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ☕ Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: 🔍 Build & Test
+        run: mvn ${{ matrix.maven-args }}
+        env:
+          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+          SPRING_DATASOURCE_USERNAME: sa
+          SPRING_DATASOURCE_PASSWORD: ""
+          JWT_SECRET: test-secret-key-for-ci-cd-pipeline-123456
+          JWT_EXPIRATION: 3600000
+
+      - name: ✅ Success message
+        if: success()
+        run: |
+          echo "🎉 ${{ matrix.name-suffix }} tests passed!"
+          echo "📦 Build completed successfully"
+          echo "🚀 CI is green for ${{ matrix.service }}!"
+
+      # Salva logs ou artifacts em caso de falha
+      - name: Upload failure logs (if failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-logs-${{ matrix.service }}
+          path: |
+            **/target/surefire-reports/*
+            **/target/*.log
+          retention-days: 7

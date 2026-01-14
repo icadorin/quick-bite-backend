@@ -6,6 +6,7 @@ out/
 
 ### Maven ###
 target/
+**/target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
