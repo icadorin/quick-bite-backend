@@ -3,6 +3,7 @@ package com.quickbite.product_service.entity;
 import com.quickbite.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
@@ -10,7 +11,7 @@ import lombok.*;
 @Table(name = "categories")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Category extends BaseEntity {
 
