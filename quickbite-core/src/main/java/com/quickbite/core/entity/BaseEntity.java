@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 public abstract class BaseEntity {
 
 	@Column(name = "created_at", nullable = false, updatable = false)
