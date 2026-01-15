@@ -12,5 +12,7 @@ public interface RestaurantCreateMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "rating", ignore = true)
+    @Mapping(target = "totalReviews", ignore = true)
     Restaurant toEntity(RestaurantRequest request);
 }
