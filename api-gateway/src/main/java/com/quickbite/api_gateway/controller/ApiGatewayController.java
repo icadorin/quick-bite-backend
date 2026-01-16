@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -32,28 +32,25 @@ public class ApiGatewayController {
         }
     )
     public Mono<ResponseEntity<String>> routeAllRequests(
-        HttpServletRequest request,
+        ServerWebExchange exchange,
         @RequestBody(required = false) String body
     ) {
-        String requestPath = request.getRequestURI();
+        String requestPath = exchange.getRequest().getPath().pathWithinApplication().value();
         String targetUrl = routingService.determineTargetUrl(requestPath);
 
-        log.info("Gateway roteando: {} {} -> {}", request.getMethod(), requestPath, targetUrl);
+        HttpMethod method = exchange.getRequest().getMethod();
+        log.info("Gateway roteando: {} {} -> {}", method, requestPath, targetUrl);
 
-        WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.valueOf(request.getMethod()))
+        WebClient.RequestBodySpec requestSpec = webClient
+            .method(method)
             .uri(targetUrl)
-            .headers(headers -> {
-                var headerNames = request.getHeaderNames();
-                while (headerNames.hasMoreElements()) {
-                    String headerName = headerNames.nextElement();
-                    if (!headerName.equalsIgnoreCase("Content-Length")) {
-                        headers.addAll(headerName, java.util.Collections.list(request.getHeaders(headerName)));
-                    }
-                }
-            });
+                .headers(headers -> exchange.getRequest().getHeaders()
+                    .forEach(headers::addAll)
+                );
 
         if (body != null && !body.isEmpty() &&
-            (request.getMethod().equals("POST") || request.getMethod().equals("PUT"))) {
+            (exchange.getRequest().getMethod() == HttpMethod.POST ||
+                exchange.getRequest().getMethod() == HttpMethod.PUT)) {
             requestSpec.bodyValue(body);
         }
 
