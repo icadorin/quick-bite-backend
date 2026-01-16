@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping(ApiPaths.CATEGORIES)
 @RequiredArgsConstructor
+@Validated
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -27,7 +29,7 @@ public class CategoryController {
 
     @GetMapping(ApiPaths.BY_ID)
     public CategoryResponse getCategoryById(
-        @PathVariable @Positive Long id
+        @PathVariable("id") @Positive Long id
     ) {
         return categoryService.getCategoryById(id);
     }
@@ -49,7 +51,7 @@ public class CategoryController {
 
     @PutMapping(ApiPaths.BY_ID)
     public CategoryResponse updateCategory(
-            @PathVariable @Positive Long id,
+            @PathVariable("id") @Positive Long id,
             @Valid @RequestBody CategoryRequest request
     ) {
         return categoryService.updateCategory(id, request);
@@ -58,7 +60,7 @@ public class CategoryController {
     @DeleteMapping(ApiPaths.BY_ID)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCategory(
-        @PathVariable @Positive Long id
+        @PathVariable("id") @Positive Long id
     ) {
         categoryService.deleteCategory(id);
     }

@@ -10,15 +10,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface ProductServiceClient {
 
     @GetMapping("/api/products/{id}")
-    ProductResponse getProduct(@PathVariable Long id);
+    ProductResponse getProduct(@PathVariable("id") Long id);
 
     @GetMapping("/api/products/{id}/exists")
-    Boolean validateProduct(@PathVariable Long id);
+    Boolean validateProduct(@PathVariable("id") Long id);
 
     @GetMapping("/api/restaurants/{id}")
-    RestaurantResponse getRestaurant(@PathVariable Long id);
+    RestaurantResponse getRestaurant(@PathVariable("id") Long id);
 
     @GetMapping("/api/restaurants/{id}/exists")
-    void validateRestaurant(@PathVariable Long id);
+    void validateRestaurant(@PathVariable("id") Long id);
 }
 

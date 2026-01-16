@@ -31,29 +31,29 @@ public class ProductController {
 
     @GetMapping(ApiPaths.BY_ID)
     public ProductResponse getProductById(
-        @PathVariable @Positive Long id
+        @PathVariable("id") @Positive Long id
     ) {
         return productService.getProductById(id);
     }
 
     @GetMapping("/restaurant/{restaurantId}")
     public List<ProductResponse> getProductsByRestaurant(
-        @PathVariable @Positive Long restaurantId
+        @PathVariable("restaurantId") @Positive Long restaurantId
     ) {
         return productService.getProductsByRestaurant(restaurantId);
     }
 
     @GetMapping("/restaurant/{restaurantId}/category/{categoryId}")
     public List<ProductResponse> getProductsByRestaurantAndCategory(
-        @PathVariable @Positive Long restaurantId,
-        @PathVariable @Positive Long categoryId
+        @PathVariable("restaurantId") @Positive Long restaurantId,
+        @PathVariable("categoryId") @Positive Long categoryId
     ) {
         return productService.getProductsByRestaurant(restaurantId, categoryId);
     }
 
     @GetMapping("/category/{categoryId}")
     public List<ProductResponse> getProductsByCategory(
-        @PathVariable @Positive Long categoryId
+        @PathVariable("categoryId") @Positive Long categoryId
     ) {
         return productService.getProductsByCategory(categoryId);
     }
@@ -73,7 +73,7 @@ public class ProductController {
 
     @PutMapping(ApiPaths.BY_ID)
     public ProductResponse updateProduct(
-        @PathVariable @Positive Long id,
+        @PathVariable("id") @Positive Long id,
         @Valid @RequestBody ProductRequest request
     ) {
         return productService.updateProduct(id, request);
@@ -82,7 +82,7 @@ public class ProductController {
     @DeleteMapping(ApiPaths.BY_ID)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteProduct(
-        @PathVariable @Positive Long id
+        @PathVariable("id") @Positive Long id
     ) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
@@ -97,7 +97,7 @@ public class ProductController {
 
     @GetMapping("/restaurant/{restaurantId}/price-range")
     public List<ProductResponse> getProductsByPriceRange(
-        @PathVariable @Positive Long restaurantId,
+        @PathVariable("restaurantId") @Positive Long restaurantId,
         @Valid @ModelAttribute PriceRangeRequest priceRange
     ) {
         return productService.getProductsByPriceRange(
@@ -109,7 +109,7 @@ public class ProductController {
 
     @GetMapping("/restaurant/{restaurantId}/count")
     public Long countProductsByRestaurant(
-        @PathVariable @Positive Long restaurantId
+        @PathVariable("restaurantId") @Positive Long restaurantId
     ) {
         return productService.countProductsByRestaurant(restaurantId);
     }

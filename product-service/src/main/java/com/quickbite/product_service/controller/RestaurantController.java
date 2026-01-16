@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping(ApiPaths.RESTAURANTS)
 @RequiredArgsConstructor
+@Validated
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
@@ -27,14 +29,14 @@ public class RestaurantController {
 
     @GetMapping(ApiPaths.BY_ID)
     public RestaurantResponse getRestaurantById(
-        @PathVariable @Positive Long id
+        @PathVariable("id") @Positive Long id
     ) {
         return restaurantService.getRestaurantById(id);
     }
 
     @GetMapping("/owner/{ownerId}")
     public List<RestaurantResponse> getRestaurantByOwner(
-        @PathVariable @Positive Long ownerId
+        @PathVariable("ownerId") @Positive Long ownerId
     ) {
         return restaurantService.getRestaurantsByOwner(ownerId);
     }
@@ -49,7 +51,7 @@ public class RestaurantController {
 
     @PutMapping(ApiPaths.BY_ID)
     public RestaurantResponse updateRestaurant(
-        @PathVariable @Positive Long id,
+        @PathVariable("id") @Positive Long id,
         @Valid @RequestBody RestaurantRequest request
     ) {
         return restaurantService.updateRestaurant(id, request);
@@ -58,7 +60,7 @@ public class RestaurantController {
     @DeleteMapping(ApiPaths.BY_ID)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRestaurant(
-        @PathVariable @Positive Long id
+        @PathVariable("id") @Positive Long id
     ) {
         restaurantService.deleteRestaurant(id);
     }
