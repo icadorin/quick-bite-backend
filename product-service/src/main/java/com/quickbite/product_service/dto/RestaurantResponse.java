@@ -10,6 +10,7 @@ import java.util.Map;
 @Data
 @Builder(toBuilder = true)
 public class RestaurantResponse {
+
     private Long id;
     private Long ownerId;
     private String name;
