@@ -11,9 +11,12 @@ public class TestConstants {
     public static final String NON_EXISTENT_EMAIL = "nonexistent@test.com";
 
     public static final String VALID_PASSWORD = "Password123";
-    public static final String SHORT_PASSWORD = "Invalid credentials";
+    public static final String SHORT_PASSWORD = "Short";
 
     public static final String VALID_FULL_NAME = "John John";
+
+    public static final String VALID_PHONE = "+5511999999999";
+    public static final String INVALID_PHONE = "123456789";
 
     public static final String VALID_REFRESH_TOKEN = "valid-refresh-token";
     public static final String INVALID_REFRESH_TOKEN = "";
