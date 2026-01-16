@@ -25,7 +25,9 @@ public class RouteConfig {
 
     private static final Map<String, Service> PATH_TO_SERVICE = Map.of(
         "auth", Service.AUTH,
-        "product", Service.PRODUCT,
+        "products", Service.PRODUCT,
+        "restaurants", Service.PRODUCT,
+        "categories", Service.PRODUCT,
         "order", Service.ORDER,
         "payment", Service.PAYMENT,
         "notification", Service.NOTIFICATION
