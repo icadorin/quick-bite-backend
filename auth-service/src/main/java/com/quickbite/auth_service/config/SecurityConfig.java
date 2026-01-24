@@ -1,5 +1,6 @@
 package com.quickbite.auth_service.config;
 
+import com.quickbite.auth_service.constants.PublicEndPoints;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,7 +22,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration config
+    ) throws Exception {
         return config.getAuthenticationManager();
     }
 
@@ -31,10 +34,10 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/auth/**",
-                    "/api/auth/**",
-                    "/actuator/health",
-                    "/error"
+                    PublicEndPoints.AUTH,
+                    PublicEndPoints.API_AUTH,
+                    PublicEndPoints.ACTUATOR_HEALTH,
+                    PublicEndPoints.ERROR
                 ).permitAll()
                 .anyRequest().authenticated()
             );
