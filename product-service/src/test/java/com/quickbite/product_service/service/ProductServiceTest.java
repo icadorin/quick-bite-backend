@@ -74,6 +74,7 @@ public class ProductServiceTest {
             .name(TestConstants.VALID_PRODUCT_NAME)
             .description(TestConstants.VALID_DESCRIPTION)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
+            .costPrice(BigDecimal.valueOf(TestConstants.VALID_COST_PRICE))
             .isAvailable(true)
             .build();
 

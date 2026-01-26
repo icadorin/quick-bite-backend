@@ -62,6 +62,7 @@ public class ProductRequestValidationTest {
             .name(TestConstants.VALID_PRODUCT_NAME)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
             .restaurantId(TestConstants.VALID_RESTAURANT_ID)
+            .costPrice(BigDecimal.valueOf(TestConstants.VALID_COST_PRICE))
             .build();
 
         Set<ConstraintViolation<ProductRequest>> violations =

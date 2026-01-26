@@ -40,6 +40,7 @@ public class ProductRequest {
         "2 fraction digits")
     private BigDecimal comparePrice;
 
+    @NotNull(message = "Cost price is required")
     @Positive(message = "Cost price must be positive")
     @Digits(integer = 10, fraction = 2, message = "Cost price must have up to 10 integer digits and 2" +
         "fraction digits")

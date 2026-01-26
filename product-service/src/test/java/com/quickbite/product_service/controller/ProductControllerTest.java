@@ -61,6 +61,7 @@ public class ProductControllerTest {
         ProductRequest request = ProductRequest.builder()
             .name(TestConstants.VALID_PRODUCT_NAME)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
+            .costPrice(BigDecimal.valueOf(TestConstants.VALID_COST_PRICE))
             .restaurantId(TestConstants.VALID_RESTAURANT_ID)
             .build();
 
