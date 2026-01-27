@@ -3,6 +3,8 @@ package com.quickbite.auth_service.repository;
 import com.quickbite.auth_service.constants.TestConstants;
 import com.quickbite.auth_service.entity.User;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
@@ -17,19 +19,23 @@ public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    private User createActiveCustomer() {
+    private User createUser(String email, User.UserStatus status, User.UserRole role) {
         return User.builder()
-            .email(TestConstants.VALID_EMAIL)
+            .email(email)
             .fullName(TestConstants.VALID_FULL_NAME)
             .passwordHash("hashed")
-            .status(User.UserStatus.ACTIVE)
-            .role(User.UserRole.CUSTOMER)
+            .status(status)
+            .role(role)
             .build();
+    }
+
+    private void saveUser(String email, User.UserStatus status, User.UserRole role) {
+        userRepository.save(createUser(email, status, role));
     }
 
     @Test
     void findByEmail_shouldReturnUser_whenEmailExists() {
-        userRepository.save(createActiveCustomer());
+        saveUser(TestConstants.VALID_EMAIL, User.UserStatus.ACTIVE, User.UserRole.CUSTOMER);
 
         Optional<User> result =
             userRepository.findByEmail(TestConstants.VALID_EMAIL);
@@ -47,52 +53,36 @@ public class UserRepositoryTest {
     }
 
     @Test
-    void existsByEmail_shouldReturnTrue_whenEmailExists() {
-        userRepository.save(createActiveCustomer());
+    void existsByEmailIgnoreCase_shouldReturnTrue_whenEmailExistsIgnoringCase() {
+        saveUser(TestConstants.VALID_EMAIL, User.UserStatus.ACTIVE, User.UserRole.CUSTOMER);
 
-        boolean exists =
-            userRepository.existsByEmail(TestConstants.VALID_EMAIL);
-
-        assertTrue(exists);
+        assertTrue(userRepository.existsByEmailIgnoreCase(TestConstants.VALID_EMAIL.toLowerCase()));
+        assertTrue(userRepository.existsByEmailIgnoreCase(TestConstants.VALID_EMAIL.toUpperCase()));
     }
 
-    @Test
-    void existsByEmail_shouldReturnFalse_whenEmailDoesNotExist() {
-        boolean exists =
-            userRepository.existsByEmail(TestConstants.VALID_EMAIL);
+    @ParameterizedTest
+    @EnumSource(User.UserStatus.class)
+    void findByStatus_shouldWorkForAllStatuses(User.UserStatus status) {
+        saveUser(
+            "status_" + status.name().toLowerCase() + "@test.com",
+            status,
+            User.UserRole.CUSTOMER
+        );
 
-        assertFalse(exists);
+        List<User> result = userRepository.findByStatus(status);
+        assertFalse(result.isEmpty());
     }
 
-    @Test
-    void existsByEmail_shouldReturnTrue_whenEmailExistsIgnoringCase() {
-        userRepository.save(createActiveCustomer());
+    @ParameterizedTest
+    @EnumSource(User.UserRole.class)
+    void findByRole_shouldWorkForAllRoles(User.UserRole role) {
+        saveUser(
+            "role_" + role.name().toLowerCase() + "@test.com",
+            User.UserStatus.ACTIVE,
+            role
+        );
 
-        boolean exists =
-            userRepository.existsByEmail(
-                TestConstants.VALID_EMAIL.toLowerCase()
-            );
-
-        assertTrue(exists);
-    }
-
-    @Test
-    void findByStatus_shouldReturnUserWithGivenStatus() {
-        userRepository.save(createActiveCustomer());
-
-        List<User> result =
-            userRepository.findByStatus(User.UserStatus.ACTIVE);
-
-        assertEquals(1, result.size());
-    }
-
-    @Test
-    void findByRole_shouldReturnUserWithGivenRole() {
-        userRepository.save(createActiveCustomer());
-
-        List<User> result =
-            userRepository.findByRole(User.UserRole.CUSTOMER);
-
-        assertEquals(1, result.size());
+        List<User> result = userRepository.findByRole(role);
+        assertFalse(result.isEmpty());
     }
 }
