@@ -9,6 +9,8 @@ import org.mapstruct.Mapping;
 public interface UserCreateMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "role", constant = "CUSTOMER")
     @Mapping(target = "status", constant = "ACTIVE")
