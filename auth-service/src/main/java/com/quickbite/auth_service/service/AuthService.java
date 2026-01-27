@@ -6,13 +6,16 @@ import com.quickbite.auth_service.dto.RegisterRequest;
 import com.quickbite.auth_service.entity.RefreshToken;
 import com.quickbite.auth_service.entity.User;
 import com.quickbite.auth_service.entity.UserProfile;
-import com.quickbite.auth_service.exception.*;
 import com.quickbite.auth_service.mapper.UserCreateMapper;
 import com.quickbite.auth_service.mapper.UserResponseMapper;
 import com.quickbite.auth_service.repository.RefreshTokenRepository;
 import com.quickbite.auth_service.repository.UserProfileRepository;
 import com.quickbite.auth_service.repository.UserRepository;
+import com.quickbite.core.exception.InvalidUserStatusException;
+import com.quickbite.core.exception.TokenException;
+import com.quickbite.core.exception.UserAlreadyExistsException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,12 +23,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Validated
 public class AuthService {
 
     @Value("${auth.refresh-token.expiration-days}")
@@ -41,7 +46,7 @@ public class AuthService {
     private final UserResponseMapper userResponseMapper;
 
     @Transactional
-    public LoginResponse register(RegisterRequest request) {
+    public LoginResponse register(@Valid RegisterRequest request) {
         validateEmailNotExists(request.getEmail());
 
         User user = createUser(request);
@@ -50,26 +55,21 @@ public class AuthService {
         return generateLoginResponse(user);
     }
 
-    public LoginResponse login(LoginRequest request) {
-
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                request.getEmail(),
-                request.getPassword()
-            )
-        );
-
+    public LoginResponse login(@Valid LoginRequest request) {
+        Authentication authentication = authenticate(request);
         User user = (User) authentication.getPrincipal();
+
         validateUserActive(user);
 
         return generateLoginResponse(user);
     }
 
     @Transactional
-    public  LoginResponse refreshToken(String refreshToken) {
+    public  LoginResponse refreshToken(String token) {
+        validateRequiredToken(token);
 
-        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
-            .orElseThrow(() -> new AuthException("Invalid token"));
+        RefreshToken storedToken = refreshTokenRepository.findByToken(token)
+            .orElseThrow(() -> new TokenException("Invalid refresh token"));
 
         validateRefreshToken(storedToken);
 
@@ -83,31 +83,40 @@ public class AuthService {
 
     private void validateEmailNotExists(String email) {
         if (userRepository.existsByEmail(email)) {
-            throw new UserAlreadyExistsException(
-                "User already exists"
-            );
+            throw new UserAlreadyExistsException("User already exists");
         }
     }
 
     private void validateUserActive(User user) {
         if(user.getStatus() != User.UserStatus.ACTIVE) {
-            throw new InvalidUserStatusException(
-                "Invalid user status"
-            );
+            throw new InvalidUserStatusException("User is not active");
         }
     }
 
     private void validateRefreshToken(RefreshToken refreshToken) {
         if (refreshToken.isRevoked()) {
-            throw new AuthException(
-                "Revoked token"
-            );
+            throw new TokenException("Revoked token revoked");
         }
 
         if (refreshToken.isExpired()) {
             revokeRefreshToken(refreshToken);
-            throw new AuthException("Expired token");
+            throw new TokenException("Refresh token expired");
         }
+    }
+
+    private void validateRequiredToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new TokenException("Refresh token must not be blank");
+        }
+    }
+
+    private Authentication authenticate(LoginRequest request) {
+        return authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                request.getEmail(),
+                request.getPassword()
+            )
+        );
     }
 
     private User createUser(RegisterRequest request) {

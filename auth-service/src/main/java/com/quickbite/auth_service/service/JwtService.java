@@ -1,7 +1,7 @@
 package com.quickbite.auth_service.service;
 
 import com.quickbite.auth_service.entity.User;
-import com.quickbite.auth_service.exception.JwtValidationException;
+import com.quickbite.core.exception.JwtValidationException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
