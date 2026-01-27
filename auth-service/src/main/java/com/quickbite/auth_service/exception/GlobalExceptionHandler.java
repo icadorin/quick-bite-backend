@@ -26,11 +26,17 @@ public class GlobalExceptionHandler {
         Map<String, String> details = new HashMap<>();
 
         ex.getBindingResult().getAllErrors().forEach(error -> {
-            FieldError fieldError = (FieldError) error;
-            details.put(
-                fieldError.getField(),
-                fieldError.getDefaultMessage()
-            );
+            if (error instanceof FieldError fieldError) {
+                details.put(
+                    fieldError.getField(),
+                    fieldError.getDefaultMessage()
+                );
+            } else {
+                details.put(
+                    error.getObjectName(),
+                    error.getDefaultMessage()
+                );
+            }
         });
 
         ApiError apiError = new ApiError(
