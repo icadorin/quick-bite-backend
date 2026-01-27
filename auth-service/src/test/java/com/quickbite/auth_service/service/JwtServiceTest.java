@@ -2,7 +2,7 @@ package com.quickbite.auth_service.service;
 
 import com.quickbite.auth_service.constants.TestConstants;
 import com.quickbite.auth_service.entity.User;
-import com.quickbite.auth_service.exception.JwtValidationException;
+import com.quickbite.core.exception.JwtValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;

@@ -7,14 +7,14 @@ import com.quickbite.auth_service.dto.RegisterRequest;
 import com.quickbite.auth_service.entity.RefreshToken;
 import com.quickbite.auth_service.entity.User;
 import com.quickbite.auth_service.entity.UserProfile;
-import com.quickbite.auth_service.exception.AuthException;
-import com.quickbite.auth_service.exception.InvalidUserStatusException;
-import com.quickbite.auth_service.exception.UserAlreadyExistsException;
 import com.quickbite.auth_service.mapper.UserCreateMapper;
 import com.quickbite.auth_service.mapper.UserResponseMapper;
 import com.quickbite.auth_service.repository.RefreshTokenRepository;
 import com.quickbite.auth_service.repository.UserProfileRepository;
 import com.quickbite.auth_service.repository.UserRepository;
+import com.quickbite.core.exception.InvalidUserStatusException;
+import com.quickbite.core.exception.TokenException;
+import com.quickbite.core.exception.UserAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -201,7 +201,7 @@ class AuthServiceTests {
             .thenReturn(Optional.empty());
 
         assertThrows(
-            AuthException.class,
+            TokenException.class,
             () -> authService.refreshToken(TestConstants.VALID_REFRESH_TOKEN)
         );
     }
@@ -214,7 +214,7 @@ class AuthServiceTests {
             .thenReturn(Optional.of(validRefreshToken));
 
         assertThrows(
-            AuthException.class,
+            TokenException.class,
             () -> authService.refreshToken(TestConstants.VALID_REFRESH_TOKEN)
         );
 
