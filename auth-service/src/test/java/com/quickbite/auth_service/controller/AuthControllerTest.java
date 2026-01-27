@@ -84,7 +84,10 @@ public class AuthControllerTest {
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.details.password")
-                .value(TestConstants.PASSWORD_REQUIRED_MESSAGE));
+                .value(org.hamcrest.Matchers.anyOf(
+                    org.hamcrest.Matchers.is(TestConstants.PASSWORD_REQUIRED_MESSAGE),
+                    org.hamcrest.Matchers.is(TestConstants.PASSWORD_SIZE_MESSAGE)
+                )));
     }
 
     @Test

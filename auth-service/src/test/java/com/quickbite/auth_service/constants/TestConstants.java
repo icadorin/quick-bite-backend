@@ -42,6 +42,9 @@ public class TestConstants {
     public static final String PASSWORD_REQUIRED_MESSAGE =
         "Password is required";
 
+    public static final String PASSWORD_SIZE_MESSAGE =
+        "Password must be between 6 and 100 characters";
+
     public static final String PASSWORD_TOO_SHORT_MESSAGE =
         "Password must be at least 8 characters long";
 
