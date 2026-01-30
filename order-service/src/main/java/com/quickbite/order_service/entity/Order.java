@@ -1,28 +1,28 @@
 package com.quickbite.order_service.entity;
 
+import com.quickbite.core.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "orders")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Order {
+@SuperBuilder(toBuilder = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true,  callSuper = false)
+public class Order extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(name = "user_id", nullable = false)
@@ -40,7 +40,6 @@ public class Order {
     private BigDecimal totalAmount;
 
     @Column(name = "delivery_address", columnDefinition = "jsonb")
-    @JdbcTypeCode(SqlTypes.JSON)
     private String deliveryAddress;
 
     @Column(name = "customer_notes", length = 500)
@@ -66,23 +65,6 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 
     public enum OrderStatus {
         PENDING, CONFIRMED, PREPARING, READY_FOR_PICKUP,

@@ -1,23 +1,23 @@
 package com.quickbite.order_service.entity;
 
+import com.quickbite.core.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
-
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "order_status_history")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class OrderStatusHistory {
+@SuperBuilder(toBuilder = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = false, callSuper = false)
+public class OrderStatusHistory extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,12 +30,4 @@ public class OrderStatusHistory {
 
     @Column(length = 500)
     private String notes;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
 }

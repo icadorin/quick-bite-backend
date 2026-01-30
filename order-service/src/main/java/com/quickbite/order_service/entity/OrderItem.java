@@ -1,23 +1,25 @@
 package com.quickbite.order_service.entity;
 
+import com.quickbite.core.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "order_items")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class OrderItem {
+@SuperBuilder(toBuilder = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class OrderItem extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
