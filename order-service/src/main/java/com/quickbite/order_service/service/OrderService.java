@@ -1,215 +1,242 @@
 package com.quickbite.order_service.service;
 
+import com.quickbite.core.exception.BusinessRuleViolationException;
+import com.quickbite.core.exception.DataValidationException;
+import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.order_service.client.ProductServiceClient;
 import com.quickbite.order_service.dtos.*;
 import com.quickbite.order_service.entity.Order;
 import com.quickbite.order_service.entity.OrderItem;
 import com.quickbite.order_service.entity.OrderStatusHistory;
-import com.quickbite.order_service.exception.ResourceNotFoundException;
+import com.quickbite.order_service.mappers.*;
 import com.quickbite.order_service.repositories.OrderItemRepository;
 import com.quickbite.order_service.repositories.OrderRepository;
 import com.quickbite.order_service.repositories.OrderStatusHistoryRepository;
+import com.quickbite.order_service.security.AuthContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Validated
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final OrderStatusHistoryRepository orderStatusHistoryRepository;
-    private final ProductServiceClient productServiceClient;
+    private final OrderStatusHistoryRepository historyRepository;
+    private final ProductServiceClient productClient;
 
-    public List<OrderResponse> getUserOrders(Long userId) {
-        return orderRepository.findByUserId(userId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    private final OrderCreateMapper createMapper;
+    private final OrderResponseMapper responseMapper;
+    private final OrderItemCreateMapper itemCreateMapper;
+
+    public List<OrderResponse> getUserOrders(AuthContext auth) {
+        validateId(auth.userId());
+
+        return responseMapper.toResponseList(
+            orderRepository.findByUserId(auth.userId())
+        );
     }
 
     public OrderResponse getOrderById(Long orderId, Long userId) {
+        validateId(orderId);
+
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
-            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id" + orderId));
+            .orElseThrow(() ->
+                new ResourceNotFoundException("Order not found with id: " + orderId)
+            );
 
-        return mapToResponse(order);
-    }
-
-    public List<OrderResponse> getRestaurantOrders(Long restaurantId) {
-        return orderRepository.findByRestaurantId(restaurantId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        return enrichAndMap(order);
     }
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request, Long userId) {
-        log.info("Create order for user: {}", userId);
+        validateId(userId);
 
-        productServiceClient.validateRestaurant(request.getRestaurantId());
+        productClient.validateRestaurant(request.getRestaurantId());
 
-        BigDecimal totalAmount = calculateOrderTotal(request.getItems());
+        Map<Long, ProductResponse> products = loadProducts(request.getItems());
 
-        Order order = Order.builder()
-            .userId(userId)
-            .restaurantId(request.getRestaurantId())
-            .deliveryAddress(request.getDeliveryAddress())
-            .customerNotes(request.getCustomerNotes())
-            .paymentMethod(request.getPaymentMethod())
-            .totalAmount(totalAmount)
-            .estimatedDeliveryTime(LocalDateTime.now().plusMinutes(45))
-            .build();
+        BigDecimal totalAmount = calculateTotal(request.getItems(), products);
+
+        Order order = createMapper.toEntity(request);
+        order.setUserId(userId);
+        order.setTotalAmount(totalAmount);
+        order.setEstimatedDeliveryTime(LocalDateTime.now().plusMinutes(45));
 
         Order saveOrder = orderRepository.save(order);
 
-        createOrderItems(saveOrder, request.getItems());
+        createItems(saveOrder, request.getItems(), products);
+        addHistory(saveOrder, Order.OrderStatus.PENDING, "Order created");
 
-        addStatusHistory(saveOrder, Order.OrderStatus.PENDING, "Order created");
-
-        log.info("Order created sucessfully with id: {}", saveOrder.getId());
-        return mapToResponse(saveOrder);
+        return enrichAndMap(saveOrder);
     }
 
     @Transactional
-    public OrderResponse updateOrderStatus(Long orderId, OrderStatusUpdateRequest request, Long userId) {
-        Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new ResourceNotFoundException("Order not find with id: " + orderId));
+    public OrderResponse updateOrderStatus(
+        Long orderId,
+        OrderStatusUpdateRequest request,
+        Long userId
+    ) {
+        AuthContext auth = new AuthContext(userId, "CUSTOMER");
+        Order order = getAuthorizedOrder(orderId, auth);
 
-        if (!order.getUserId().equals(userId) && !order.getRestaurantId().equals(userId)) {
-            throw new SecurityException("Not authorized to update this order");
-        }
-
-        Order.OrderStatus oldStatus = order.getStatus();
         order.setStatus(request.getStatus());
 
         if (request.getStatus() == Order.OrderStatus.DELIVERED) {
             order.setActualDeliveryTime(LocalDateTime.now());
         }
 
-        Order updateOrder = orderRepository.save(order);
+        Order updated = orderRepository.save(order);
+        addHistory(updated, request.getStatus(), request.getNotes());
 
-        addStatusHistory(updateOrder, request.getStatus(), request.getNotes());
-
-        log.info("Order {} status updated from {} to {}", orderId, oldStatus, request.getStatus());
-        return mapToResponse(updateOrder);
+        return enrichAndMap(updated);
     }
 
     @Transactional
-    public OrderResponse cancelOrder(Long orderId, Long userId) throws IllegalAccessException {
+    public OrderResponse cancelOrder(Long orderId, Long userId) {
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
-            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+            .orElseThrow(() ->
+                new ResourceNotFoundException("Order not found with id: " + orderId)
+            );
 
         if (order.getStatus() != Order.OrderStatus.PENDING) {
-            throw new IllegalAccessException("Order can only be cancelled while pending");
+            throw new BusinessRuleViolationException(
+                "Order can only be cancelled while pending"
+            );
         }
 
         order.setStatus(Order.OrderStatus.CANCELLED);
         Order updatedOrder = orderRepository.save(order);
 
-        addStatusHistory(updatedOrder, Order.OrderStatus.CANCELLED, "Order cancelled by user");
+        addHistory(updatedOrder, Order.OrderStatus.CANCELLED, "Order cancelled by user");
 
-        log.info("Order {} cancelled by user {}", orderId, userId);
-        return mapToResponse(updatedOrder);
+        return enrichAndMap(updatedOrder);
     }
 
-    private BigDecimal calculateOrderTotal(List<OrderItemRequest> items) {
+    private OrderResponse enrichAndMap(Order order) {
+        OrderResponse response = responseMapper.toResponse(order);
+
+        RestaurantResponse restaurant =
+            productClient.getRestaurant(order.getRestaurantId());
+
+        response.setRestaurantName(restaurant.getName());
+        return response;
+    }
+
+    private void createItems(
+        Order order,
+        List<OrderItemRequest> requests,
+        Map<Long, ProductResponse> products
+    ) {
+        List<OrderItem> items = requests.stream()
+            .map(req -> {
+                ProductResponse product =
+                    products.get(req.getProductId());
+
+                if (product == null) {
+                    throw new ResourceNotFoundException(
+                        "Product not found: " + req.getProductId()
+                    );
+                }
+
+                OrderItem item = itemCreateMapper.toEntity(req);
+                item.setOrder(order);
+                item.setProductName(product.getName());
+                item.setUnitPrice(product.getPrice());
+                return item;
+            })
+            .toList();
+
+        orderItemRepository.saveAll(items);
+    }
+
+    private BigDecimal calculateTotal(
+        List<OrderItemRequest> items,
+        Map<Long, ProductResponse> products
+    ) {
         return items.stream()
             .map(item -> {
-                ProductResponse product = productServiceClient.getProduct(item.getProductId());
-                return product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                ProductResponse product = products.get(item.getProductId());
+
+                if (product == null || !Boolean.TRUE.equals(product.getIsAvailable())) {
+                    throw new BusinessRuleViolationException(
+                        "Product not available: " + item.getProductId()
+                    );
+                }
+
+                return product.getPrice()
+                    .multiply(BigDecimal.valueOf(item.getQuantity()));
+
             })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private void createOrderItems(Order order, List<OrderItemRequest> itemRequests) {
-        List<OrderItem> orderItems = itemRequests.stream()
-            .map(itemRequest -> {
-                ProductResponse product = productServiceClient.getProduct(itemRequest.getProductId());
-
-                return OrderItem.builder()
-                    .order(order)
-                    .productId(itemRequest.getProductId())
-                    .productName(product.getName())
-                    .quantity(itemRequest.getQuantity())
-                    .unitPrice(product.getPrice())
-                    .notes(itemRequest.getNotes())
-                    .build();
-            })
-            .collect(Collectors.toList());
-
-        orderItemRepository.saveAll(orderItems);
+    private void addHistory(Order order, Order.OrderStatus status, String notes) {
+        historyRepository.save(
+            OrderStatusHistory.builder()
+                .order(order)
+                .status(status)
+                .notes(notes)
+                .build()
+        );
     }
 
-    private void addStatusHistory(Order order, Order.OrderStatus status, String notes) {
-        OrderStatusHistory history = OrderStatusHistory.builder()
-            .order(order)
-            .status(status)
-            .notes(notes)
-            .build();
+    private Order getAuthorizedOrder(Long orderId, AuthContext auth) {
+        if (auth == null) {
+            throw new BusinessRuleViolationException("Authentication context missing");
+        }
 
-        orderStatusHistoryRepository.save(history);
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() ->
+                new ResourceNotFoundException("Order not found with id: " + orderId)
+            );
+
+        switch (auth.role()) {
+            case "CUSTOMER" -> {
+                if (!order.getUserId().equals(auth.userId())) {
+                    throw new BusinessRuleViolationException(
+                        "You are not allowed to access this order"
+                    );
+                }
+            }
+            case "RESTAURANT" -> {
+                //
+                // if (!order.getRestaurantId().equals(auth.userId())){}
+            }
+            case "ADMIN" -> {
+                //
+            }
+            default -> throw new BusinessRuleViolationException("Invalid role");
+        }
+
+        return order;
     }
 
-    private OrderResponse mapToResponse(Order order) {
-        List<OrderItemResponse> itemResponses = orderItemRepository.findByOrderId(order.getId())
-            .stream()
-            .map(this::mapItemToResponse)
-            .toList();
-
-        List<OrderStatusHistoryResponse> historyResponses = orderStatusHistoryRepository
-            .findByOrderIdOrderByCreatedAtAsc(order.getId())
-            .stream()
-            .map(this::mapHistoryToResponse)
-            .toList();
-
-        RestaurantResponse restaurant = productServiceClient.getRestaurant(order.getRestaurantId());
-
-        return OrderResponse.builder()
-            .id(order.getId())
-            .userId(order.getUserId())
-            .restaurantId(order.getRestaurantId())
-            .restaurantName(restaurant.getName())
-            .status(order.getStatus())
-            .totalAmount(order.getTotalAmount())
-            .deliveryAddress(order.getDeliveryAddress())
-            .customerNotes(order.getCustomerNotes())
-            .estimatedDeliveryTime(order.getEstimatedDeliveryTime())
-            .actualDeliveryTime(order.getActualDeliveryTime())
-            .paymentMethod(order.getPaymentMethod())
-            .paymentStatus(order.getPaymentStatus())
-            .items(itemResponses)
-            .statusHistory(historyResponses)
-            .createdAt(order.getCreatedAt())
-            .updatedAt(order.getUpdatedAt())
-            .build();
+    private void validateId(Long id) {
+        if (id == null || id <= 0) {
+            throw new DataValidationException("Invalid id");
+        }
     }
 
-    private OrderItemResponse mapItemToResponse(OrderItem item) {
-        return OrderItemResponse.builder()
-            .id(item.getId())
-            .productId(item.getProductId())
-            .productName(item.getProductName())
-            .quantity(item.getQuantity())
-            .unitPrice(item.getUnitPrice())
-            .totalPrice(item.getTotalPrice())
-            .notes(item.getNotes())
-            .build();
-    }
-
-    private OrderStatusHistoryResponse mapHistoryToResponse(OrderStatusHistory history) {
-        return OrderStatusHistoryResponse.builder()
-            .id(history.getId())
-            .status(history.getStatus())
-            .notes(history.getNotes())
-            .createdAt(history.getCreatedAt())
-            .build();
+    private Map<Long, ProductResponse> loadProducts(List<OrderItemRequest> items) {
+        return items.stream()
+            .map(OrderItemRequest::getProductId)
+            .distinct()
+            .collect(Collectors.toMap(
+                id -> id,
+                productClient::getProduct
+            ));
     }
 }
