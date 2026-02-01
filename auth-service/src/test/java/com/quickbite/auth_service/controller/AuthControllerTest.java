@@ -8,6 +8,7 @@ import com.quickbite.auth_service.dto.LoginResponse;
 import com.quickbite.auth_service.dto.RefreshTokenRequest;
 import com.quickbite.auth_service.dto.RegisterRequest;
 import com.quickbite.auth_service.exception.GlobalExceptionHandler;
+import com.quickbite.auth_service.security.JwtAuthenticationFilter;
 import com.quickbite.auth_service.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ public class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
     private ObjectMapper objectMapper;
