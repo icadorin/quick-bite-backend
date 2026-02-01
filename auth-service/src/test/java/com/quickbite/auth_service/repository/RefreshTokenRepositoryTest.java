@@ -3,6 +3,7 @@ package com.quickbite.auth_service.repository;
 import com.quickbite.auth_service.constants.TestConstants;
 import com.quickbite.auth_service.entity.RefreshToken;
 import com.quickbite.auth_service.entity.User;
+import com.quickbite.core.security.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -29,7 +30,7 @@ public class RefreshTokenRepositoryTest {
                 .email(TestConstants.VALID_EMAIL)
                 .fullName(TestConstants.VALID_FULL_NAME)
                 .status(User.UserStatus.ACTIVE)
-                .role(User.UserRole.CUSTOMER)
+                .role(UserRole.CUSTOMER)
                 .passwordHash("hashed")
                 .build()
         );

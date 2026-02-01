@@ -1,6 +1,7 @@
 package com.quickbite.auth_service.entity;
 
 import com.quickbite.core.entity.BaseEntity;
+import com.quickbite.core.security.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -38,10 +39,6 @@ public class User extends BaseEntity {
     @Column(length = 20, nullable = false)
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
-
-    public enum UserRole {
-        CUSTOMER, RESTAURANT_OWNER, ADMIN
-    }
 
     public enum UserStatus {
         ACTIVE, INACTIVE, SUSPENDED

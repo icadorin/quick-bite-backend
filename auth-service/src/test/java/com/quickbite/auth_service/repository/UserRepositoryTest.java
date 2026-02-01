@@ -2,6 +2,7 @@ package com.quickbite.auth_service.repository;
 
 import com.quickbite.auth_service.constants.TestConstants;
 import com.quickbite.auth_service.entity.User;
+import com.quickbite.core.security.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -19,7 +20,7 @@ public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    private User createUser(String email, User.UserStatus status, User.UserRole role) {
+    private User createUser(String email, User.UserStatus status, UserRole role) {
         return User.builder()
             .email(email)
             .fullName(TestConstants.VALID_FULL_NAME)
@@ -29,13 +30,13 @@ public class UserRepositoryTest {
             .build();
     }
 
-    private void saveUser(String email, User.UserStatus status, User.UserRole role) {
+    private void saveUser(String email, User.UserStatus status, UserRole role) {
         userRepository.save(createUser(email, status, role));
     }
 
     @Test
     void findByEmail_shouldReturnUser_whenEmailExists() {
-        saveUser(TestConstants.VALID_EMAIL, User.UserStatus.ACTIVE, User.UserRole.CUSTOMER);
+        saveUser(TestConstants.VALID_EMAIL, User.UserStatus.ACTIVE, UserRole.CUSTOMER);
 
         Optional<User> result =
             userRepository.findByEmail(TestConstants.VALID_EMAIL);
@@ -54,7 +55,7 @@ public class UserRepositoryTest {
 
     @Test
     void existsByEmailIgnoreCase_shouldReturnTrue_whenEmailExistsIgnoringCase() {
-        saveUser(TestConstants.VALID_EMAIL, User.UserStatus.ACTIVE, User.UserRole.CUSTOMER);
+        saveUser(TestConstants.VALID_EMAIL, User.UserStatus.ACTIVE, UserRole.CUSTOMER);
 
         assertTrue(userRepository.existsByEmailIgnoreCase(TestConstants.VALID_EMAIL.toLowerCase()));
         assertTrue(userRepository.existsByEmailIgnoreCase(TestConstants.VALID_EMAIL.toUpperCase()));
@@ -66,7 +67,7 @@ public class UserRepositoryTest {
         saveUser(
             "status_" + status.name().toLowerCase() + "@test.com",
             status,
-            User.UserRole.CUSTOMER
+            UserRole.CUSTOMER
         );
 
         List<User> result = userRepository.findByStatus(status);
@@ -74,8 +75,8 @@ public class UserRepositoryTest {
     }
 
     @ParameterizedTest
-    @EnumSource(User.UserRole.class)
-    void findByRole_shouldWorkForAllRoles(User.UserRole role) {
+    @EnumSource(UserRole.class)
+    void findByRole_shouldWorkForAllRoles(UserRole role) {
         saveUser(
             "role_" + role.name().toLowerCase() + "@test.com",
             User.UserStatus.ACTIVE,

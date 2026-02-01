@@ -15,6 +15,7 @@ import com.quickbite.auth_service.repository.UserRepository;
 import com.quickbite.core.exception.InvalidUserStatusException;
 import com.quickbite.core.exception.TokenException;
 import com.quickbite.core.exception.UserAlreadyExistsException;
+import com.quickbite.core.security.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,7 +88,7 @@ class AuthServiceTests {
             .email(TestConstants.VALID_EMAIL)
             .fullName(TestConstants.VALID_FULL_NAME)
             .status(User.UserStatus.ACTIVE)
-            .role(User.UserRole.CUSTOMER)
+            .role(UserRole.CUSTOMER)
             .build();
 
         validRefreshToken = RefreshToken.builder()

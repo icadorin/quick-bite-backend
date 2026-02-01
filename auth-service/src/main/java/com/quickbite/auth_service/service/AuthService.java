@@ -14,6 +14,7 @@ import com.quickbite.auth_service.repository.UserRepository;
 import com.quickbite.core.exception.InvalidUserStatusException;
 import com.quickbite.core.exception.TokenException;
 import com.quickbite.core.exception.UserAlreadyExistsException;
+import com.quickbite.core.security.UserRole;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -123,7 +124,7 @@ public class AuthService {
         User user = userCreateMapper.toEntity(request);
 
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setRole(User.UserRole.CUSTOMER);
+        user.setRole(UserRole.CUSTOMER);
         user.setStatus(User.UserStatus.ACTIVE);
 
         return userRepository.save(user);

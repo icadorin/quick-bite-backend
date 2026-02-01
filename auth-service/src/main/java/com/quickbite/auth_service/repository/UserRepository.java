@@ -1,6 +1,7 @@
 package com.quickbite.auth_service.repository;
 
 import com.quickbite.auth_service.entity.User;
+import com.quickbite.core.security.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,8 +19,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByStatus(User.UserStatus status);
 
-    List<User> findByRole(User.UserRole role);
+    List<User> findByRole(UserRole role);
 
-    @Query("SELECT COUNT(u) > 0 FROM User u WHERE LOWER(u.email) = LOWER(:email)")
+    @Query("""
+        SELECT COUNT(u) > 0
+        FROM User u
+        WHERE LOWER(u.email) = LOWER(:email)
+    """)
     boolean existsByEmailIgnoreCase(@Param("email") String email);
 }
