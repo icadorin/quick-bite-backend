@@ -90,7 +90,7 @@ public class ProductController {
 
     @GetMapping(ApiPaths.SEARCH)
     public List<ProductResponse> searchProducts(
-        @RequestParam @Size(min = 2) String name
+        @RequestParam @Size(min = 3) String name
     ) {
         return productService.searchProducts(name);
     }

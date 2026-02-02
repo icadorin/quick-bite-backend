@@ -36,7 +36,7 @@ public class CategoryController {
 
     @GetMapping(ApiPaths.SEARCH)
     public List<CategoryResponse> searchCategories(
-        @RequestParam @Size(min = 2) String name
+        @RequestParam @Size(min = 3) String name
     ) {
         return categoryService.searchCategories(name);
     }
