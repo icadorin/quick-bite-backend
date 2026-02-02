@@ -26,7 +26,7 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final CategoryCreateMapper createMapper;
-    private final CategoryPatchMapper  patchMapper;
+    private final CategoryPatchMapper patchMapper;
     private final CategoryResponseMapper responseMapper;
 
     public List<CategoryResponse> getAllCategories() {
