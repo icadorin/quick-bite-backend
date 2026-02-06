@@ -2,14 +2,23 @@ package com.quickbite.product_service.constants;
 
 public final class PublicEndPoints {
 
-	private PublicEndPoints() {}
+	public static final String[] PUBLIC = {
+		ApiPaths.PRODUCTS,
+		ApiPaths.PRODUCTS + ApiPaths.BY_ID,
+		ApiPaths.PRODUCTS + ApiPaths.SEARCH,
+		ApiPaths.PRODUCTS + ApiPaths.FEATURED,
+		ApiPaths.PRODUCTS + "/restaurant/**",
 
-	public static final String API_PRODUCTS = "/api/products/**";
-	public static final String API_RESTAURANTS = "/api/restaurants/**";
+		ApiPaths.RESTAURANTS,
+		ApiPaths.RESTAURANTS + ApiPaths.BY_ID,
+		ApiPaths.RESTAURANTS + ApiPaths.SEARCH,
+		ApiPaths.RESTAURANTS + ApiPaths.CUISINE,
+		ApiPaths.RESTAURANTS + ApiPaths.RATING,
 
-	public static final String PRODUCTS = "/products/**";
-	public static final String RESTAURANTS = "/restaurants/**";
+		ApiPaths.CATEGORIES,
+		ApiPaths.CATEGORIES + ApiPaths.BY_ID,
 
-	public static final String ACTUATOR_HEALTH = "/actuator/health";
-	public static final String ERROR = "/error";
+		"/api/v1/actuator/health",
+		"/error"
+	};
 }
