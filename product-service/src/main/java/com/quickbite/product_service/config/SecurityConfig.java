@@ -1,8 +1,6 @@
 package com.quickbite.product_service.config;
 
-import com.quickbite.core.security.UserRole;
 import com.quickbite.product_service.constants.PublicEndPoints;
-import com.quickbite.product_service.constants.SecuredEndPoints;
 import com.quickbite.product_service.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -25,27 +23,13 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
+        return http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    PublicEndPoints.PRODUCTS,
-                    PublicEndPoints.RESTAURANTS,
-                    PublicEndPoints.API_PRODUCTS,
-                    PublicEndPoints.API_RESTAURANTS,
-                    PublicEndPoints.ACTUATOR_HEALTH,
-                    PublicEndPoints.ERROR
-                ).permitAll()
-                .requestMatchers(SecuredEndPoints.ADMIN)
-                    .hasRole(UserRole.ADMIN.name())
-                .requestMatchers(SecuredEndPoints.RESTAURANT_MANAGEMENT)
-                    .hasAnyRole(
-                        UserRole.ADMIN.name(),
-                        UserRole.RESTAURANT_OWNER.name()
-                    )
+                .requestMatchers(PublicEndPoints.PUBLIC).permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(
@@ -53,7 +37,5 @@ public class SecurityConfig {
                 UsernamePasswordAuthenticationFilter.class
             )
             .build();
-
-        return http.build();
     }
 }
