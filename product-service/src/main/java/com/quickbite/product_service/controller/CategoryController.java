@@ -3,16 +3,20 @@ package com.quickbite.product_service.controller;
 import com.quickbite.product_service.constants.ApiPaths;
 import com.quickbite.product_service.dto.CategoryRequest;
 import com.quickbite.product_service.dto.CategoryResponse;
+import com.quickbite.product_service.dto.filter.CategoryFilter;
 import com.quickbite.product_service.service.CategoryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(ApiPaths.CATEGORIES)
@@ -20,48 +24,38 @@ import java.util.List;
 @Validated
 public class CategoryController {
 
-    private final CategoryService categoryService;
+    private final CategoryService service;
 
     @GetMapping
-    public List<CategoryResponse> getAllCategories() {
-        return categoryService.getAllCategories();
-    }
-
-    @GetMapping(ApiPaths.BY_ID)
-    public CategoryResponse getCategoryById(
-        @PathVariable("id") @Positive Long id
+    public Page<CategoryResponse> getCategories(
+        @RequestParam(required = false) String name,
+        @PageableDefault(size = 50, sort = "name",
+            direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return categoryService.getCategoryById(id);
-    }
-
-    @GetMapping(ApiPaths.SEARCH)
-    public List<CategoryResponse> searchCategories(
-        @RequestParam @Size(min = 3) String name
-    ) {
-        return categoryService.searchCategories(name);
+        var filter = new CategoryFilter(name, true);
+        return service.getCategories(filter, pageable);
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryResponse createCategory(
-        @Valid @RequestBody CategoryRequest request
-    ) {
-        return categoryService.createCategory(request);
+    public CategoryResponse create(@Valid @RequestBody CategoryRequest request) {
+        return service.createCategory(request);
     }
 
     @PutMapping(ApiPaths.BY_ID)
-    public CategoryResponse updateCategory(
-            @PathVariable("id") @Positive Long id,
-            @Valid @RequestBody CategoryRequest request
+    @PreAuthorize("hasRole('ADMIN')")
+    public CategoryResponse update(
+        @PathVariable("id") @Positive Long id,
+        @Valid @RequestBody CategoryRequest request
     ) {
-        return categoryService.updateCategory(id, request);
+        return service.updateCategory(id, request);
     }
 
     @DeleteMapping(ApiPaths.BY_ID)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCategory(
-        @PathVariable("id") @Positive Long id
-    ) {
-        categoryService.deleteCategory(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable("id") @Positive Long id) {
+        service.deleteCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }
