@@ -5,6 +5,7 @@ import com.quickbite.core.exception.DataValidationException;
 import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
+import com.quickbite.product_service.dto.filter.ProductFilter;
 import com.quickbite.product_service.entity.Category;
 import com.quickbite.product_service.entity.Product;
 import com.quickbite.product_service.entity.Restaurant;
@@ -13,13 +14,15 @@ import com.quickbite.product_service.mapper.ProductPatchMapper;
 import com.quickbite.product_service.mapper.ProductResponseMapper;
 import com.quickbite.product_service.repository.CategoryRepository;
 import com.quickbite.product_service.repository.ProductRepository;
+import com.quickbite.product_service.repository.specification.ProductSpecification;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -34,9 +37,25 @@ public class ProductService {
     private final ProductCreateMapper createMapper;
     private final ProductResponseMapper responseMapper;
 
-    public List<ProductResponse> getAllAvailableProducts() {
+    public Page<ProductResponse> getProducts(
+        ProductFilter filter,
+        Pageable pageable
+    ) {
+        var specification =
+            ProductSpecification.withFilters(
+                filter == null
+                    ? new ProductFilter(null, null, null, null, null)
+                    : filter
+            );
+
+        return productRepository
+            .findAll(specification, pageable)
+            .map(responseMapper::toResponse);
+    }
+
+    public List<ProductResponse> getFeaturedProducts() {
         return responseMapper.toResponseList(
-            productRepository.findByIsAvailableTrue()
+            productRepository.findByIsFeaturedTrueAndIsAvailableTrue()
         );
     }
 
@@ -45,7 +64,7 @@ public class ProductService {
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Product not found with id: " + id
+                "Product not found with id: %d".formatted(id)
             ));
 
         return responseMapper.toResponse(product);
@@ -61,46 +80,43 @@ public class ProductService {
         Category category = null;
         if (request.getCategoryId() != null) {
             category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() ->
-                    new ResourceNotFoundException(
-                        "Category not found with id: " + request.getCategoryId()
-                    )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "Category not found with id: %d".formatted(request.getCategoryId())
+                ));
         }
 
         Product product = createMapper.toEntity(request);
         product.setRestaurant(restaurant);
         product.setCategory(category);
 
-        return responseMapper.toResponse(
-            productRepository.save(product)
-        );
+        return responseMapper.toResponse(productRepository.save(product));
     }
 
     @Transactional
-    public ProductResponse updateProduct(Long id, ProductRequest request) {
+    public ProductResponse updateProduct(Long id, @Valid ProductRequest request) {
         validatePricingRules(request);
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Product not found with id: " + id
+                "Product not found with id: %d".formatted(id)
             ));
 
-        Restaurant restaurant = restaurantService.getRestaurantEntity(request.getRestaurantId());
-        product.setRestaurant(restaurant);
+        if (request.getRestaurantId() != null) {
+            Restaurant restaurant = restaurantService.getRestaurantEntity(request.getRestaurantId());
+            product.setRestaurant(restaurant);
+        }
 
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                    "Category not found with id: " + request.getCategoryId())
-                );
+                    "Category not found with id: %d".formatted(id)
+                ));
             product.setCategory(category);
         }
 
         patchMapper.updateProductFromRequest(request, product);
 
-        Product updated = productRepository.save(product);
-        return responseMapper.toResponse(updated);
+        return responseMapper.toResponse(productRepository.save(product));
     }
 
     @Transactional
@@ -109,68 +125,15 @@ public class ProductService {
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Product not found with id: " + id
+                "Product not found with id: %d".formatted(id)
             ));
 
         product.setIsAvailable(false);
         productRepository.save(product);
     }
 
-    public List<ProductResponse> getFeaturedProducts() {
-        return responseMapper.toResponseList(
-            productRepository.findByIsFeaturedTrueAndIsAvailableTrue()
-        );
-    }
-
-    public List<ProductResponse> getProductsByPriceRange(
-        Long restaurantId,
-        BigDecimal minPrice,
-        BigDecimal maxPrice
-    ) {
-        validatePriceRange(minPrice, maxPrice);
-
-        return responseMapper.toResponseList(
-            productRepository.findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
-                restaurantId,
-                minPrice,
-                maxPrice
-            )
-        );
-    }
-
-    public List<ProductResponse> getProductsByRestaurant(Long restaurantId) {
-        validateId(restaurantId, "restaurant");
-
-        return responseMapper.toResponseList(
-            productRepository.findByRestaurantIdAndIsAvailableTrue(restaurantId)
-        );
-    }
-
-    public List<ProductResponse> searchProducts(String name) {
-        return responseMapper.toResponseList(
-            productRepository.findByNameContainingIgnoreCaseAndIsAvailableTrue(name)
-        );
-    }
-
-    public List<ProductResponse> getProductsByRestaurant(Long restaurantId, Long categoryId) {
-        validateId(restaurantId, "restaurant");
-        validateId(categoryId, "category");
-
-        return responseMapper.toResponseList(
-            productRepository.findByRestaurantIdAndCategoryIdAndIsAvailableTrue(
-                restaurantId,
-                categoryId
-            )
-        );
-    }
-
-    public List<ProductResponse> getProductsByCategory(Long categoryId) {
-        return responseMapper.toResponseList(
-            productRepository.findByCategoryIdAndIsAvailableTrue(categoryId)
-        );
-    }
-
     public Long countProductsByRestaurant(Long restaurantId) {
+        validateId(restaurantId, "restaurant");
         return productRepository.countByRestaurantIdAndIsAvailableTrue(restaurantId);
     }
 
@@ -193,23 +156,8 @@ public class ProductService {
     private void validateId(Long id, String fieldName) {
         if (id == null || id <= 0) {
             throw new DataValidationException(
-                "Invalid " +  fieldName + " ID"
+                "Invalid %s ID: %d".formatted(fieldName, id)
             );
-        }
-    }
-
-    private void validatePriceRange(BigDecimal minPrice,  BigDecimal maxPrice) {
-        if (minPrice == null || maxPrice == null) {
-            throw new DataValidationException("Price range values must not be null");
-        }
-
-        if (minPrice.compareTo(BigDecimal.ZERO) < 0 ||
-            maxPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new DataValidationException("Price values must be zero or positive");
-        }
-
-        if (minPrice.compareTo(maxPrice) > 0) {
-            throw new DataValidationException("minPrice must be less than or equal to maxPrice");
         }
     }
 }
