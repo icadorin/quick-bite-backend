@@ -5,152 +5,176 @@ import com.quickbite.core.exception.DataValidationException;
 import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.product_service.dto.RestaurantRequest;
 import com.quickbite.product_service.dto.RestaurantResponse;
+import com.quickbite.product_service.dto.filter.RestaurantFilter;
 import com.quickbite.product_service.entity.Restaurant;
 import com.quickbite.product_service.mapper.RestaurantCreateMapper;
 import com.quickbite.product_service.mapper.RestaurantPatchMapper;
 import com.quickbite.product_service.mapper.RestaurantResponseMapper;
 import com.quickbite.product_service.repository.RestaurantRepository;
+import com.quickbite.product_service.repository.specification.RestaurantSpecification;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Validated
 public class RestaurantService {
 
-    private final RestaurantRepository restaurantRepository;
+    private final RestaurantRepository repository;
     private final RestaurantCreateMapper createMapper;
     private final RestaurantPatchMapper patchMapper;
     private final RestaurantResponseMapper responseMapper;
 
-    public List<RestaurantResponse> getAllActiveRestaurants() {
-        return responseMapper.toResponseList(
-            restaurantRepository.findByIsActiveTrue()
-        );
+    public Page<RestaurantResponse> getRestaurants(
+        RestaurantFilter filter,
+        Pageable pageable
+    ) {
+        var safeFilter = filter == null
+            ? new RestaurantFilter(null, null, null, null, true)
+            : filter;
+
+        var specification = RestaurantSpecification.withFilters(safeFilter);
+
+        return repository
+            .findAll(specification, pageable)
+            .map(responseMapper::toResponse);
     }
 
     public RestaurantResponse getRestaurantById(Long id) {
         validateId(id, "restaurant");
 
-        Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
+        Restaurant restaurant = repository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Restaurant not found with id: " + id
+                "Restaurant not found with id: %d".formatted(id)
             ));
 
         return responseMapper.toResponse(restaurant);
     }
 
-    public List<RestaurantResponse> getRestaurantsByOwner(Long ownerId) {
+    public Restaurant getRestaurantEntity(Long id) {
+        validateId(id, "restaurant");
+
+        return repository.findByIdAndIsActiveTrue(id)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "Restaurant not found with id: %d".formatted(id)
+            ));
+    }
+
+    public Page<RestaurantResponse> getRestaurantsByOwner(Long ownerId, Pageable pageable) {
         validateId(ownerId, "owner");
 
-        return responseMapper.toResponseList(
-            restaurantRepository.findByOwnerIdAndIsActiveTrue(ownerId)
+        var filter = new RestaurantFilter(
+            null,
+            ownerId,
+            null,
+            null,
+            true
         );
+
+        var spec = RestaurantSpecification.withFilters(filter);
+
+        return repository.findAll(spec, pageable)
+            .map(responseMapper::toResponse);
     }
 
     @Transactional
-    public RestaurantResponse createRestaurant(@Valid RestaurantRequest request) {
-
-        validateUniqueRestaurantName(
-            request.getName(),
-            request.getOwnerId(),
-            null
-        );
+    public RestaurantResponse createRestaurant(RestaurantRequest request) {
+        validateUniqueRestaurantName(request.getName(), request.getOwnerId(), null);
 
         Restaurant restaurant = createMapper.toEntity(request);
         restaurant.setIsActive(true);
 
-        return responseMapper.toResponse(
-            restaurantRepository.save(restaurant)
-        );
+        return responseMapper.toResponse(repository.save(restaurant));
     }
 
     @Transactional
-    public RestaurantResponse updateRestaurant(Long id, @Valid RestaurantRequest request) {
+    public RestaurantResponse updateRestaurant(Long id, RestaurantRequest request) {
         validateId(id, "restaurant");
 
-        Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
+        Restaurant restaurant = repository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Restaurant not found with id: " + id
+                "Restaurant not found with id: %d".formatted(id)
             ));
 
-        validateUniqueRestaurantName(
-            request.getName(),
-            request.getOwnerId(),
-            id
-        );
+        validateUniqueRestaurantName(request.getName(), request.getOwnerId(), id);
 
         patchMapper.updateRestaurantFromRequest(request, restaurant);
 
-        return responseMapper.toResponse(
-            restaurantRepository.save(restaurant)
-        );
+        return responseMapper.toResponse(repository.save(restaurant));
     }
 
     @Transactional
     public void deleteRestaurant(Long id) {
         validateId(id, "restaurant");
 
-        Restaurant restaurant = restaurantRepository.findByIdAndIsActiveTrue(id)
+        Restaurant restaurant = repository.findByIdAndIsActiveTrue(id)
             .orElseThrow(() -> new ResourceNotFoundException(
-                "Restaurant not found with id: " + id
+                "Restaurant not found with id: %d".formatted(id)
             ));
 
         restaurant.setIsActive(false);
-        restaurantRepository.save(restaurant);
+        repository.save(restaurant);
     }
 
-    public List<RestaurantResponse> searchRestaurants(String name) {
+    public Page<RestaurantResponse> searchRestaurants(String name, Pageable pageable) {
         validateRequiredText(name, "Search name");
 
-        return responseMapper.toResponseList(
-            restaurantRepository.searchActiveRestaurantsByName(name)
+        var filter = new RestaurantFilter(
+            name.trim(),
+            null,
+            null,
+            null,
+            true
         );
+
+        var spec = RestaurantSpecification.withFilters(filter);
+
+        return repository.findAll(spec, pageable)
+            .map(responseMapper::toResponse);
     }
 
-    public List<RestaurantResponse> getRestaurantsByCuisine(String cuisineType) {
+    public Page<RestaurantResponse> getRestaurantsByCuisine(String cuisineType, Pageable pageable) {
         validateRequiredText(cuisineType, "Cuisine type");
 
-        return responseMapper.toResponseList(
-            restaurantRepository.findByCuisineTypeAndIsActiveTrue(cuisineType)
+        var filter = new RestaurantFilter(
+            null,
+            null,
+            cuisineType,
+            null,
+            true
         );
+
+        var spec = RestaurantSpecification.withFilters(filter);
+
+        return repository.findAll(spec, pageable)
+            .map(responseMapper::toResponse);
     }
 
-    public List<RestaurantResponse> getRestaurantsWithMinRating(Double minRating) {
+    public Page<RestaurantResponse> getRestaurantsWithMinRating(Double minRating, Pageable pageable) {
         if (minRating == null || minRating < 0) {
             throw new DataValidationException("Minimum rating must be zero or positive");
         }
 
-        return responseMapper.toResponseList(
-            restaurantRepository.findActiveRestaurantsWithMinRating(minRating)
+        var filter = new RestaurantFilter(
+            null,
+            null,
+            null,
+            minRating,
+            true
         );
+
+        var spec = RestaurantSpecification.withFilters(filter);
+
+        return repository.findAll(spec, pageable)
+            .map(responseMapper::toResponse);
     }
 
-    public Restaurant getRestaurantEntity(Long id) {
-        validateId(id, "restaurant");
-
-        return restaurantRepository.findByIdAndIsActiveTrue(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "Restaurant not found with id: " + id
-            ));
-    }
-
-    private void validateUniqueRestaurantName(
-        String name,
-        Long ownerId,
-        Long currentRestaurantId
-    ) {
-        boolean exists = restaurantRepository
-            .existsByNameAndOwnerIdAndIdNot(
-                name,
-                ownerId,
-                currentRestaurantId
-            );
+    private void validateUniqueRestaurantName(String name, Long ownerId, Long currentRestaurantId) {
+        boolean exists = repository.existsByNameAndOwnerIdAndIdNot(name, ownerId, currentRestaurantId);
 
         if (exists) {
             throw new BusinessRuleViolationException(
@@ -161,17 +185,13 @@ public class RestaurantService {
 
     private void validateId(Long id, String fieldName) {
         if (id == null || id <= 0) {
-            throw new DataValidationException(
-                "Invalid " + fieldName + " ID"
-            );
+            throw new DataValidationException("Invalid %s ID: %d".formatted(fieldName, id));
         }
     }
 
     private void validateRequiredText(String value, String fieldName) {
         if (value == null || value.isBlank()) {
-            throw new DataValidationException(
-                fieldName + " must not be blank"
-            );
+            throw new DataValidationException("%s must not be blank".formatted(fieldName));
         }
     }
 }
