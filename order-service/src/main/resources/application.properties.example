@@ -22,3 +22,6 @@ logging.level.org.hibernate.SQL=DEBUG
 logging.level.com.quickbite.order_service=DEBUG
 logging.level.com.quickbite.order_service.service=DEBUG
 logging.level.com.quickbite.order_service.client=DEBUG
+
+# Key
+spring.config.import=classpath:application-core.yml

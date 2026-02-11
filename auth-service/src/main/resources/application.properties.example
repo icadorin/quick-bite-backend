@@ -17,5 +17,5 @@ spring.jpa.properties.hibernate.format_sql=true
 logging.level.org.hibernate.SQL=DEBUG
 logging.level.com.quickbite.auth_service=DEBUG
 
-# Chave
-jwt.secret=minhaChave
+# Key
+spring.config.import=classpath:application-core.yml

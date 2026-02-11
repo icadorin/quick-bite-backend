@@ -17,3 +17,6 @@ spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
 # Logging
 logging.level.org.hibernate.SQL=DEBUG
 logging.level.com.quickbite.product_service=DEBUG
+
+# Key
+spring.config.import=classpath:application-core.yml
