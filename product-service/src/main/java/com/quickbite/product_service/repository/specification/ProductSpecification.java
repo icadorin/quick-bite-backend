@@ -2,7 +2,13 @@ package com.quickbite.product_service.repository.specification;
 
 import com.quickbite.product_service.dto.filter.ProductFilter;
 import com.quickbite.product_service.entity.Product;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public final class ProductSpecification {
 
@@ -12,50 +18,62 @@ public final class ProductSpecification {
 
         return (root, query, cb) -> {
 
-            var predicate = cb.conjunction();
+            List<Predicate> predicates = new ArrayList<>();
 
-            predicate.getExpressions().add(
-                cb.isTrue(root.get("isAvailable"))
-            );
+            var restaurantJoin = root.join("restaurant");
+            var categoryJoin = root.join("category", JoinType.LEFT);
 
-            predicate.getExpressions().add(
-                cb.isTrue(root.get("restaurant").get("isActive"))
-            );
+            predicates.add(cb.isTrue(root.get("isAvailable")));
+            predicates.add(cb.isTrue(root.get("restaurant").get("isActive")));
 
             if (filter.restaurantId() != null) {
-                predicate.getExpressions().add(
-                    cb.equal(root.get("restaurant").get("id"), filter.restaurantId())
+                predicates.add(
+                    cb.equal(
+                        restaurantJoin.get("id"),
+                        filter.restaurantId()
+                    )
                 );
             }
 
             if (filter.categoryId() != null) {
-                predicate.getExpressions().add(
-                    cb.equal(root.get("category").get("id"), filter.categoryId())
+                predicates.add(
+                    cb.equal(
+                        categoryJoin.get("id"),
+                        filter.categoryId()
+                    )
                 );
             }
 
-            if (filter.name() != null && filter.name().length() >= 3) {
-                predicate.getExpressions().add(
+            if (filter.name() != null && !filter.name().isBlank()) {
+                String pattern = "%%%s%%".formatted(filter.name().toLowerCase(Locale.ROOT));
+
+                predicates.add(
                     cb.like(
                         cb.lower(root.get("name")),
-                        "%%%s%%".formatted(filter.name().toLowerCase())
+                        pattern
                     )
                 );
             }
 
             if (filter.minPrice() != null) {
-                predicate.getExpressions().add(
-                    cb.greaterThanOrEqualTo(root.get("price"), filter.minPrice())
+                predicates.add(
+                    cb.greaterThanOrEqualTo(
+                        root.get("price"),
+                        filter.minPrice()
+                    )
                 );
             }
 
             if (filter.maxPrice() != null) {
-                predicate.getExpressions().add(
-                    cb.lessThanOrEqualTo(root.get("price"), filter.maxPrice())
+                predicates.add(
+                    cb.lessThanOrEqualTo(
+                        root.get("price"),
+                        filter.maxPrice()
+                    )
                 );
             }
 
-            return predicate;
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 }
