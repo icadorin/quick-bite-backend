@@ -2,42 +2,33 @@ package com.quickbite.product_service.repository;
 
 import com.quickbite.product_service.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
-
-    List<Product> findByRestaurantIdAndIsAvailableTrue(Long restaurantId);
-
-    List<Product> findByCategoryIdAndIsAvailableTrue(Long categoryId);
-
-    List<Product> findByIsAvailableTrue();
-
-    List<Product> findByRestaurantIdAndCategoryIdAndIsAvailableTrue(Long restaurantId, Long categoryId);
-
-    List<Product> findByNameContainingIgnoreCaseAndIsAvailableTrue(String name);
+@Repository
+public interface ProductRepository extends
+    JpaRepository<Product, Long>,
+    JpaSpecificationExecutor<Product> {
 
     List<Product> findByIsFeaturedTrueAndIsAvailableTrue();
 
     Long countByRestaurantIdAndIsAvailableTrue(Long restaurantId);
 
-    Long countByCategoryIdAndIsAvailableTrue(Long categoryId);
-
-    List<Product> findByRestaurantIdAndPriceBetweenAndIsAvailableTrue(
-        Long restaurantId,
-        BigDecimal minPrice,
-        BigDecimal maxPrice
+    @Query("""
+        SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END
+        FROM Product p
+        WHERE p.id = :productId
+            AND p.restaurant.owner.email = :ownerEmail
+            AND p.isAvailable = true
+    """)
+    boolean existsByAndRestaurantOwnerEmail(
+        @Param("productId") Long productId,
+        @Param("ownerEmail") String ownerEmail
     );
 
-    @Query("""
-        SELECT p
-        FROM Product p
-        WHERE p.isAvailable = true
-          AND p.restaurant.isActive = true
-          AND LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))
-    """)
-    List<Product> searchAvailableProductsByName(@Param("name") String name);
+    Long countByCategoryIdAndIsAvailableTrue(Long categoryId);
 }
