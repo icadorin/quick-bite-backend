@@ -1,5 +1,6 @@
 package com.quickbite.product_service.utils;
 
+import com.quickbite.product_service.security.AuthenticatedUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -17,12 +18,22 @@ public final class SecurityUtils {
         return auth;
     }
 
-    public static String getCurrentUserEmail() {
-        return getAuthentication().getName();
+    public static AuthenticatedUser getCurrentUser() {
+        Object principal = getAuthentication().getPrincipal();
+
+        if (principal instanceof AuthenticatedUser user) {
+            return user;
+        }
+
+        throw new IllegalStateException("Invalid authentication principal");
     }
 
     public static Long getCurrentUserId() {
-        return Long.valueOf(getAuthentication().getName());
+        return getCurrentUser().getId();
+    }
+
+    public static String getCurrentUserEmail() {
+        return getCurrentUser().getEmail();
     }
 
     public static boolean hasRole(String role) {
