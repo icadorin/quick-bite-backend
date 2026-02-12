@@ -31,11 +31,8 @@ public class ProductController {
     @GetMapping
     public Page<ProductResponse> getProducts(
         ProductFilter filter,
-        @PageableDefault(
-            size = 20,
-            sort = "name",
-            direction = Sort.Direction.ASC
-        ) Pageable pageable
+        @PageableDefault(size = 20, sort = "name",
+            direction = Sort.Direction.ASC) Pageable pageable
     ) {
         return service.getProducts(filter, pageable);
     }

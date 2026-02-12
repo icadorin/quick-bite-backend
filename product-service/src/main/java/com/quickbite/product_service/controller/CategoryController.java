@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +27,9 @@ public class CategoryController {
 
     @GetMapping
     public Page<CategoryResponse> getCategories(
-        @RequestParam(required = false) String name,
-        @PageableDefault(size = 50, sort = "name",
-            direction = Sort.Direction.ASC) Pageable pageable
+        CategoryFilter filter,
+        @PageableDefault(size = 50, sort = "name") Pageable pageable
     ) {
-        var filter = new CategoryFilter(name, true);
         return service.getCategories(filter, pageable);
     }
 
