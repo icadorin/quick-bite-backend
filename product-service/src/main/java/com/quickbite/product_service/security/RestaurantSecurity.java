@@ -13,12 +13,12 @@ public class RestaurantSecurity {
 
     public boolean canManageRestaurant(Long restaurantId) {
 
-        String email = SecurityUtils.getCurrentUserEmail();
-
         if (SecurityUtils.hasRole("ADMIN")) {
             return true;
         }
 
-        return repository.existsByIdAndOwnerEmail(restaurantId, email);
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        return repository.existsByIdAndOwnerId(restaurantId, userId);
     }
 }
