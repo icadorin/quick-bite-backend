@@ -20,7 +20,7 @@ public class JwtService {
 
     private static final int MILLISECONDS_TO_SECONDS = 1000;
 
-    @Value("${jwt.secret:fallbackSecretKeyForDevelopment}")
+    @Value("${security.jwt.secret}")
     private String secret;
 
     @Value("${jwt.expiration:3600000}")
