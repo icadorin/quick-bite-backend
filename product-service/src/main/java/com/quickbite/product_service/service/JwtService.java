@@ -44,6 +44,16 @@ public class JwtService {
         return getClaims(token).getSubject();
     }
 
+    public Long getUserIdFromToken(String token) {
+        Object value = getClaims(token).get("userId");
+
+        if (value == null) {
+            throw new InvalidTokenException("Token missing userId");
+        }
+
+        return Long.valueOf(value.toString());
+    }
+
     private Claims getClaims(String token) {
         return Jwts.parserBuilder()
             .setSigningKey(secretKey)

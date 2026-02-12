@@ -12,7 +12,7 @@ public interface RestaurantRepository extends
 
     Optional<Restaurant> findByIdAndIsActiveTrue(Long id);
 
-    boolean existsByIdAndOwnerEmail(Long id, String ownerEmail);
+    boolean existsByIdAndOwnerId(Long id, Long ownerId);
 
     boolean existsByNameAndOwnerId(String name, Long ownerId);
 

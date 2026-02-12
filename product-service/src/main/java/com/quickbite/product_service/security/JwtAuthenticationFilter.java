@@ -52,10 +52,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             jwtService.validateToken(token);
 
+            String email = jwtService.getEmailFromToken(token);
             String role =  jwtService.getRoleFromToken(token);
+            Long userId = jwtService.getUserIdFromToken(token);
+
+            AuthenticatedUser user =
+                new AuthenticatedUser(userId, email);
 
             var auth = new UsernamePasswordAuthenticationToken(
-                jwtService.getEmailFromToken(token),
+                user,
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_" + role))
             );
@@ -63,6 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(auth);
 
             filterChain.doFilter(request, response);
+
         } catch (AuthenticationException | BaseBusinessException ex) {
             resolver.resolveException(request, response, null, ex);
         }
