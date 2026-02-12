@@ -31,8 +31,7 @@ public class RestaurantController {
     @GetMapping
     public Page<RestaurantResponse> getRestaurants(
         RestaurantFilter filter,
-        @PageableDefault(size = 20, sort = "name")
-        Pageable pageable
+        @PageableDefault(size = 20, sort = "name") Pageable pageable
     ) {
         return service.getRestaurants(filter, pageable);
     }
