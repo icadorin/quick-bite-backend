@@ -20,13 +20,16 @@ public final class ProductSpecification {
 
             List<Predicate> predicates = new ArrayList<>();
 
-            var restaurantJoin = root.join("restaurant");
-            var categoryJoin = root.join("category", JoinType.LEFT);
-
             predicates.add(cb.isTrue(root.get("isAvailable")));
             predicates.add(cb.isTrue(root.get("restaurant").get("isActive")));
 
+            if (filter == null) {
+                return cb.and(predicates.toArray(new Predicate[0]));
+            }
+
             if (filter.restaurantId() != null) {
+                var restaurantJoin = root.join("restaurant");
+
                 predicates.add(
                     cb.equal(
                         restaurantJoin.get("id"),
@@ -36,6 +39,8 @@ public final class ProductSpecification {
             }
 
             if (filter.categoryId() != null) {
+                var categoryJoin = root.join("category", JoinType.LEFT);
+
                 predicates.add(
                     cb.equal(
                         categoryJoin.get("id"),

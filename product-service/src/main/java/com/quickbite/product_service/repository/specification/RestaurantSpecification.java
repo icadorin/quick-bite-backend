@@ -17,6 +17,10 @@ public final class RestaurantSpecification {
 
         return (root, query, cb) -> {
 
+            if (filter == null) {
+                return cb.conjunction();
+            }
+
             List<Predicate> predicates = new ArrayList<>();
 
             if (filter.isActive() != null) {

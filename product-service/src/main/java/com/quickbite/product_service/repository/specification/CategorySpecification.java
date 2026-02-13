@@ -19,6 +19,11 @@ public final class CategorySpecification {
 
             List<Predicate> predicates = new ArrayList<>();
 
+            if (filter == null) {
+                predicates.add(cb.isTrue(root.get("isActive")));
+                return cb.and(predicates.toArray(new Predicate[0]));
+            }
+
             if (filter.isActive() == null || filter.isActive()) {
                 predicates.add(cb.isTrue(root.get("isActive")));
             }
