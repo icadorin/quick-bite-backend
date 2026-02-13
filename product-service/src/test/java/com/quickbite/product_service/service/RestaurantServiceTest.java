@@ -120,7 +120,7 @@ public class RestaurantServiceTest {
         );
 
         assertEquals(
-            "Restaurant name already exists for this owner",
+            TestConstants.RESTAURANT_NAME_ALREADY_EXISTS_MESSAGE,
             ex.getMessage()
         );
 
@@ -209,7 +209,7 @@ public class RestaurantServiceTest {
         when(responseMapper.toResponse(activeRestaurant))
             .thenReturn(response);
 
-        var result = service.searchRestaurants("Pizza", pageable);
+        var result = service.searchRestaurants(TestConstants.SEARCH_TERM_PIZZA, pageable);
 
         assertEquals(1, result.getTotalElements());
     }
@@ -323,7 +323,7 @@ public class RestaurantServiceTest {
             () -> service.getRestaurantsByOwner(invalidOwnerId, pageable)
         );
 
-        assertEquals("Invalid owner ID: -1", exception.getMessage());
+        assertEquals(TestConstants.INVALID_OWNER_ID_MESSAGE, exception.getMessage());
 
         verifyNoMoreInteractions(repository);
     }

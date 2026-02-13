@@ -215,10 +215,8 @@ public class CategoryServiceTest {
             .thenReturn(Optional.of(activeCategory));
         when(categoryRepository.existsByName(TestConstants.UPDATED_CATEGORY_NAME))
             .thenReturn(false);
-        when(categoryRepository.save(activeCategory))
-            .thenReturn(activeCategory);
-        when(responseMapper.toResponse(activeCategory))
-            .thenReturn(categoryResponse);
+        when(categoryRepository.save(activeCategory)).thenReturn(activeCategory);
+        when(responseMapper.toResponse(activeCategory)).thenReturn(categoryResponse);
 
         doNothing().when(patchMapper)
             .updateCategoryFromRequest(updateRequest, activeCategory);
@@ -250,12 +248,13 @@ public class CategoryServiceTest {
     @Test
     void createCategory_shouldTrimNameBeforeSaving() {
         CategoryRequest request = CategoryRequest.builder()
-            .name(" Pizza ")
+            .name(TestConstants.CATEGORY_NAME_WITH_SPACES)
             .build();
 
         Category category = Category.builder().build();
 
-        when(categoryRepository.existsByName("Pizza")).thenReturn(false);
+        when(categoryRepository.existsByName(TestConstants.CATEGORY_NAME_TRIMMED))
+            .thenReturn(false);
         when(createMapper.toEntity(request)).thenReturn(category);
         when(categoryRepository.save(category)).thenReturn(category);
         when(responseMapper.toResponse(category)).thenReturn(categoryResponse);
@@ -263,23 +262,24 @@ public class CategoryServiceTest {
         categoryService.createCategory(request);
 
         verify(createMapper).toEntity(request);
-        verify(categoryRepository).existsByName("Pizza");
+        verify(categoryRepository).existsByName(TestConstants.CATEGORY_NAME_TRIMMED);
         verify(categoryRepository).save(argThat((cat ->
-            "Pizza".equals(cat.getName()))
+            TestConstants.CATEGORY_NAME_TRIMMED.equals(cat.getName()))
         ));
     }
 
     @Test
     void createCategory_shouldApplyDefaultValues() {
         CategoryRequest request = CategoryRequest.builder()
-            .name(" Pizza ")
+            .name(TestConstants.CATEGORY_NAME_WITH_SPACES)
             .isActive(null)
             .sortOrder(null)
             .build();
 
         Category category = Category.builder().build();
 
-        when(categoryRepository.existsByName("Pizza")).thenReturn(false);
+        when(categoryRepository.existsByName(TestConstants.CATEGORY_NAME_TRIMMED))
+            .thenReturn(false);
         when(createMapper.toEntity(request)).thenReturn(category);
         when(categoryRepository.save(category)).thenReturn(category);
         when(responseMapper.toResponse(category)).thenReturn(categoryResponse);

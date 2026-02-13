@@ -70,7 +70,7 @@ public class CategoryControllerTest {
             .thenReturn(page);
 
         mockMvc.perform(get(ApiPaths.CATEGORIES)
-                .param("name", "Food"))
+                .param("name", TestConstants.TEST_CATEGORY_FILTER_NAME))
             .andExpect(status().isOk());
 
         verify(categoryService).getCategories(

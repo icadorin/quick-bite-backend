@@ -1,5 +1,6 @@
 package com.quickbite.product_service.repository;
 
+import com.quickbite.product_service.constants.TestConstants;
 import com.quickbite.product_service.dto.filter.CategoryFilter;
 import com.quickbite.product_service.entity.Category;
 import com.quickbite.product_service.repository.specification.CategorySpecification;
@@ -26,12 +27,12 @@ public class CategoryRepositoryTest {
     void shouldReturnOnlyActiveCategories_whenFilterIsActiveTrue() {
 
         Category active = Category.builder()
-            .name("ActiveCategory")
+            .name(TestConstants.ACTIVE_CATEGORY_NAME)
             .isActive(true)
             .build();
 
         Category inactive = Category.builder()
-            .name("InactiveCategory")
+            .name(TestConstants.INACTIVE_CATEGORY_NAME)
             .isActive(false)
             .build();
 
@@ -44,6 +45,6 @@ public class CategoryRepositoryTest {
         assertEquals(1, result.size());
         Category first = result.getFirst();
         assertTrue(first.getIsActive());
-        assertEquals("ActiveCategory", first.getName());
+        assertEquals(TestConstants.ACTIVE_CATEGORY_NAME, first.getName());
     }
 }

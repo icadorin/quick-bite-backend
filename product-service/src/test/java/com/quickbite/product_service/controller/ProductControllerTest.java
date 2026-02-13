@@ -75,9 +75,9 @@ public class ProductControllerTest {
             .thenReturn(page);
 
         mockMvc.perform(get(ApiPaths.PRODUCTS)
-                .param("page", "0")
-                .param("size", "20")
-                .param("sort", "name,asc"))
+                .param("page", TestConstants.DEFAULT_PAGE)
+                .param("size", TestConstants.DEFAULT_SIZE)
+                .param("sort", TestConstants.DEFAULT_SORT))
             .andExpect(status().isOk());
 
         verify(service).getProducts(any(ProductFilter.class), any());

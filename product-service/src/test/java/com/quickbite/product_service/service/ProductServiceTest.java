@@ -315,8 +315,8 @@ public class ProductServiceTest {
     @Test
     void createProduct_shouldThrow_whereComparePriceInvalid() {
         ProductRequest invalidRequest = validProductRequest.toBuilder()
-            .price(BigDecimal.valueOf(100))
-            .comparePrice(BigDecimal.valueOf(50))
+            .price(TestConstants.INVALID_PRICE_HIGH)
+            .comparePrice(TestConstants.INVALID_COMPARE_PRICE_LOW)
             .build();
 
         BusinessRuleViolationException ex = assertThrows(
@@ -325,7 +325,7 @@ public class ProductServiceTest {
         );
 
         assertEquals(
-            "Compare price should be greater than current price",
+            TestConstants.COMPARE_PRICE_MUST_BE_GREATER_THAN_CURRENT_PRICE,
             ex.getMessage()
         );
         verifyNoInteractions(productRepository);

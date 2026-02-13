@@ -77,9 +77,9 @@ class RestaurantControllerTest {
     @Test
     void getRestaurants_shouldReturnPaginatedRestaurants() throws Exception {
         mockMvc.perform(get(ApiPaths.RESTAURANTS)
-                .param("page", "0")
-                .param("size", "20")
-                .param("sort", "name,asc"))
+                .param("page", TestConstants.DEFAULT_PAGE)
+                .param("size", TestConstants.DEFAULT_SIZE)
+                .param("sort", TestConstants.DEFAULT_SORT))
             .andExpect(status().isOk());
 
         verify(restaurantService).getRestaurants(any(RestaurantFilter.class), any());
