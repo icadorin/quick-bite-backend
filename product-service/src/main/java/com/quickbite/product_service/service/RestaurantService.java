@@ -33,11 +33,7 @@ public class RestaurantService {
         RestaurantFilter filter,
         Pageable pageable
     ) {
-        var safeFilter = filter == null
-            ? new RestaurantFilter(null, null, null, null, true)
-            : filter;
-
-        var specification = RestaurantSpecification.withFilters(safeFilter);
+        var specification = RestaurantSpecification.withFilters(filter);
 
         return repository
             .findAll(specification, pageable)

@@ -35,15 +35,12 @@ public class CategoryService {
         CategoryFilter filter,
         Pageable pageable
     ) {
-        var safeFilter = filter == null
+        CategoryFilter safeFilter = filter == null
             ? new CategoryFilter(null, true)
             : filter;
 
-        var specification =
-            CategorySpecification.withFilters(safeFilter);
-
         return categoryRepository
-            .findAll(specification, pageable)
+            .findAll(CategorySpecification.withFilters(safeFilter), pageable)
             .map(responseMapper::toResponse);
     }
 
