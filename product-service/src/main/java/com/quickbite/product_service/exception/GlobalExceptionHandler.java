@@ -85,9 +85,10 @@ public class GlobalExceptionHandler {
         return switch (ex.getApiError().code()) {
             case "RESOURCE_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "DATA_VALIDATION_ERROR", "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
-            case "BUSINESS_RULE_VALIDATION" -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case "BUSINESS_RULE_VIOLATION" -> HttpStatus.UNPROCESSABLE_ENTITY;
             case "DATABASE_ERROR" -> HttpStatus.INTERNAL_SERVER_ERROR;
             case "JWT_VALIDATION_ERROR", "TOKEN_ERROR", "INVALID_USER_STATUS" -> HttpStatus.UNAUTHORIZED;
+            case "USER_ALREADY_EXISTS" -> HttpStatus.CONFLICT;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }
