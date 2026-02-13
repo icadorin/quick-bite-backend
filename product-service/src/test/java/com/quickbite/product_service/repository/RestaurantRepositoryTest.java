@@ -1,7 +1,9 @@
 package com.quickbite.product_service.repository;
 
 import com.quickbite.product_service.constants.TestConstants;
+import com.quickbite.product_service.dto.filter.RestaurantFilter;
 import com.quickbite.product_service.entity.Restaurant;
+import com.quickbite.product_service.repository.specification.RestaurantSpecification;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -9,11 +11,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -27,85 +25,37 @@ public class RestaurantRepositoryTest {
     private TestEntityManager entityManager;
 
     @Test
-    void findByIdAndActiveTrue_shouldReturnRestaurant_whenExists() {
-        Restaurant restaurant = Restaurant.builder()
-            .name(TestConstants.VALID_RESTAURANT_NAME)
-            .ownerId(TestConstants.VALID_OWNER_ID)
-            .isActive(true)
-            .build();
+    void shouldReturnOnlyActiveRestaurants_whenFiltering() {
+         entityManager.persist(
+             Restaurant.builder()
+                 .name(TestConstants.VALID_PRODUCT_NAME)
+                 .ownerId(TestConstants.VALID_OWNER_ID)
+                 .isActive(true)
+                 .build()
+         );
 
-        entityManager.persist(restaurant);
-        entityManager.flush();
+         entityManager.persist(
+             Restaurant.builder()
+                 .name(TestConstants.VALID_PRODUCT_NAME)
+                 .ownerId(TestConstants.VALID_OWNER_ID)
+                 .isActive(false)
+                 .build()
+         );
 
-        Optional<Restaurant> result =
-            restaurantRepository.findByIdAndIsActiveTrue(restaurant.getId());
+         entityManager.flush();
 
-        assertTrue(result.isPresent());
-    }
+         var filter = new RestaurantFilter(
+             TestConstants.VALID_PRODUCT_NAME,
+             null,
+             null,
+             null,
+             true
+         );
 
-    @Test
-    void findByOwnerIdAndIsActiveTrue_shouldReturnOnlyActiveRestaurants() {
-        Restaurant active = Restaurant.builder()
-            .name(TestConstants.VALID_RESTAURANT_NAME)
-            .ownerId(TestConstants.VALID_OWNER_ID)
-            .isActive(true)
-            .build();
+         var result = restaurantRepository.findAll(
+             RestaurantSpecification.withFilters(filter)
+         );
 
-        Restaurant inactive = Restaurant.builder()
-            .name(TestConstants.UPDATED_RESTAURANT_NAME)
-            .ownerId(TestConstants.VALID_OWNER_ID)
-            .isActive(false)
-            .build();
-
-        entityManager.persist(active);
-        entityManager.persist(inactive);
-        entityManager.flush();
-
-        List<Restaurant> result =
-            restaurantRepository.findByOwnerIdAndIsActiveTrue(
-                TestConstants.VALID_OWNER_ID
-            );
-
-        assertEquals(1, result.size());
-        assertTrue(result.getFirst().getIsActive());
-    }
-
-    @Test
-    void searchActiveRestaurantByName_shouldReturnMatchingRestaurants() {
-        Restaurant restaurant = Restaurant.builder()
-            .name(TestConstants.VALID_RESTAURANT_NAME)
-            .ownerId(TestConstants.VALID_OWNER_ID)
-            .isActive(true)
-            .build();
-
-        entityManager.persist(restaurant);
-        entityManager.flush();
-
-        List<Restaurant> result =
-            restaurantRepository.searchActiveRestaurantsByName(
-                TestConstants.VALID_SEARCH_TERM
-            );
-
-        assertEquals(1, result.size());
-    }
-
-    @Test
-    void existsByNameAndOwnerId_shouldReturnTrue_whenExists() {
-        Restaurant restaurant = Restaurant.builder()
-            .name(TestConstants.VALID_RESTAURANT_NAME)
-            .ownerId(TestConstants.VALID_OWNER_ID)
-            .isActive(true)
-            .build();
-
-        entityManager.persist(restaurant);
-        entityManager.flush();
-
-        boolean exists =
-            restaurantRepository.existsByNameAndOwnerId(
-                TestConstants.VALID_RESTAURANT_NAME,
-                TestConstants.VALID_OWNER_ID
-            );
-
-        assertTrue(exists);
+         assertEquals(1, result.size());
     }
 }

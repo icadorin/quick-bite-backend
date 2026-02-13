@@ -1,23 +1,19 @@
 package com.quickbite.product_service.repository;
 
-import com.quickbite.product_service.constants.TestConstants;
+import com.quickbite.product_service.dto.filter.CategoryFilter;
 import com.quickbite.product_service.entity.Category;
+import com.quickbite.product_service.repository.specification.CategorySpecification;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class CategoryRepositoryTest {
 
     @Autowired
@@ -27,76 +23,27 @@ public class CategoryRepositoryTest {
     private TestEntityManager entityManager;
 
     @Test
-    void findByName_shouldReturnCategory_whenExists() {
-        Category category = Category.builder()
-            .name(TestConstants.VALID_CATEGORY_NAME)
-            .isActive(true)
-            .build();
+    void shouldReturnOnlyActiveCategories_whenFilterIsActiveTrue() {
 
-        entityManager.persist(category);
-        entityManager.flush();
-
-        Optional<Category> result =
-            categoryRepository.findByName(TestConstants.VALID_CATEGORY_NAME);
-
-        assertTrue(result.isPresent());
-        assertEquals(TestConstants.VALID_CATEGORY_NAME, result.get().getName());
-    }
-
-    @Test
-    void findByIsActiveTrueOrderBySortOrderAsc_shouldReturnOnlyActiveCategories() {
         Category active = Category.builder()
-            .name(TestConstants.VALID_PRODUCT_NAME)
-            .sortOrder(TestConstants.VALID_SORT_ORDER)
+            .name("ActiveCategory")
             .isActive(true)
             .build();
 
         Category inactive = Category.builder()
-            .name(TestConstants.UPDATED_CATEGORY_NAME)
-            .sortOrder(TestConstants.ZERO_SORT_ORDER)
+            .name("InactiveCategory")
             .isActive(false)
             .build();
 
-        entityManager.persist(active);
-        entityManager.persist(inactive);
-        entityManager.flush();
+        entityManager.persistAndFlush(active);
+        entityManager.persistAndFlush(inactive);
 
-        List<Category> result =
-            categoryRepository.findByIsActiveTrueOrderBySortOrderAsc();
-
-        assertEquals(1, result.size());
-        assertTrue(result.getFirst().getIsActive());
-    }
-
-    @Test
-    void searchActiveCategoriesByName_shouldReturnMatchingActiveCategories() {
-        Category category = Category.builder()
-            .name(TestConstants.VALID_CATEGORY_NAME)
-            .isActive(true)
-            .build();
-
-        entityManager.persist(category);
-        entityManager.flush();
-
-        List<Category> result =
-            categoryRepository.searchActiveCategoriesByName(
-                TestConstants.VALID_SEARCH_TERM
-            );
+        CategoryFilter filter = new CategoryFilter(null, true);
+        var result = categoryRepository.findAll(CategorySpecification.withFilters(filter));
 
         assertEquals(1, result.size());
-        assertEquals(TestConstants.VALID_CATEGORY_NAME, result.getFirst().getName());
-    }
-
-    @Test
-    void existsByName_shouldReturnTrue_whenCategoryExists() {
-        Category category = Category.builder()
-            .name(TestConstants.VALID_CATEGORY_NAME)
-            .isActive(true)
-            .build();
-
-        entityManager.persist(category);
-        entityManager.flush();
-
-        assertTrue(categoryRepository.existsByName(TestConstants.VALID_CATEGORY_NAME));
+        Category first = result.getFirst();
+        assertTrue(first.getIsActive());
+        assertEquals("ActiveCategory", first.getName());
     }
 }

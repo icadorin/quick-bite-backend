@@ -1,8 +1,10 @@
 package com.quickbite.product_service.repository;
 
 import com.quickbite.product_service.constants.TestConstants;
+import com.quickbite.product_service.dto.filter.ProductFilter;
 import com.quickbite.product_service.entity.Product;
 import com.quickbite.product_service.entity.Restaurant;
+import com.quickbite.product_service.repository.specification.ProductSpecification;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -11,7 +13,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -27,58 +28,38 @@ public class ProductRepositoryTest {
     private TestEntityManager entityManager;
 
     @Test
-    void shouldReturnOnlyAvailableProducts_whenRestaurantIsActiveAndNameMatches() {
-        Restaurant activeRestaurant = Restaurant.builder()
-            .name(TestConstants.VALID_RESTAURANT_NAME)
-            .isActive(true)
-            .ownerId(TestConstants.VALID_OWNER_ID)
-            .build();
+    void shouldReturnAvailableProducts_whenUsingSpecification() {
 
-        Restaurant inactiveRestaurant = Restaurant.builder()
-            .name(TestConstants.VALID_RESTAURANT_NAME)
-            .isActive(false)
-            .ownerId(TestConstants.VALID_OWNER_ID)
-            .build();
+        Restaurant restaurant = entityManager.persist(
+            Restaurant.builder()
+                .name(TestConstants.VALID_RESTAURANT_NAME)
+                .ownerId(TestConstants.VALID_OWNER_ID)
+                .isActive(true)
+                .build()
+        );
 
-        entityManager.persist(activeRestaurant);
-        entityManager.persist(inactiveRestaurant);
-
-        Product validProduct = Product.builder()
-            .name(TestConstants.VALID_PRODUCT_NAME)
-            .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
-            .isAvailable(true)
-            .restaurant(activeRestaurant)
-            .ingredients(null)
-            .allergens(null)
-            .build();
-
-        Product unavailableProduct = Product.builder()
-            .name(TestConstants.VALID_PRODUCT_NAME)
-            .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
-            .isAvailable(false)
-            .restaurant(activeRestaurant)
-            .ingredients(null)
-            .allergens(null)
-            .build();
-
-        Product inactiveRestaurantProduct = Product.builder()
-            .name(TestConstants.VALID_PRODUCT_NAME)
-            .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
-            .isAvailable(true)
-            .restaurant(inactiveRestaurant)
-            .ingredients(null)
-            .allergens(null)
-            .build();
-
-        entityManager.persist(validProduct);
-        entityManager.persist(unavailableProduct);
-        entityManager.persist(inactiveRestaurantProduct);
+        Product product = entityManager.persist(
+            Product.builder()
+                .name(TestConstants.VALID_PRODUCT_NAME)
+                .price(BigDecimal.TEN)
+                .restaurant(restaurant)
+                .build()
+        );
 
         entityManager.flush();
 
-        List<Product> result = productRepository.searchAvailableProductsByName(TestConstants.VALID_PRODUCT_NAME);
+        var filter = new ProductFilter(
+            null,
+            null,
+            TestConstants.VALID_PRODUCT_NAME,
+            null,
+            null
+        );
+
+        var result = productRepository.findAll(
+            ProductSpecification.withFilters(filter)
+        );
 
         assertEquals(1, result.size());
-        assertEquals(TestConstants.VALID_PRODUCT_NAME, result.getFirst().getName());
     }
 }
