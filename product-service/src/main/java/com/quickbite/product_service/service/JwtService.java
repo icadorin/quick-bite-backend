@@ -51,7 +51,11 @@ public class JwtService {
             throw new InvalidTokenException("Token missing userId");
         }
 
-        return Long.valueOf(value.toString());
+        try {
+            return Long.valueOf(value.toString());
+        } catch (NumberFormatException ex) {
+            throw new InvalidTokenException("Token has invalid userId");
+        }
     }
 
     private Claims getClaims(String token) {
