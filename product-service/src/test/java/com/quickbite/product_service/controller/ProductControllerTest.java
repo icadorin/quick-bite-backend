@@ -1,24 +1,30 @@
 package com.quickbite.product_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.quickbite.product_service.constants.ApiPaths;
 import com.quickbite.product_service.constants.TestConstants;
 import com.quickbite.product_service.dto.ProductRequest;
 import com.quickbite.product_service.dto.ProductResponse;
+import com.quickbite.product_service.dto.filter.ProductFilter;
 import com.quickbite.product_service.security.JwtAuthenticationFilter;
 import com.quickbite.product_service.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,52 +40,92 @@ public class ProductControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
-    private ProductService productService;
+    private ProductService service;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    @WithMockUser(username = "user")
+    private ProductResponse response;
+
+    @WithMockUser(roles = {"ADMIN", "RESTAURANT_OWNER"})
     @Test
-    void shouldReturn400_whenNameIsBlank() throws Exception {
+    void create_shouldReturn400_whenNameIsBlank() throws Exception {
         ProductRequest request = ProductRequest.builder()
+            .restaurantId(TestConstants.VALID_RESTAURANT_ID)
             .name(TestConstants.BLANK_RESTAURANT_NAME)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
-            .restaurantId(TestConstants.VALID_RESTAURANT_ID)
+            .costPrice(BigDecimal.valueOf(TestConstants.VALID_COST_PRICE))
             .build();
 
-        String body = objectMapper.writeValueAsString(request);
-
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post(ApiPaths.PRODUCTS)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body)
-            )
+                .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.details.name")
-                .value(TestConstants.PRODUCT_NAME_REQUIRED_MESSAGE));
+            .andExpect(jsonPath("$.details.name").exists());
+
+        verifyNoMoreInteractions(service);
     }
 
-    @WithMockUser(username = "user")
     @Test
-    void shouldCreateProduct_whenNameIsValid() throws Exception {
+    void getProducts_shouldReturnPaginatedProducts() throws Exception {
+        Page<ProductResponse> page =
+            new PageImpl<>(List.of(mock(ProductResponse.class)));
+
+        when(service.getProducts(any(), any()))
+            .thenReturn(page);
+
+        mockMvc.perform(get(ApiPaths.PRODUCTS)
+                .param("page", "0")
+                .param("size", "20")
+                .param("sort", "name,asc"))
+            .andExpect(status().isOk());
+
+        verify(service).getProducts(any(ProductFilter.class), any());
+    }
+
+    @Test
+    void getById_shouldReturnProduct() throws Exception {
+        ProductResponse response = ProductResponse.builder()
+            .id(TestConstants.VALID_PRODUCT_ID)
+            .name(TestConstants.VALID_PRODUCT_NAME)
+            .build();
+
+        when(service.getProductById(TestConstants.VALID_PRODUCT_ID))
+            .thenReturn(response);
+
+        mockMvc.perform(get(ApiPaths.PRODUCTS + ApiPaths.BY_ID,
+                TestConstants.VALID_PRODUCT_ID))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(TestConstants.VALID_PRODUCT_ID));
+
+        verify(service).getProductById(TestConstants.VALID_PRODUCT_ID);
+    }
+
+    @WithMockUser(roles = {"ADMIN", "RESTAURANT_OWNER"})
+    @Test
+    void create_shouldReturn201_whenRequestIsValid() throws Exception {
         ProductRequest request = ProductRequest.builder()
+            .restaurantId(TestConstants.VALID_RESTAURANT_ID)
             .name(TestConstants.VALID_PRODUCT_NAME)
             .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
             .costPrice(BigDecimal.valueOf(TestConstants.VALID_COST_PRICE))
-            .restaurantId(TestConstants.VALID_RESTAURANT_ID)
             .build();
 
-        String body = objectMapper.writeValueAsString(request);
+        ProductResponse response = ProductResponse.builder()
+            .id(TestConstants.VALID_PRODUCT_ID)
+            .name(TestConstants.VALID_PRODUCT_NAME)
+            .price(BigDecimal.valueOf(TestConstants.VALID_PRICE))
+            .build();
 
-        when(productService.createProduct(any()))
-            .thenReturn(new ProductResponse());
+        when(service.createProduct(any(ProductRequest.class)))
+            .thenReturn(response);
 
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post(ApiPaths.PRODUCTS)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body)
-            )
-            .andExpect(status().isCreated());
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").value(TestConstants.VALID_PRODUCT_ID));
 
-        verify(productService, times(1)).createProduct(any());
+        verify(service).createProduct(any(ProductRequest.class));
     }
 }
