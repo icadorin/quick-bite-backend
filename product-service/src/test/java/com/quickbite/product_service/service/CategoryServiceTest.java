@@ -6,6 +6,7 @@ import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.product_service.constants.TestConstants;
 import com.quickbite.product_service.dto.CategoryRequest;
 import com.quickbite.product_service.dto.CategoryResponse;
+import com.quickbite.product_service.dto.filter.CategoryFilter;
 import com.quickbite.product_service.entity.Category;
 import com.quickbite.product_service.mapper.CategoryCreateMapper;
 import com.quickbite.product_service.mapper.CategoryPatchMapper;
@@ -15,9 +16,12 @@ import com.quickbite.product_service.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -151,25 +155,61 @@ public class CategoryServiceTest {
     }
 
     @Test
-    void getAllCategories_shouldReturnActiveCategories() {
-        when(categoryRepository.findByIsActiveTrueOrderBySortOrderAsc())
-            .thenReturn(List.of(activeCategory));
-        when(responseMapper.toResponseList(any()))
-            .thenReturn(List.of(categoryResponse));
+    void getCategories_shouldReturnFilteredCategories() {
+        Pageable pageable = PageRequest.of(0, 20);
 
-        List<CategoryResponse> result = categoryService.getAllCategories();
+        Page<Category> mockPage = new PageImpl<>(List.of(activeCategory));
 
-        assertFalse(result.isEmpty());
-        assertEquals(categoryResponse, result.getFirst());
+        when(categoryRepository.findAll(
+            ArgumentMatchers.<Specification<Category>>any(),
+            eq(pageable)
+        )).thenReturn(mockPage);
+        when(responseMapper.toResponse(activeCategory))
+            .thenReturn(categoryResponse);
 
-        verify(categoryRepository).findByIsActiveTrueOrderBySortOrderAsc();
-        verify(responseMapper).toResponseList(any());
+        CategoryFilter filter = new CategoryFilter(null, true);
+
+        Page<CategoryResponse> result = categoryService.getCategories(filter, pageable);
+
+        assertEquals(1, result.getTotalElements());
+
+        verify(categoryRepository).findAll(
+            ArgumentMatchers.<Specification<Category>>any(),
+            eq(pageable)
+        );
+        verify(responseMapper).toResponse(activeCategory);
+    }
+
+    @Test
+    void getCategories_shouldUseDefaultFilter_whenFilterIsNull() {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        Page<Category> mockPage = new PageImpl<>(List.of(activeCategory));
+
+        when(categoryRepository.findAll(
+            ArgumentMatchers.<Specification<Category>>any(),
+            eq(pageable))
+        ).thenReturn(mockPage);
+        when(responseMapper.toResponse(activeCategory))
+            .thenReturn(categoryResponse);
+
+        Page<CategoryResponse> result = categoryService.getCategories(null, pageable);
+
+        assertEquals(1, result.getTotalElements());
+
+        verify(categoryRepository).findAll(
+            ArgumentMatchers.<Specification<Category>>any(),
+            eq(pageable)
+        );
+
+        verify(responseMapper).toResponse(activeCategory);
     }
 
     @Test
     void updateCategory_shouldUpdateSuccessfully() {
-        CategoryRequest updateRequest = new CategoryRequest();
-        updateRequest.setName(TestConstants.UPDATED_CATEGORY_NAME);
+        CategoryRequest updateRequest = CategoryRequest.builder()
+            .name(TestConstants.UPDATED_CATEGORY_NAME)
+            .build();
 
         when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID))
             .thenReturn(Optional.of(activeCategory));
@@ -190,7 +230,6 @@ public class CategoryServiceTest {
 
         verify(patchMapper).updateCategoryFromRequest(updateRequest, activeCategory);
         verify(categoryRepository).save(activeCategory);
-        verify(patchMapper).updateCategoryFromRequest(updateRequest, activeCategory);
     }
 
     @Test
@@ -209,6 +248,111 @@ public class CategoryServiceTest {
     }
 
     @Test
+    void createCategory_shouldTrimNameBeforeSaving() {
+        CategoryRequest request = CategoryRequest.builder()
+            .name(" Pizza ")
+            .build();
+
+        Category category = Category.builder().build();
+
+        when(categoryRepository.existsByName("Pizza")).thenReturn(false);
+        when(createMapper.toEntity(request)).thenReturn(category);
+        when(categoryRepository.save(category)).thenReturn(category);
+        when(responseMapper.toResponse(category)).thenReturn(categoryResponse);
+
+        categoryService.createCategory(request);
+
+        verify(createMapper).toEntity(request);
+        verify(categoryRepository).existsByName("Pizza");
+        verify(categoryRepository).save(argThat((cat ->
+            "Pizza".equals(cat.getName()))
+        ));
+    }
+
+    @Test
+    void createCategory_shouldApplyDefaultValues() {
+        CategoryRequest request = CategoryRequest.builder()
+            .name(" Pizza ")
+            .isActive(null)
+            .sortOrder(null)
+            .build();
+
+        Category category = Category.builder().build();
+
+        when(categoryRepository.existsByName("Pizza")).thenReturn(false);
+        when(createMapper.toEntity(request)).thenReturn(category);
+        when(categoryRepository.save(category)).thenReturn(category);
+        when(responseMapper.toResponse(category)).thenReturn(categoryResponse);
+
+        categoryService.createCategory(request);
+
+        assertTrue(category.getIsActive());
+        verify(categoryRepository).save(argThat(cat ->
+            cat.getIsActive() &&
+            cat.getSortOrder() == 0
+        ));
+    }
+
+    @Test
+    void getCategoryById_shouldThrow_whenIdIsNull() {
+        assertThrows(
+            DataValidationException.class,
+            () -> categoryService.getCategoryById(null)
+        );
+    }
+
+    @Test
+    void getCategoryById_shouldThrow_whenIdIsInvalid() {
+        assertThrows(
+            DataValidationException.class,
+            () -> categoryService.getCategoryById(0L)
+        );
+    }
+
+    @Test
+    void updateCategory_shouldThrow_whenNameAlreadyExists() {
+        CategoryRequest request = CategoryRequest.builder()
+            .name(TestConstants.UPDATED_CATEGORY_NAME)
+            .build();
+
+        when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID))
+            .thenReturn(Optional.of(activeCategory));
+        when(categoryRepository.existsByName(TestConstants.UPDATED_CATEGORY_NAME))
+            .thenReturn(true);
+
+        assertThrows(
+            BusinessRuleViolationException.class,
+            () -> categoryService.updateCategory(
+                TestConstants.VALID_CATEGORY_ID,
+                request
+            )
+        );
+
+        verify(categoryRepository, never()).save(any());
+    }
+
+    @Test
+    void updateCategory_shouldNotCheckDuplicate_whenNameIsSame() {
+        CategoryRequest request = CategoryRequest.builder()
+            .name(activeCategory.getName())
+            .build();
+
+        when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID))
+            .thenReturn(Optional.of(activeCategory));
+        when(categoryRepository.save(activeCategory))
+            .thenReturn(activeCategory);
+        when(responseMapper.toResponse(activeCategory))
+            .thenReturn(categoryResponse);
+
+        CategoryResponse result =
+            categoryService.updateCategory(TestConstants.VALID_CATEGORY_ID, request);
+
+        assertEquals(categoryResponse, result);
+
+        verify(categoryRepository, never()).existsByName(any());
+    }
+
+    @Test
     void deleteCategory_shouldThrow_whenHasAssociatedProducts() {
         when(categoryRepository.findById(TestConstants.VALID_CATEGORY_ID))
             .thenReturn(Optional.of(activeCategory));
@@ -224,27 +368,5 @@ public class CategoryServiceTest {
         verify(productRepository)
             .countByCategoryIdAndIsAvailableTrue(TestConstants.VALID_CATEGORY_ID);
         verify(categoryRepository, never()).save(any());
-    }
-
-    @Test
-    void searchCategories_shouldReturnResults_whenSearchTermIsValid() {
-        when(categoryRepository.searchActiveCategoriesByName(TestConstants.VALID_SEARCH_TERM))
-            .thenReturn(List.of(activeCategory));
-        when(responseMapper.toResponseList(any()))
-            .thenReturn(List.of(categoryResponse));
-
-        List<CategoryResponse> result =
-            categoryService.searchCategories(TestConstants.VALID_SEARCH_TERM);
-
-        assertFalse(result.isEmpty());
-        assertEquals(categoryResponse, result.getFirst());
-    }
-
-    @Test
-    void searchCategories_shouldThrow_whenSearchTermIsTooShort() {
-        assertThrows(
-            DataValidationException.class,
-            () -> categoryService.searchCategories(TestConstants.SEARCH_TERM_SHORT)
-        );
     }
 }

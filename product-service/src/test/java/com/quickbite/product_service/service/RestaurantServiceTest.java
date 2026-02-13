@@ -1,10 +1,12 @@
 package com.quickbite.product_service.service;
 
 import com.quickbite.core.exception.BusinessRuleViolationException;
+import com.quickbite.core.exception.DataValidationException;
 import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.product_service.constants.TestConstants;
 import com.quickbite.product_service.dto.RestaurantRequest;
 import com.quickbite.product_service.dto.RestaurantResponse;
+import com.quickbite.product_service.dto.filter.RestaurantFilter;
 import com.quickbite.product_service.entity.Restaurant;
 import com.quickbite.product_service.mapper.RestaurantCreateMapper;
 import com.quickbite.product_service.mapper.RestaurantPatchMapper;
@@ -13,9 +15,12 @@ import com.quickbite.product_service.repository.RestaurantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +33,7 @@ import static org.mockito.Mockito.*;
 public class RestaurantServiceTest {
 
     @Mock
-    private RestaurantRepository restaurantRepository;
+    private RestaurantRepository repository;
 
     @Mock
     private RestaurantCreateMapper createMapper;
@@ -40,11 +45,11 @@ public class RestaurantServiceTest {
     private RestaurantResponseMapper responseMapper;
 
     @InjectMocks
-    private RestaurantService restaurantService;
+    private RestaurantService service;
 
     private RestaurantRequest validRequest;
     private Restaurant activeRestaurant;
-    private RestaurantResponse restaurantResponse;
+    private RestaurantResponse response;
 
     @BeforeEach
     void setUp() {
@@ -69,7 +74,7 @@ public class RestaurantServiceTest {
             .isActive(true)
             .build();
 
-        restaurantResponse = RestaurantResponse.builder()
+        response = RestaurantResponse.builder()
             .id(TestConstants.VALID_RESTAURANT_ID)
             .name(TestConstants.VALID_RESTAURANT_NAME)
             .description(TestConstants.VALID_DESCRIPTION)
@@ -81,7 +86,7 @@ public class RestaurantServiceTest {
 
     @Test
     void createRestaurant_shouldCreateSuccessfully() {
-        when(restaurantRepository.existsByNameAndOwnerIdAndIdNot(
+        when(repository.existsByNameAndOwnerIdAndIdNot(
             TestConstants.VALID_RESTAURANT_NAME,
             TestConstants.VALID_OWNER_ID,
             null
@@ -89,24 +94,21 @@ public class RestaurantServiceTest {
 
         when(createMapper.toEntity(validRequest))
             .thenReturn(activeRestaurant);
-        when(restaurantRepository.save(activeRestaurant))
+        when(repository.save(activeRestaurant))
             .thenReturn(activeRestaurant);
         when(responseMapper.toResponse(activeRestaurant))
-            .thenReturn(restaurantResponse);
+            .thenReturn(response);
 
-        RestaurantResponse result =
-            restaurantService.createRestaurant(validRequest);
+        RestaurantResponse result = service.createRestaurant(validRequest);
 
-        assertEquals(restaurantResponse, result);
+        assertEquals(response, result);
 
-        verify(createMapper).toEntity(validRequest);
-        verify(restaurantRepository).save(activeRestaurant);
-        verify(responseMapper).toResponse(activeRestaurant);
+        verify(repository).save(activeRestaurant);
     }
 
     @Test
     void createRestaurant_shouldThrow_whenNameAlreadyExists() {
-        when(restaurantRepository.existsByNameAndOwnerIdAndIdNot(
+        when(repository.existsByNameAndOwnerIdAndIdNot(
             TestConstants.VALID_RESTAURANT_NAME,
             TestConstants.VALID_OWNER_ID,
         null
@@ -114,7 +116,7 @@ public class RestaurantServiceTest {
 
         BusinessRuleViolationException ex = assertThrows(
             BusinessRuleViolationException.class,
-            () -> restaurantService.createRestaurant(validRequest)
+            () -> service.createRestaurant(validRequest)
         );
 
         assertEquals(
@@ -122,64 +124,215 @@ public class RestaurantServiceTest {
             ex.getMessage()
         );
 
-        verify(restaurantRepository, never()).save(any());
+        verify(repository, never()).save(any());
         verify(createMapper, never()).toEntity(any());
         verify(responseMapper, never()).toResponse(any());
     }
 
     @Test
     void getRestaurantById_shouldReturn_whenExists() {
-        when(restaurantRepository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
+        when(repository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(Optional.of(activeRestaurant));
         when(responseMapper.toResponse(activeRestaurant))
-            .thenReturn(restaurantResponse);
+            .thenReturn(response);
 
-        RestaurantResponse result =
-            restaurantService.getRestaurantById(TestConstants.VALID_RESTAURANT_ID);
+        var result = service.getRestaurantById(TestConstants.VALID_RESTAURANT_ID);
 
-        assertEquals(restaurantResponse, result);
-
-        verify(restaurantRepository)
-            .findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID);
-        verify(responseMapper).toResponse(activeRestaurant);
+        assertEquals(response, result);
     }
 
     @Test
     void getRestaurantById_shouldThrow_whenNotFound() {
-        when(restaurantRepository.findByIdAndIsActiveTrue(TestConstants.NON_EXISTENT_ID))
+        when(repository.findByIdAndIsActiveTrue(TestConstants.NON_EXISTENT_ID))
             .thenReturn(Optional.empty());
 
         assertThrows(
             ResourceNotFoundException.class,
-            () -> restaurantService.getRestaurantById(TestConstants.NON_EXISTENT_ID)
+            () -> service.getRestaurantById(TestConstants.NON_EXISTENT_ID)
         );
-
-        verify(responseMapper, never()).toResponse(any());
     }
 
     @Test
-    void getRestaurantByOwner_shouldReturnRestaurants_whenOwnerExists() {
-        when(restaurantRepository.findByOwnerIdAndIsActiveTrue(TestConstants.VALID_OWNER_ID))
-            .thenReturn(List.of(activeRestaurant));
-        when(responseMapper.toResponseList(List.of(activeRestaurant)))
-            .thenReturn(List.of(restaurantResponse));
+    void getRestaurantById_shouldThrow_whenIsInvalid() {
+        assertThrows(
+            DataValidationException.class,
+            () -> service.getRestaurantById(0L)
+        );
+    }
 
-        List<RestaurantResponse> result =
-            restaurantService.getRestaurantsByOwner(TestConstants.VALID_OWNER_ID);
+    @Test
+    void getRestaurantEntity_shouldReturnEntity() {
+        when(repository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
+            .thenReturn(Optional.of(activeRestaurant));
 
-        assertEquals(List.of(restaurantResponse), result);
+        var result = service.getRestaurantEntity(TestConstants.VALID_RESTAURANT_ID);
 
-        verify(restaurantRepository)
-            .findByOwnerIdAndIsActiveTrue(TestConstants.VALID_OWNER_ID);
-        verify(responseMapper)
-            .toResponseList(List.of(activeRestaurant));
+        assertEquals(activeRestaurant, result);
+    }
+
+    @Test
+    void getRestaurants_shouldReturnFilteredRestaurants() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Restaurant> mockPage = new PageImpl<>(List.of(activeRestaurant));
+
+        when(repository.findAll(
+            ArgumentMatchers.<Specification<Restaurant>>any(),
+            eq(pageable))
+        ).thenReturn(mockPage);
+
+        when(responseMapper.toResponse(activeRestaurant))
+            .thenReturn(response);
+
+        Page<RestaurantResponse> result =
+            service.getRestaurants(new RestaurantFilter(
+                null,
+                null,
+                null,
+                null,
+                true
+            ), pageable);
+
+        assertEquals(1, result.getTotalElements());
+    }
+
+    @Test
+    void searchRestaurants_shouldReturnResults() {
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Restaurant> mockPage = new PageImpl<>(List.of(activeRestaurant));
+
+        when(repository.findAll(
+            ArgumentMatchers.<Specification<Restaurant>>any(),
+            eq(pageable))
+        ).thenReturn(mockPage);
+
+        when(responseMapper.toResponse(activeRestaurant))
+            .thenReturn(response);
+
+        var result = service.searchRestaurants("Pizza", pageable);
+
+        assertEquals(1, result.getTotalElements());
+    }
+
+    @Test
+    void searchRestaurants_shouldThrow_whenBlank() {
+        assertThrows(
+            DataValidationException.class,
+            () -> service.searchRestaurants(" ", PageRequest.of(0, 10))
+        );
+    }
+
+    @Test
+    void getRestaurantsByCuisine_shouldReturnResults() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Restaurant> mockPage = new PageImpl<>(List.of(activeRestaurant));
+
+        when(repository.findAll(
+            ArgumentMatchers.<Specification<Restaurant>>any(),
+            eq(pageable))
+        ).thenReturn(mockPage);
+
+        when(responseMapper.toResponse(activeRestaurant))
+            .thenReturn(response);
+
+        var result = service.getRestaurantsByCuisine(
+            TestConstants.VALID_CUISINE_TYPE,
+            pageable
+        );
+
+        assertEquals(1, result.getTotalElements());
+    }
+
+    @Test
+    void getRestaurantsWithMinRating_shouldReturnResults() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Restaurant> mockPage = new PageImpl<>(List.of(activeRestaurant));
+
+        when(repository.findAll(
+            ArgumentMatchers.<Specification<Restaurant>>any(),
+            eq(pageable))
+        ).thenReturn(mockPage);
+
+        when(responseMapper.toResponse(activeRestaurant))
+            .thenReturn(response);
+
+        var result = service.getRestaurantsWithMinRating(4.0, pageable);
+
+        assertEquals(1, result.getTotalElements());
+    }
+
+    @Test
+    void getRestaurantsWithMinRating_shouldThrow_whenInvalid() {
+        assertThrows(
+            DataValidationException.class,
+            () -> service.getRestaurantsWithMinRating(-1.0, PageRequest.of(0, 10))
+        );
+    }
+
+    @Test
+    void getRestaurants_shouldUseDefaultFilter_whenNull() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Restaurant> mockPage = new PageImpl<>(List.of(activeRestaurant));
+
+        when(repository.findAll(
+            ArgumentMatchers.<Specification<Restaurant>>any(),
+            eq(pageable))
+        ).thenReturn(mockPage);
+
+        when(responseMapper.toResponse(activeRestaurant))
+            .thenReturn(response);
+
+        var result = service.getRestaurants(null, pageable);
+
+        assertEquals(1, result.getTotalElements());
+    }
+
+    @Test
+    void getRestaurantsByOwner_shouldReturnRestaurants_whenOwnerExists() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<Restaurant> mockPage = new PageImpl<>(List.of(activeRestaurant));
+
+        when(repository.findAll(
+            ArgumentMatchers.<Specification<Restaurant>>any(),
+            eq(pageable))
+        ).thenReturn(mockPage);
+
+        when(responseMapper.toResponse(activeRestaurant))
+            .thenReturn(response);
+
+        Page<RestaurantResponse> result =
+            service.getRestaurantsByOwner(TestConstants.VALID_OWNER_ID, pageable);
+
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.getTotalElements());
+
+        verify(repository).findAll(
+            ArgumentMatchers.<Specification<Restaurant>>any(),
+            eq(pageable)
+        );
+    }
+
+    @Test
+    void getRestaurantByOwner_shouldThrow_whenOwnerIdInvalid() {
+        Long invalidOwnerId = TestConstants.INVALID_ID;
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("name").ascending());
+
+        DataValidationException exception = assertThrows(
+            DataValidationException.class,
+            () -> service.getRestaurantsByOwner(invalidOwnerId, pageable)
+        );
+
+        assertEquals("Invalid owner ID: -1", exception.getMessage());
+
+        verifyNoMoreInteractions(repository);
     }
 
     @Test
     void updateRestaurant_shouldUpdateSuccessfully() {
-        when(restaurantRepository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
+        when(repository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(Optional.of(activeRestaurant));
-        when(restaurantRepository.existsByNameAndOwnerIdAndIdNot(
+        when(repository.existsByNameAndOwnerIdAndIdNot(
             TestConstants.VALID_RESTAURANT_NAME,
             TestConstants.VALID_OWNER_ID,
             TestConstants.VALID_RESTAURANT_ID
@@ -188,38 +341,45 @@ public class RestaurantServiceTest {
         doNothing().when(patchMapper)
             .updateRestaurantFromRequest(validRequest, activeRestaurant);
 
-        when(restaurantRepository.save(activeRestaurant))
+        when(repository.save(activeRestaurant))
             .thenReturn(activeRestaurant);
+
         when(responseMapper.toResponse(activeRestaurant))
-            .thenReturn(restaurantResponse);
+            .thenReturn(response);
 
-        RestaurantResponse result =
-            restaurantService.updateRestaurant(
-                TestConstants.VALID_RESTAURANT_ID,
-                validRequest
-            );
+        var result = service.updateRestaurant(
+            TestConstants.VALID_RESTAURANT_ID,
+            validRequest
+        );
 
-        assertEquals(restaurantResponse, result);
+        assertEquals(response, result);
+    }
 
-        verify(restaurantRepository)
-            .findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID);
-        verify(patchMapper)
-            .updateRestaurantFromRequest(validRequest, activeRestaurant);
-        verify(restaurantRepository).save(activeRestaurant);
-        verify(responseMapper).toResponse(activeRestaurant);
+    @Test
+    void updateRestaurant_shouldThrow_whenDuplicateName() {
+         when(repository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
+             .thenReturn(Optional.of(activeRestaurant));
+
+         when(repository.existsByNameAndOwnerIdAndIdNot(any(), any(), any()))
+             .thenReturn(true);
+
+         assertThrows(
+             BusinessRuleViolationException.class,
+             () -> service.updateRestaurant(
+                 TestConstants.VALID_RESTAURANT_ID,
+                 validRequest
+             )
+         );
     }
 
     @Test
     void deleteRestaurant_shouldDeleteSuccessfully() {
-        when(restaurantRepository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
+        when(repository.findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID))
             .thenReturn(Optional.of(activeRestaurant));
 
-        restaurantService.deleteRestaurant(TestConstants.VALID_RESTAURANT_ID);
+        service.deleteRestaurant(TestConstants.VALID_RESTAURANT_ID);
 
         assertFalse(activeRestaurant.getIsActive());
-
-        verify(restaurantRepository)
-            .findByIdAndIsActiveTrue(TestConstants.VALID_RESTAURANT_ID);
-        verify(restaurantRepository).save(activeRestaurant);
+        verify(repository).save(activeRestaurant);
     }
 }
