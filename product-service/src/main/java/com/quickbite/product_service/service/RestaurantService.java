@@ -186,7 +186,8 @@ public class RestaurantService {
     }
 
     private void validateRequiredText(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
+
+        if (value == null || value.trim().isEmpty()) {
             throw new DataValidationException("%s must not be blank".formatted(fieldName));
         }
     }
