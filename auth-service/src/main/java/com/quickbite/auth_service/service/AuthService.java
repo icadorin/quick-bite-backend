@@ -168,6 +168,25 @@ public class AuthService {
         return refreshToken.getToken();
     }
 
+    public void logout(String token) {
+
+        if (token == null || token.isBlank()) {
+            throw new TokenException("Refresh token must not be blank");
+        }
+
+        RefreshToken storedToken =  refreshTokenRepository.findByToken(token)
+            .orElseThrow(() -> new TokenException("Invalid refresh token"));
+
+        Long userId = storedToken.getUser().getId();
+
+        refreshTokenRepository.
+            findAllByUser_IdAndRevokedFalse(userId)
+            .forEach(rt -> {
+                rt.setRevoked(true);
+                refreshTokenRepository.save(rt);
+            });
+    }
+
     private void revokeRefreshToken(RefreshToken refreshToken) {
         refreshToken.setRevoked(true);
         refreshTokenRepository.save(refreshToken);
