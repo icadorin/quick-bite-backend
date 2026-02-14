@@ -86,8 +86,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return null;
         }
 
+        AuthenticatedUser principal = new AuthenticatedUser(
+            user.getId(),
+            user.getEmail()
+        );
+
         return new UsernamePasswordAuthenticationToken(
-            user,
+            principal,
             null,
             buildAuthorities(user)
         );
