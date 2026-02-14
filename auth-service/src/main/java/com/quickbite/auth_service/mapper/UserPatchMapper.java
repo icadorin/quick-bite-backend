@@ -1,6 +1,6 @@
 package com.quickbite.auth_service.mapper;
 
-import com.quickbite.auth_service.dto.RegisterRequest;
+import com.quickbite.auth_service.dto.UpdateUserRequest;
 import com.quickbite.auth_service.entity.User;
 import com.quickbite.core.mapper.config.PatchMapperConfig;
 import org.mapstruct.BeanMapping;
@@ -14,8 +14,8 @@ public interface UserPatchMapper {
     @BeanMapping(ignoreByDefault = true)
     @Mapping(
         target = "fullName",
-        expression = "java(request.getFullName() != null ? request.getFullName().trim() : null)"
+        expression = "java(request.fullName() != null ? request.fullName().trim() : null)"
     )
-    void updateUserFromRequest(RegisterRequest request,
+    void updateUserFromRequest(UpdateUserRequest request,
                                @MappingTarget User user);
 }
