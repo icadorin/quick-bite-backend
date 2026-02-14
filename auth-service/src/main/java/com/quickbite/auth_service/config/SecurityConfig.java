@@ -1,9 +1,6 @@
 package com.quickbite.auth_service.config;
 
-import com.quickbite.auth_service.constants.PublicEndPoints;
-import com.quickbite.auth_service.constants.SecuredEndPoints;
 import com.quickbite.auth_service.security.JwtAuthenticationFilter;
-import com.quickbite.core.security.UserRole;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -49,26 +46,14 @@ public class SecurityConfig {
             )
             .exceptionHandling(exception -> exception
                 .authenticationEntryPoint((
-                    request,
-                    response,
-                    authException
-                    ) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                        request,
+                        response,
+                        authException
+                    ) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                )
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    PublicEndPoints.AUTH,
-                    PublicEndPoints.API_AUTH,
-                    PublicEndPoints.ACTUATOR_HEALTH,
-                    PublicEndPoints.ERROR
-                ).permitAll()
-                .requestMatchers(SecuredEndPoints.ADMIN)
-                    .hasRole(UserRole.ADMIN.name())
-                .requestMatchers(SecuredEndPoints.RESTAURANT)
-                    .hasAnyRole(
-                        UserRole.ADMIN.name(),
-                        UserRole.RESTAURANT_OWNER.name()
-                    )
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             )
             .addFilterBefore(
                 jwtAuthenticationFilter,
