@@ -1,6 +1,7 @@
 package com.quickbite.product_service.service;
 
 import com.quickbite.core.exception.InvalidTokenException;
+import com.quickbite.core.security.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -55,6 +56,16 @@ public class JwtService {
             return Long.valueOf(value.toString());
         } catch (NumberFormatException ex) {
             throw new InvalidTokenException("Token has invalid userId");
+        }
+    }
+
+    public UserRole getUserRoleFromToken(String token) {
+        String role = getRoleFromToken(token);
+
+        try {
+            return UserRole.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidTokenException("Invalid role in token");
         }
     }
 
