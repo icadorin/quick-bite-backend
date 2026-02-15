@@ -1,6 +1,7 @@
 package com.quickbite.product_service.security;
 
 import com.quickbite.core.exception.BaseBusinessException;
+import com.quickbite.core.security.UserRole;
 import com.quickbite.product_service.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -53,16 +54,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwtService.validateToken(token);
 
             String email = jwtService.getEmailFromToken(token);
-            String role =  jwtService.getRoleFromToken(token);
+            UserRole userRole = jwtService.getUserRoleFromToken(token);
             Long userId = jwtService.getUserIdFromToken(token);
 
             AuthenticatedUser user =
                 new AuthenticatedUser(userId, email);
 
+            var authorities = List.of(
+                new SimpleGrantedAuthority(userRole.getAuthority())
+            );
+
             var auth = new UsernamePasswordAuthenticationToken(
                 user,
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                authorities
             );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
@@ -70,6 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (AuthenticationException | BaseBusinessException ex) {
+            SecurityContextHolder.clearContext();
             resolver.resolveException(request, response, null, ex);
         }
     }
