@@ -1,5 +1,6 @@
 package com.quickbite.product_service.security;
 
+import com.quickbite.core.security.UserRole;
 import com.quickbite.product_service.repository.RestaurantRepository;
 import com.quickbite.product_service.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,7 @@ public class RestaurantSecurity {
 
     public boolean canManageRestaurant(Long restaurantId) {
 
-        if (SecurityUtils.hasRole("ADMIN")) {
+        if (SecurityUtils.hasRole(UserRole.ADMIN)) {
             return true;
         }
 
