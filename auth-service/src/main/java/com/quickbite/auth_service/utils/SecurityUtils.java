@@ -1,6 +1,7 @@
 package com.quickbite.auth_service.utils;
 
 import com.quickbite.auth_service.security.AuthenticatedUser;
+import com.quickbite.core.security.UserRole;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -38,10 +39,12 @@ public class SecurityUtils {
         return getCurrentUser().getEmail();
     }
 
-    public static boolean hasRole(String role) {
+    public static boolean hasRole(UserRole role) {
         return getAuthentication()
             .getAuthorities()
             .stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_" + role));
+            .anyMatch(
+                a -> a.getAuthority().equals(role.getAuthority())
+            );
     }
 }
