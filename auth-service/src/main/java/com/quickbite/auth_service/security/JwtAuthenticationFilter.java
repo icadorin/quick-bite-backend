@@ -1,9 +1,9 @@
 package com.quickbite.auth_service.security;
 
-import com.quickbite.auth_service.entity.User;
-import com.quickbite.auth_service.repository.UserRepository;
 import com.quickbite.auth_service.service.JwtService;
 import com.quickbite.core.exception.BaseBusinessException;
+import com.quickbite.core.security.UserRole;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,16 +26,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final HandlerExceptionResolver resolver;
-    private final UserRepository userRepository;
 
     public JwtAuthenticationFilter(
         JwtService jwtService,
         @Qualifier("handlerExceptionResolver")
-        HandlerExceptionResolver resolver, UserRepository userRepository
+        HandlerExceptionResolver resolver
     ) {
         this.jwtService = jwtService;
         this.resolver = resolver;
-        this.userRepository = userRepository;
     }
 
     @Override
@@ -59,48 +57,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (auth != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
+
                 SecurityContextHolder.getContext()
                     .setAuthentication(auth);
             }
 
             filterChain.doFilter(request, response);
         } catch (AuthenticationException | BaseBusinessException ex) {
+            SecurityContextHolder.clearContext();
             resolver.resolveException(request, response, null, ex);
         }
     }
 
     private UsernamePasswordAuthenticationToken buildAuthentication(String token) {
 
-        jwtService.validateToken(token);
+        Claims claims = jwtService.validateAndExtractClaims(token);
 
-        String email = jwtService.getEmailFromToken(token);
+        String email = claims.getSubject();
+        Long userId = claims.get("userId", Long.class);
+        UserRole userRole = UserRole.valueOf(
+            claims.get("role", String.class)
+        );
 
-        if (email == null) {
-            return null;
-        }
+        AuthenticatedUser principal =
+            new AuthenticatedUser(userId, email);
 
-        User user = userRepository.findByEmail(email)
-            .orElse(null);
-
-        if (user == null) {
-            return null;
-        }
-
-        AuthenticatedUser principal = new AuthenticatedUser(
-            user.getId(),
-            user.getEmail()
+        var authorities = List.of(
+            new SimpleGrantedAuthority(userRole.getAuthority())
         );
 
         return new UsernamePasswordAuthenticationToken(
             principal,
             null,
-            buildAuthorities(user)
-        );
-    }
-
-    private List<SimpleGrantedAuthority> buildAuthorities(User user) {
-        return List.of(
-            new SimpleGrantedAuthority(user.getRole().getAuthority())
+            authorities
         );
     }
 }
