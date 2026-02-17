@@ -69,7 +69,7 @@ public class JwtService {
             }
 
             return claims;
-        } catch (JwtException e) {
+        } catch (JwtException | IllegalArgumentException e) {
             throw new JwtValidationException("Invalid token");
         }
     }
