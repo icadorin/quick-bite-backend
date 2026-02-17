@@ -24,6 +24,43 @@ public class RefreshTokenRepositoryTest {
     private UserRepository userRepository;
 
     @Test
+    void findAllByUserIdAndRevokedFalse_shouldReturnOnlyActiveTokens() {
+        User user = userRepository.save(
+            User.builder()
+                .email(TestConstants.VALID_EMAIL)
+                .fullName(TestConstants.VALID_FULL_NAME)
+                .status(User.UserStatus.ACTIVE)
+                .role(UserRole.CUSTOMER)
+                .passwordHash("hashed")
+                .build()
+        );
+
+        RefreshToken validToken = refreshTokenRepository.save(
+            RefreshToken.builder()
+                .token(TestConstants.VALID_REFRESH_TOKEN)
+                .user(user)
+                .expiresAt(LocalDateTime.now().plusDays(1))
+                .revoked(false)
+                .build()
+        );
+
+        refreshTokenRepository.save(
+            RefreshToken.builder()
+                .token(TestConstants.INVALID_REFRESH_TOKEN)
+                .user(user)
+                .expiresAt(LocalDateTime.now().plusDays(1))
+                .revoked(true)
+                .build()
+        );
+
+        var result =
+            refreshTokenRepository.findAllByUser_IdAndRevokedFalse(user.getId());
+
+        assertEquals(1, result.size());
+        assertEquals(TestConstants.VALID_REFRESH_TOKEN, result.getFirst().getToken());
+    }
+
+    @Test
     void findById_shouldReturnToken_whenTokenExists() {
         User user = userRepository.save(
             User.builder()
