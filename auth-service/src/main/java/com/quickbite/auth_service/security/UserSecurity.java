@@ -2,6 +2,7 @@ package com.quickbite.auth_service.security;
 
 import com.quickbite.auth_service.repository.UserRepository;
 import com.quickbite.auth_service.utils.SecurityUtils;
+import com.quickbite.core.security.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +14,7 @@ public class UserSecurity {
 
     public boolean canManageUser(Long userId) {
 
-        if (SecurityUtils.hasRole("ADMIN")) {
+        if (SecurityUtils.hasRole(UserRole.ADMIN)) {
             return true;
         }
 
