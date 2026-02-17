@@ -62,6 +62,10 @@ public class JwtService {
     public UserRole getUserRoleFromToken(String token) {
         String role = getRoleFromToken(token);
 
+        if (role == null || role.isBlank()) {
+            throw new InvalidTokenException("Role not found in token");
+        }
+
         try {
             return UserRole.valueOf(role.toUpperCase());
         } catch (IllegalArgumentException ex) {

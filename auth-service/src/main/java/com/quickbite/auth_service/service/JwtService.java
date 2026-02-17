@@ -1,7 +1,9 @@
 package com.quickbite.auth_service.service;
 
 import com.quickbite.auth_service.entity.User;
+import com.quickbite.core.exception.InvalidTokenException;
 import com.quickbite.core.exception.JwtValidationException;
+import com.quickbite.core.security.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -54,7 +56,7 @@ public class JwtService {
      * @throws JwtException when token is invalid
      * @throws JwtValidationException when token is expired or issuer is invalid
      */
-    public void validateToken(String token) {
+    public Claims validateAndExtractClaims(String token) {
         try {
             Claims claims = extractAllClaims(token);
 
@@ -65,18 +67,22 @@ public class JwtService {
             if (!issuer.equals(claims.getIssuer())) {
                 throw new JwtValidationException("Invalid token issuer");
             }
+
+            return claims;
         } catch (JwtException e) {
             throw new JwtValidationException("Invalid token");
         }
     }
 
     public String getEmailFromToken(String token) {
-        return extractClaim(token, Claims::getSubject);
+        Claims claims = validateAndExtractClaims(token);
+        return extractClaim(claims, Claims::getSubject);
     }
 
     public Long getUserIdFromToken(String token) {
-        return extractClaim(token, claim ->
-            claim.get("userId", Long.class)
+        Claims claims = validateAndExtractClaims(token);
+        return extractClaim(claims,
+            c -> c.get("userId", Long.class)
         );
     }
 
@@ -84,12 +90,29 @@ public class JwtService {
         return expiration / MILLISECONDS_TO_SECONDS;
     }
 
+    public UserRole getUserRoleFromToken(String token) {
+        Claims claims = validateAndExtractClaims(token);
+
+        String role = extractClaim(claims,
+            c -> c.get("role", String.class)
+        );
+
+        if (role == null || role.isBlank()) {
+            throw new InvalidTokenException("Role not found in token");
+        }
+
+        try {
+            return UserRole.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidTokenException("Invalid role in token");
+        }
+    }
+
     private <T> T extractClaim(
-        String token,
-        Function<Claims, T> claimsResolver
+        Claims claims,
+        Function<Claims, T> resolver
     ) {
-        Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+        return resolver.apply(claims);
     }
 
     private Claims extractAllClaims(String token) {
