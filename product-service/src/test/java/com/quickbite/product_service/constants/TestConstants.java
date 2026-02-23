@@ -65,7 +65,7 @@ public class TestConstants {
         "Category name is required";
 
     public static final String COMPARE_PRICE_MUST_BE_GREATER_THAN_CURRENT_PRICE =
-        "Compare price should be greater than current price";
+        "Compare price should be greater than current price for discount to make sense";
 
     public static final String INVALID_OWNER_ID_MESSAGE =
         "Invalid owner ID: -1";
