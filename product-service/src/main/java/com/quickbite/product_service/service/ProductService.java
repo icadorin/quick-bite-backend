@@ -80,6 +80,7 @@ public class ProductService {
         Category category = null;
         if (request.getCategoryId() != null) {
             category = categoryRepository.findById(request.getCategoryId())
+                .filter(Category::getIsActive)
                 .orElseThrow(() -> new ResourceNotFoundException(
                     "Category not found with id: %d".formatted(request.getCategoryId())
                 ));
@@ -139,13 +140,14 @@ public class ProductService {
 
     private void validatePricingRules(ProductRequest request) {
         if (request.getComparePrice() != null &&
-            request.getPrice().compareTo(request.getComparePrice()) >= 0) {
+            request.getPrice().compareTo(request.getComparePrice()) <= 0) {
             throw new BusinessRuleViolationException(
-                "Compare price should be greater than current price"
+                "Compare price should be greater than current price for discount to make sense"
             );
         }
 
         if (request.getComparePrice() != null &&
+            request.getCostPrice() != null &&
             request.getPrice().compareTo(request.getCostPrice()) <= 0) {
             throw new BusinessRuleViolationException(
                 "Price should be greater than cost price"
