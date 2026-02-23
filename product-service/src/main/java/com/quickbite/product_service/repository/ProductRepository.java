@@ -16,7 +16,5 @@ public interface ProductRepository extends
 
     Long countByRestaurantIdAndIsAvailableTrue(Long restaurantId);
 
-    boolean existsByIdAndRestaurantOwnerIdAndIsAvailableTrue(Long productId, Long restaurantId);
-
     Long countByCategoryIdAndIsAvailableTrue(Long categoryId);
 }
