@@ -315,8 +315,8 @@ public class ProductServiceTest {
     @Test
     void createProduct_shouldThrow_whereComparePriceInvalid() {
         ProductRequest invalidRequest = validProductRequest.toBuilder()
-            .price(TestConstants.INVALID_PRICE_HIGH)
-            .comparePrice(TestConstants.INVALID_COMPARE_PRICE_LOW)
+            .price(TestConstants.INVALID_COMPARE_PRICE_LOW)
+            .comparePrice(TestConstants.INVALID_PRICE_HIGH)
             .build();
 
         BusinessRuleViolationException ex = assertThrows(
