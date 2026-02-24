@@ -4,6 +4,7 @@ import com.quickbite.product_service.dto.filter.CategoryFilter;
 import com.quickbite.product_service.entity.Category;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,19 +17,21 @@ public final class CategorySpecification {
     public static Specification<Category> withFilters(CategoryFilter filter) {
 
         return (root, query, cb) -> {
-
             List<Predicate> predicates = new ArrayList<>();
 
             if (filter == null) {
-                predicates.add(cb.isTrue(root.get("isActive")));
-                return cb.and(predicates.toArray(new Predicate[0]));
+                return cb.conjunction();
             }
 
-            if (filter.isActive() == null || filter.isActive()) {
-                predicates.add(cb.isTrue(root.get("isActive")));
+            if (filter.isActive() != null) {
+                predicates.add(
+                    filter.isActive()
+                        ? cb.isTrue(root.get("isActive"))
+                        : cb.isFalse(root.get("isActive"))
+                );
             }
 
-            if (filter.name() != null && !filter.name().isBlank()) {
+            if (StringUtils.hasText(filter.name())) {
                 String pattern = "%%%s%%".formatted(filter.name().toLowerCase(Locale.ROOT));
 
                 predicates.add(
@@ -41,5 +44,10 @@ public final class CategorySpecification {
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    public static Specification<Category> onlyActive() {
+        return (root, query, cb) ->
+            cb.isTrue(root.get("isActive"));
     }
 }
