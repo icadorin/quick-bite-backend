@@ -7,5 +7,15 @@ public record ProductFilter(
     Long categoryId,
     String name,
     BigDecimal minPrice,
-    BigDecimal maxPrice
-) {}
+    BigDecimal maxPrice,
+    Boolean onlyAvailable
+) {
+    public ProductFilter {
+        if (minPrice != null && maxPrice != null
+                && minPrice.compareTo(maxPrice) > 0) {
+            throw new IllegalArgumentException(
+                "minPrice must be <= maxPrice"
+            );
+        }
+    }
+}

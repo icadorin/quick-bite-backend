@@ -42,6 +42,7 @@ public class ProductRepositoryTest {
             Product.builder()
                 .name(TestConstants.VALID_PRODUCT_NAME)
                 .price(BigDecimal.TEN)
+                .isAvailable(true)
                 .restaurant(restaurant)
                 .build()
         );
@@ -53,7 +54,8 @@ public class ProductRepositoryTest {
             null,
             TestConstants.VALID_PRODUCT_NAME,
             null,
-            null
+            null,
+            true
         );
 
         var result = productRepository.findAll(
