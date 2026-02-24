@@ -4,6 +4,7 @@ import com.quickbite.product_service.dto.filter.RestaurantFilter;
 import com.quickbite.product_service.entity.Restaurant;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,22 +17,21 @@ public final class RestaurantSpecification {
     public static Specification<Restaurant> withFilters(RestaurantFilter filter) {
 
         return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
             if (filter == null) {
                 return cb.conjunction();
             }
 
-            List<Predicate> predicates = new ArrayList<>();
-
             if (filter.isActive() != null) {
                 predicates.add(
                     filter.isActive()
-                    ? cb.isTrue(root.get("isActive"))
-                    : cb.isFalse(root.get("isActive"))
+                        ? cb.isTrue(root.get("isActive"))
+                        : cb.isFalse(root.get("isActive"))
                 );
             }
 
-            if (filter.name() != null && !filter.name().isBlank()) {
+            if (StringUtils.hasText(filter.name())) {
                 String pattern = "%%%s%%".formatted(filter.name().toLowerCase(Locale.ROOT));
 
                 predicates.add(
@@ -44,26 +44,20 @@ public final class RestaurantSpecification {
 
             if (filter.ownerId() != null) {
                 predicates.add(
-                    cb.equal(
-                        root.get("ownerId"),
-                        filter.ownerId()
-                    )
+                    cb.equal(root.get("owner").get("id"), filter.ownerId())
                 );
             }
 
-            if (filter.cuisineType() != null && !filter.cuisineType().isBlank()) {
+            if (filter.cuisineType() != null) {
                 predicates.add(
-                    cb.equal(
-                        root.get("cuisineType"),
-                        filter.cuisineType()
-                    )
+                    cb.equal(root.get("cuisineType"), filter.cuisineType())
                 );
             }
 
             if (filter.minRating() != null) {
                 predicates.add(
                     cb.greaterThanOrEqualTo(
-                        root.get("averageRating"),
+                        root.get("rating"),
                         filter.minRating()
                     )
                 );
@@ -71,5 +65,10 @@ public final class RestaurantSpecification {
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    public static Specification<Restaurant> onlyActive() {
+        return (root, query, cb) ->
+            cb.isTrue(root.get("isActive"));
     }
 }

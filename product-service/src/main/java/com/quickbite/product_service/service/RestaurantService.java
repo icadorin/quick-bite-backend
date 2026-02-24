@@ -33,10 +33,11 @@ public class RestaurantService {
         RestaurantFilter filter,
         Pageable pageable
     ) {
-        var specification = RestaurantSpecification.withFilters(filter);
+        var spec = RestaurantSpecification.withFilters(filter)
+            .and(RestaurantSpecification.onlyActive());
 
         return repository
-            .findAll(specification, pageable)
+            .findAll(spec, pageable)
             .map(responseMapper::toResponse);
     }
 
@@ -71,7 +72,8 @@ public class RestaurantService {
             true
         );
 
-        var spec = RestaurantSpecification.withFilters(filter);
+        var spec = RestaurantSpecification.withFilters(filter)
+            .and(RestaurantSpecification.onlyActive());
 
         return repository.findAll(spec, pageable)
             .map(responseMapper::toResponse);

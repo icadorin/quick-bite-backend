@@ -2,9 +2,9 @@ package com.quickbite.product_service.repository.specification;
 
 import com.quickbite.product_service.dto.filter.ProductFilter;
 import com.quickbite.product_service.entity.Product;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,39 +17,31 @@ public final class ProductSpecification {
     public static Specification<Product> withFilters(ProductFilter filter) {
 
         return (root, query, cb) -> {
-
             List<Predicate> predicates = new ArrayList<>();
 
-            predicates.add(cb.isTrue(root.get("isAvailable")));
-            predicates.add(cb.isTrue(root.get("restaurant").get("isActive")));
-
             if (filter == null) {
-                return cb.and(predicates.toArray(new Predicate[0]));
+                return cb.conjunction();
             }
 
             if (filter.restaurantId() != null) {
-                var restaurantJoin = root.join("restaurant");
-
                 predicates.add(
                     cb.equal(
-                        restaurantJoin.get("id"),
+                        root.get("restaurant").get("id"),
                         filter.restaurantId()
                     )
                 );
             }
 
             if (filter.categoryId() != null) {
-                var categoryJoin = root.join("category", JoinType.LEFT);
-
                 predicates.add(
                     cb.equal(
-                        categoryJoin.get("id"),
+                        root.get("category").get("id"),
                         filter.categoryId()
                     )
                 );
             }
 
-            if (filter.name() != null && !filter.name().isBlank()) {
+            if (StringUtils.hasText(filter.name())) {
                 String pattern = "%%%s%%".formatted(filter.name().toLowerCase(Locale.ROOT));
 
                 predicates.add(
@@ -78,7 +70,24 @@ public final class ProductSpecification {
                 );
             }
 
+            if (Boolean.TRUE.equals(filter.onlyAvailable())) {
+                predicates.add(cb.isTrue(root.get("isAvailable")));
+                predicates.add(cb.isTrue(root.get("restaurant").get("isActive")));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    public static Specification<Product> onlyAvailable() {
+        return (root, query, cb) -> cb.and(
+            cb.isTrue(root.get("isAvailable")),
+            cb.isTrue(root.get("restaurant").get("isActive"))
+        );
+    }
+
+    public static Specification<Product> featured() {
+        return (root, query, cb) ->
+            cb.isTrue(root.get("isFeatured"));
     }
 }
