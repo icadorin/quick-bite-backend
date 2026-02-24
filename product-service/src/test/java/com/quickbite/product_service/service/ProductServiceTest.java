@@ -211,8 +211,10 @@ public class ProductServiceTest {
         List<Product> products = List.of(activeProduct);
         List<ProductResponse> responses  = List.of(productResponse);
 
-        when(productRepository.findByIsFeaturedTrueAndIsAvailableTrue())
-            .thenReturn(products);
+        when(productRepository.findAll(
+            ArgumentMatchers.<Specification<Product>>any()
+        )).thenReturn(products);
+
         when(responseMapper.toResponseList(products))
             .thenReturn(responses);
 
@@ -220,7 +222,10 @@ public class ProductServiceTest {
 
         assertEquals(responses, result);
 
-        verify(productRepository).findByIsFeaturedTrueAndIsAvailableTrue();
+        verify(productRepository).findAll(
+            ArgumentMatchers.<Specification<Product>>any()
+        );
+
         verify(responseMapper).toResponseList(products);
     }
 
@@ -276,7 +281,8 @@ public class ProductServiceTest {
             null,
             TestConstants.VALID_PRODUCT_NAME,
             null,
-            null
+            null,
+            true
         );
 
         Page<ProductResponse> result = productService.getProducts(filter, pageable);

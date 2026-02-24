@@ -41,21 +41,20 @@ public class ProductService {
         ProductFilter filter,
         Pageable pageable
     ) {
-        var specification =
-            ProductSpecification.withFilters(
-                filter == null
-                    ? new ProductFilter(null, null, null, null, null)
-                    : filter
-            );
+        var spec = ProductSpecification.withFilters(filter)
+            .and(ProductSpecification.onlyAvailable());
 
         return productRepository
-            .findAll(specification, pageable)
+            .findAll(spec, pageable)
             .map(responseMapper::toResponse);
     }
 
     public List<ProductResponse> getFeaturedProducts() {
+        var spec = ProductSpecification.featured()
+            .and(ProductSpecification.onlyAvailable());
+
         return responseMapper.toResponseList(
-            productRepository.findByIsFeaturedTrueAndIsAvailableTrue()
+            productRepository.findAll(spec)
         );
     }
 
