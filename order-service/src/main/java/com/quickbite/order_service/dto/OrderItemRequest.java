@@ -1,4 +1,4 @@
-package com.quickbite.order_service.dtos;
+package com.quickbite.order_service.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

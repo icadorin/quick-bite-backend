@@ -12,13 +12,22 @@ public interface OrderStatusHistoryRepository extends JpaRepository<OrderStatusH
 
     List<OrderStatusHistory> findByOrderIdOrderByCreatedAtAsc(Long orderId);
 
-    @Query("SELECT osh FROM OrderStatusHistory osh WHERE osh.order.id = :orderId AND osh.status = :status")
+    @Query("""
+        SELECT osh
+        FROM OrderStatusHistory osh
+        WHERE osh.order.id = :orderId
+            AND osh.status = :status
+    """)
     List<OrderStatusHistory> findByOrderIdAndStatus(
             @Param("order_id") Long orderId,
             @Param("status") OrderStatus status
     );
 
-    @Query("SELECT osh FROM OrderStatusHistory osh WHERE osh.order.restaurantId = :restaurantId")
+    @Query("""
+        SELECT osh
+        FROM OrderStatusHistory osh
+        WHERE osh.order.restaurantId = :restaurantId
+    """)
     List<OrderStatusHistory> findByRestaurantId(@Param("restaurantId") Long restaurantId);
 
     OrderStatusHistory findFirstByOrderIdOrderByCreatedAtDesc(Long orderId);

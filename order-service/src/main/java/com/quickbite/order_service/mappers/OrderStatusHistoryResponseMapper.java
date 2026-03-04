@@ -1,6 +1,6 @@
 package com.quickbite.order_service.mappers;
 
-import com.quickbite.order_service.dtos.OrderStatusHistoryResponse;
+import com.quickbite.order_service.dto.OrderStatusHistoryResponse;
 import com.quickbite.order_service.entity.OrderStatusHistory;
 import org.mapstruct.Mapper;
 

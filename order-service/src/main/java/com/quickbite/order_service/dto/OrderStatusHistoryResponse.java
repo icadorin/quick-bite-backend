@@ -1,14 +1,11 @@
-package com.quickbite.order_service.dtos;
+package com.quickbite.order_service.dto;
 
 import com.quickbite.order_service.entity.Order;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data

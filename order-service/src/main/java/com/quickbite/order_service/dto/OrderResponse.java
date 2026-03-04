@@ -1,7 +1,6 @@
-package com.quickbite.order_service.dtos;
+package com.quickbite.order_service.dto;
 
 import com.quickbite.order_service.entity.Order;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
