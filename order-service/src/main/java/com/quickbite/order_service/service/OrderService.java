@@ -4,7 +4,9 @@ import com.quickbite.core.exception.BusinessRuleViolationException;
 import com.quickbite.core.exception.DataValidationException;
 import com.quickbite.core.exception.ResourceNotFoundException;
 import com.quickbite.order_service.client.ProductServiceClient;
-import com.quickbite.order_service.dtos.*;
+import com.quickbite.order_service.domain.OrderCalculator;
+import com.quickbite.order_service.dto.*;
+import com.quickbite.order_service.dto.filter.OrderFilter;
 import com.quickbite.order_service.entity.Order;
 import com.quickbite.order_service.entity.OrderItem;
 import com.quickbite.order_service.entity.OrderStatusHistory;
@@ -12,11 +14,10 @@ import com.quickbite.order_service.mappers.*;
 import com.quickbite.order_service.repositories.OrderItemRepository;
 import com.quickbite.order_service.repositories.OrderRepository;
 import com.quickbite.order_service.repositories.OrderStatusHistoryRepository;
-import com.quickbite.order_service.security.AuthContext;
+import com.quickbite.order_service.repositories.specifications.OrderSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -40,22 +41,37 @@ public class OrderService {
     private final OrderCreateMapper createMapper;
     private final OrderResponseMapper responseMapper;
     private final OrderItemCreateMapper itemCreateMapper;
+    private final OrderAuthorizationService authorizationService;
+    private final OrderCalculator orderCalculator;
 
-    public List<OrderResponse> getUserOrders(AuthContext auth) {
-        validateId(auth.userId());
+    public List<OrderResponse> getUserOrders(Long userId) {
+        validateId(userId);
+
+        var spec = OrderSpecification.withFilters(
+            new OrderFilter(userId, null, null, null, null)
+        );
 
         return responseMapper.toResponseList(
-            orderRepository.findByUserId(auth.userId())
+            orderRepository.findAll(spec)
+        );
+    }
+
+    public List<OrderResponse> getRestaurantOrders(Long restaurantId) {
+        validateId(restaurantId);
+
+        var spec = OrderSpecification.withFilters(
+            new OrderFilter(null, restaurantId, null, null, null)
+        );
+
+        return responseMapper.toResponseList(
+            orderRepository.findAll(spec)
         );
     }
 
     public OrderResponse getOrderById(Long orderId, Long userId) {
-        validateId(orderId);
 
-        Order order = orderRepository.findByIdAndUserId(orderId, userId)
-            .orElseThrow(() ->
-                new ResourceNotFoundException("Order not found with id: " + orderId)
-            );
+        Order order =
+            authorizationService.authorizeUserAccess(orderId, userId);
 
         return enrichAndMap(order);
     }
@@ -68,7 +84,7 @@ public class OrderService {
 
         Map<Long, ProductResponse> products = loadProducts(request.getItems());
 
-        BigDecimal totalAmount = calculateTotal(request.getItems(), products);
+        BigDecimal totalAmount = orderCalculator.calculateTotal(request.getItems(), products);
 
         Order order = createMapper.toEntity(request);
         order.setUserId(userId);
@@ -89,8 +105,7 @@ public class OrderService {
         OrderStatusUpdateRequest request,
         Long userId
     ) {
-        AuthContext auth = new AuthContext(userId, "CUSTOMER");
-        Order order = getAuthorizedOrder(orderId, auth);
+        Order order = getCustomerAuthorizedOrder(orderId, userId);
 
         order.setStatus(request.getStatus());
 
@@ -106,10 +121,8 @@ public class OrderService {
 
     @Transactional
     public OrderResponse cancelOrder(Long orderId, Long userId) {
-        Order order = orderRepository.findByIdAndUserId(orderId, userId)
-            .orElseThrow(() ->
-                new ResourceNotFoundException("Order not found with id: " + orderId)
-            );
+
+        Order order = getCustomerAuthorizedOrder(orderId, userId);
 
         if (order.getStatus() != Order.OrderStatus.PENDING) {
             throw new BusinessRuleViolationException(
@@ -141,46 +154,10 @@ public class OrderService {
         Map<Long, ProductResponse> products
     ) {
         List<OrderItem> items = requests.stream()
-            .map(req -> {
-                ProductResponse product =
-                    products.get(req.getProductId());
-
-                if (product == null) {
-                    throw new ResourceNotFoundException(
-                        "Product not found: " + req.getProductId()
-                    );
-                }
-
-                OrderItem item = itemCreateMapper.toEntity(req);
-                item.setOrder(order);
-                item.setProductName(product.getName());
-                item.setUnitPrice(product.getPrice());
-                return item;
-            })
+            .map(req -> buildOrderItem(order, req, products))
             .toList();
 
         orderItemRepository.saveAll(items);
-    }
-
-    private BigDecimal calculateTotal(
-        List<OrderItemRequest> items,
-        Map<Long, ProductResponse> products
-    ) {
-        return items.stream()
-            .map(item -> {
-                ProductResponse product = products.get(item.getProductId());
-
-                if (product == null || !Boolean.TRUE.equals(product.getIsAvailable())) {
-                    throw new BusinessRuleViolationException(
-                        "Product not available: " + item.getProductId()
-                    );
-                }
-
-                return product.getPrice()
-                    .multiply(BigDecimal.valueOf(item.getQuantity()));
-
-            })
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private void addHistory(Order order, Order.OrderStatus status, String notes) {
@@ -193,32 +170,17 @@ public class OrderService {
         );
     }
 
-    private Order getAuthorizedOrder(Long orderId, AuthContext auth) {
-        if (auth == null) {
-            throw new BusinessRuleViolationException("Authentication context missing");
-        }
+    private Order getCustomerAuthorizedOrder(Long orderId, Long userId) {
 
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() ->
                 new ResourceNotFoundException("Order not found with id: " + orderId)
             );
 
-        switch (auth.role()) {
-            case "CUSTOMER" -> {
-                if (!order.getUserId().equals(auth.userId())) {
-                    throw new BusinessRuleViolationException(
-                        "You are not allowed to access this order"
-                    );
-                }
-            }
-            case "RESTAURANT" -> {
-                //
-                // if (!order.getRestaurantId().equals(auth.userId())){}
-            }
-            case "ADMIN" -> {
-                //
-            }
-            default -> throw new BusinessRuleViolationException("Invalid role");
+        if (!order.getUserId().equals(userId)) {
+            throw new BusinessRuleViolationException(
+                "You are not allowed to access this order"
+            );
         }
 
         return order;
@@ -238,5 +200,37 @@ public class OrderService {
                 id -> id,
                 productClient::getProduct
             ));
+    }
+
+    private OrderItem buildOrderItem(
+        Order order,
+        OrderItemRequest request,
+        Map<Long, ProductResponse> products
+    ) {
+        ProductResponse product =
+            getProductOrThrow(request.getProductId(), products);
+
+        OrderItem item = itemCreateMapper.toEntity(request);
+
+        item.setOrder(order);
+        item.setProductName(product.getName());
+        item.setUnitPrice(product.getPrice());
+
+        return item;
+    }
+
+    private ProductResponse getProductOrThrow(
+        Long productId,
+        Map<Long, ProductResponse> products
+    ) {
+        ProductResponse product = products.get(productId);
+
+        if (product == null) {
+            throw new ResourceNotFoundException(
+                "Product not found with id: " + productId
+            );
+        }
+
+        return product;
     }
 }
