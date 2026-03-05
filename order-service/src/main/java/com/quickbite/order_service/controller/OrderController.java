@@ -4,6 +4,7 @@ import com.quickbite.order_service.constants.ApiPaths;
 import com.quickbite.order_service.dto.OrderRequest;
 import com.quickbite.order_service.dto.OrderResponse;
 import com.quickbite.order_service.dto.OrderStatusUpdateRequest;
+import com.quickbite.order_service.security.JwtUser;
 import com.quickbite.order_service.service.OrderService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -24,17 +25,21 @@ public class OrderController {
 
     @GetMapping
     public List<OrderResponse> getUserOrders(
-        @AuthenticationPrincipal Long userId
-    ) {
-        return orderService.getUserOrders(userId);
+        @AuthenticationPrincipal JwtUser user
+        ) {
+        return orderService.getUserOrders(user.id());
     }
 
     @GetMapping(ApiPaths.BY_ID)
     public OrderResponse getOrderById(
         @PathVariable("id") @Positive Long id,
-        @AuthenticationPrincipal Long userId
-    ) {
-        return orderService.getOrderById(id, userId);
+        @AuthenticationPrincipal JwtUser user
+        ) {
+        return orderService.getOrderById(
+            id,
+            user.id(),
+            user.role()
+        );
     }
 
     @GetMapping(ApiPaths.RESTAURANT + ApiPaths.BY_RESTAURANT_ID)
@@ -47,25 +52,25 @@ public class OrderController {
     @PostMapping
     public OrderResponse createOrder(
         @Valid @RequestBody OrderRequest request,
-        @AuthenticationPrincipal Long userId
+        @AuthenticationPrincipal JwtUser user
     ) {
-        return orderService.createOrder(request, userId);
+        return orderService.createOrder(request, user.id());
     }
 
     @PostMapping(ApiPaths.BY_ID + ApiPaths.STATUS)
     public OrderResponse updateOrderStatus(
         @PathVariable("id") @Positive Long id,
         @Valid @RequestBody OrderStatusUpdateRequest request,
-        @AuthenticationPrincipal Long userId
+        @AuthenticationPrincipal JwtUser user
     ) {
-        return orderService.updateOrderStatus(id, request, userId);
+        return orderService.updateOrderStatus(id, request, user.id(), user.role());
     }
 
     @PostMapping(ApiPaths.BY_ID + ApiPaths.CANCEL)
     public OrderResponse cancelOrder(
         @PathVariable("id") @Positive Long id,
-        @AuthenticationPrincipal Long userId
+        @AuthenticationPrincipal JwtUser user
     ) {
-        return orderService.cancelOrder(id, userId);
+        return orderService.cancelOrder(id, user.id(), user.role());
     }
 }
