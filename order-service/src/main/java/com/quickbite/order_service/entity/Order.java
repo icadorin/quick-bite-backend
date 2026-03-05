@@ -1,6 +1,7 @@
 package com.quickbite.order_service.entity;
 
 import com.quickbite.core.entity.BaseEntity;
+import com.quickbite.core.exception.BusinessRuleViolationException;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -69,5 +70,39 @@ public class Order extends BaseEntity {
     public enum OrderStatus {
         PENDING, CONFIRMED, PREPARING, READY_FOR_PICKUP,
         OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+    }
+
+    public void changeStatus(OrderStatus newStatus, String notes) {
+        if (this.status == newStatus) {
+            throw new BusinessRuleViolationException(
+                "Order already in this status"
+            );
+        }
+
+        this.status = newStatus;
+
+        OrderStatusHistory history =
+            OrderStatusHistory.builder()
+                .order(this)
+                .status(newStatus)
+                .notes(notes)
+                .build();
+
+        this.statusHistory.add(history);
+
+        if (newStatus == OrderStatus.DELIVERED) {
+            this.actualDeliveryTime = LocalDateTime.now();
+        }
+    }
+
+    public void initializeHistory(String notes) {
+        OrderStatusHistory history =
+            OrderStatusHistory.builder()
+                .order(this)
+                .status(this.status)
+                .notes(notes)
+                .build();
+
+        this.statusHistory.add(history);
     }
 }
