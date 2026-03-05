@@ -19,7 +19,7 @@ public interface OrderStatusHistoryRepository extends JpaRepository<OrderStatusH
             AND osh.status = :status
     """)
     List<OrderStatusHistory> findByOrderIdAndStatus(
-            @Param("order_id") Long orderId,
+            @Param("orderId") Long orderId,
             @Param("status") OrderStatus status
     );
 
