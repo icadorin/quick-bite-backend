@@ -1,8 +1,8 @@
 package com.quickbite.order_service.service;
 
-import com.quickbite.order_service.client.aggregator.ExternalOrderDataLoader;
+import com.quickbite.core.exception.ResourceNotFoundException;
+import com.quickbite.core.security.UserRole;
 import com.quickbite.order_service.dto.OrderResponse;
-import com.quickbite.order_service.dto.RestaurantResponse;
 import com.quickbite.order_service.dto.filter.OrderFilter;
 import com.quickbite.order_service.entity.Order;
 import com.quickbite.order_service.mappers.OrderResponseMapper;
@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -20,74 +19,47 @@ public class OrderQueryService {
 
     private final OrderRepository orderRepository;
     private final OrderResponseMapper responseMapper;
-    private final ExternalOrderDataLoader externalLoader;
 
     public List<OrderResponse> getUserOrders(Long userId) {
 
-        var spec = OrderSpecification.withFilters(
-            new OrderFilter(userId, null, null, null, null)
+        List<Order> orders = orderRepository.findAll(
+            OrderSpecification.withFilters(
+                new OrderFilter(userId, null, null, null, null)
+            )
         );
 
-        List<Order> orders = orderRepository.findAll(spec);
-
-        List<Long> restaurantIds = orders.stream()
-            .map(Order::getRestaurantId)
-            .distinct()
-            .toList();
-
-        var restaurants =
-            externalLoader.loadRestaurants(restaurantIds);
-
-        return orders.stream()
-            .map(order -> enrichOrders(order, restaurants))
-            .toList();
+        return responseMapper.toResponseList(orders);
     }
 
     public List<OrderResponse> getRestaurantOrders(Long restaurantId) {
 
-        var spec = OrderSpecification.withFilters(
-            new OrderFilter(null, restaurantId, null, null, null)
+        List<Order> orders = orderRepository.findAll(
+            OrderSpecification.withFilters(
+                new OrderFilter(null, restaurantId, null, null, null)
+            )
         );
 
-        List<Order> orders = orderRepository.findAll(spec);
-
-        List<Long> restaurantIds = orders.stream()
-            .map(Order::getRestaurantId)
-            .distinct()
-            .toList();
-
-        var restaurants =
-            externalLoader.loadRestaurants(restaurantIds);
-
-        return orders.stream()
-            .map(order -> enrichOrders(order, restaurants))
-            .toList();
+        return responseMapper.toResponseList(orders);
     }
 
-    public OrderResponse getOrderById(Order order) {
-
-        Map<Long, RestaurantResponse> restaurant =
-            externalLoader.loadRestaurants(
-                List.of(order.getRestaurantId())
-            );
-
-        return enrichOrders(order, restaurant);
-    }
-
-    private OrderResponse enrichOrders(
-        Order order,
-        Map<Long, RestaurantResponse> restaurants
+    public OrderResponse getOrderById(
+        Long id,
+        Long userId,
+        UserRole role
     ) {
-        OrderResponse response =
-             responseMapper.toResponse(order);
 
-        RestaurantResponse restaurant =
-            restaurants.get(order.getRestaurantId());
+        Order order;
 
-        if (restaurant != null) {
-            response.setRestaurantName(restaurant.getName());
+        if (role == UserRole.CUSTOMER) {
+            order = orderRepository
+                .findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        } else {
+            order = orderRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         }
 
-        return response;
+        return responseMapper.toResponse(order);
     }
 }
