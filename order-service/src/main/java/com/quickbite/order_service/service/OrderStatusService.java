@@ -2,57 +2,72 @@ package com.quickbite.order_service.service;
 
 import com.quickbite.core.security.UserRole;
 import com.quickbite.order_service.domain.OrderStatusValidation;
+import com.quickbite.order_service.dto.OrderResponse;
+import com.quickbite.order_service.dto.OrderStatusUpdateRequest;
 import com.quickbite.order_service.entity.Order;
-import com.quickbite.order_service.entity.OrderStatusHistory;
-import com.quickbite.order_service.repositories.OrderRepository;
-import com.quickbite.order_service.repositories.OrderStatusHistoryRepository;
+import com.quickbite.order_service.mappers.OrderResponseMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 public class OrderStatusService {
 
-    private final OrderRepository orderRepository;
     private final OrderAuthorizationService authorizationService;
     private final OrderStatusValidation statusValidation;
-    private final OrderStatusHistoryRepository historyRepository;
+    private final OrderResponseMapper responseMapper;
 
     @Transactional
-    public Order updateStatus(
-        Long orderId,
+    public OrderResponse updateStatus(
+        Long id,
+        OrderStatusUpdateRequest request,
         Long userId,
-        UserRole role,
-        Order.OrderStatus newStatus,
-        String notes
+        UserRole role
     ) {
         Order order =
-            authorizationService.authorizeUserAccess(orderId, userId, role);
+            authorizationService.authorizeUserAccess(
+                id,
+                userId,
+                role
+            );
 
-        statusValidation.validationTransition(
+        statusValidation.validateTransition(
             order.getStatus(),
-            newStatus
+            request.getStatus()
         );
 
-        order.setStatus(newStatus);
-
-        if (newStatus == Order.OrderStatus.DELIVERED) {
-            order.setActualDeliveryTime(LocalDateTime.now());
-        }
-
-        Order saved = orderRepository.save(order);
-
-        historyRepository.save(
-            OrderStatusHistory.builder()
-                .order(saved)
-                .status(newStatus)
-                .notes(notes)
-                .build()
+        order.changeStatus(
+            request.getStatus(),
+            request.getNotes()
         );
 
-        return saved;
+        return responseMapper.toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(
+        Long id,
+        Long userId,
+        UserRole role
+    ) {
+        Order order =
+            authorizationService.authorizeUserAccess(
+                id,
+                userId,
+                role
+            );
+
+        statusValidation.validateTransition(
+            order.getStatus(),
+            Order.OrderStatus.CANCELLED
+        );
+
+        order.changeStatus(
+            Order.OrderStatus.CANCELLED,
+            "Order cancelled"
+        );
+
+        return responseMapper.toResponse(order);
     }
 }
