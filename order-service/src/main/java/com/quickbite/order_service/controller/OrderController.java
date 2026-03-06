@@ -57,7 +57,7 @@ public class OrderController {
         return orderService.createOrder(request, user.id());
     }
 
-    @PostMapping(ApiPaths.BY_ID + ApiPaths.STATUS)
+    @PatchMapping(ApiPaths.BY_ID + ApiPaths.STATUS)
     public OrderResponse updateOrderStatus(
         @PathVariable("id") @Positive Long id,
         @Valid @RequestBody OrderStatusUpdateRequest request,
