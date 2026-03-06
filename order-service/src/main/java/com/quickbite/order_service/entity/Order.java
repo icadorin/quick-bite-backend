@@ -73,7 +73,7 @@ public class Order extends BaseEntity {
     }
 
     public void changeStatus(OrderStatus newStatus, String notes) {
-        if (this.status == newStatus) {
+        if (this.status.equals(newStatus)) {
             throw new BusinessRuleViolationException(
                 "Order already in this status"
             );
@@ -81,25 +81,14 @@ public class Order extends BaseEntity {
 
         this.status = newStatus;
 
+        if (newStatus == OrderStatus.DELIVERED) {
+            this.actualDeliveryTime = LocalDateTime.now();
+        }
+
         OrderStatusHistory history =
             OrderStatusHistory.builder()
                 .order(this)
                 .status(newStatus)
-                .notes(notes)
-                .build();
-
-        this.statusHistory.add(history);
-
-        if (newStatus == OrderStatus.DELIVERED) {
-            this.actualDeliveryTime = LocalDateTime.now();
-        }
-    }
-
-    public void initializeHistory(String notes) {
-        OrderStatusHistory history =
-            OrderStatusHistory.builder()
-                .order(this)
-                .status(this.status)
                 .notes(notes)
                 .build();
 
