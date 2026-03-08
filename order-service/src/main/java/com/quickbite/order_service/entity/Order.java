@@ -2,9 +2,12 @@ package com.quickbite.order_service.entity;
 
 import com.quickbite.core.entity.BaseEntity;
 import com.quickbite.core.exception.BusinessRuleViolationException;
+import com.quickbite.order_service.dto.DeliveryAddress;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,7 +44,8 @@ public class Order extends BaseEntity {
     private BigDecimal totalAmount;
 
     @Column(name = "delivery_address", columnDefinition = "jsonb")
-    private String deliveryAddress;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private DeliveryAddress deliveryAddress;
 
     @Column(name = "customer_notes", length = 500)
     private String customerNotes;
@@ -52,12 +56,14 @@ public class Order extends BaseEntity {
     @Column(name = "actual_delivery_time")
     private LocalDateTime actualDeliveryTime;
 
-    @Column(name = "payment_method", length = 50)
-    private String paymentMethod;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    private PaymentMethod paymentMethod;
 
-    @Column(name = "payment_status", length = 50)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status")
     @Builder.Default
-    private String paymentStatus = "PENDING";
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -93,5 +99,11 @@ public class Order extends BaseEntity {
                 .build();
 
         this.statusHistory.add(history);
+    }
+
+    public void recalculateTotal() {
+        this.totalAmount = items.stream()
+            .map(OrderItem::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
