@@ -1,5 +1,6 @@
 package com.quickbite.order_service.dto;
 
+import com.quickbite.order_service.entity.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -25,7 +26,7 @@ public class OrderRequest {
     @NotBlank
     private String deliveryAddress;
     private String customerNotes;
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
 
     @NotEmpty
     @Valid
