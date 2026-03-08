@@ -1,7 +1,7 @@
 package com.quickbite.order_service.service;
 
 import com.quickbite.core.security.UserRole;
-import com.quickbite.order_service.domain.OrderStatusValidation;
+import com.quickbite.order_service.service.validation.OrderStatusValidation;
 import com.quickbite.order_service.dto.OrderResponse;
 import com.quickbite.order_service.dto.OrderStatusUpdateRequest;
 import com.quickbite.order_service.entity.Order;
