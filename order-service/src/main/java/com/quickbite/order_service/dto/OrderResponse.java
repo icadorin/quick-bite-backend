@@ -1,6 +1,8 @@
 package com.quickbite.order_service.dto;
 
 import com.quickbite.order_service.entity.Order;
+import com.quickbite.order_service.entity.PaymentMethod;
+import com.quickbite.order_service.entity.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,8 +28,8 @@ public class OrderResponse {
     private String customerNotes;
     private LocalDateTime estimatedDeliveryTime;
     private LocalDateTime actualDeliveryTime;
-    private String paymentMethod;
-    private String paymentStatus;
+    private PaymentMethod paymentMethod;
+    private PaymentStatus paymentStatus;
     private List<OrderItemResponse> items;
     private List<OrderStatusHistoryResponse> statusHistory;
     private LocalDateTime createdAt;
