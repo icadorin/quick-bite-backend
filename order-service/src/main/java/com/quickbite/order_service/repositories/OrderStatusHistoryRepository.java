@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface OrderStatusHistoryRepository extends JpaRepository<OrderStatusHistory, Long> {
 
@@ -30,5 +31,5 @@ public interface OrderStatusHistoryRepository extends JpaRepository<OrderStatusH
     """)
     List<OrderStatusHistory> findByRestaurantId(@Param("restaurantId") Long restaurantId);
 
-    OrderStatusHistory findFirstByOrderIdOrderByCreatedAtDesc(Long orderId);
+    Optional<OrderStatusHistory> findFirstByOrderIdOrderByCreatedAtDesc(Long orderId);
 }
