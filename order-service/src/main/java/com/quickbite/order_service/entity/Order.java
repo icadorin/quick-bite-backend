@@ -4,6 +4,7 @@ import com.quickbite.core.entity.BaseEntity;
 import com.quickbite.core.exception.BusinessRuleViolationException;
 import com.quickbite.order_service.dto.DeliveryAddress;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -43,6 +44,7 @@ public class Order extends BaseEntity {
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @NotNull
     @Column(name = "delivery_address", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private DeliveryAddress deliveryAddress;
