@@ -1,5 +1,6 @@
 package com.quickbite.order_service.mappers;
 
+import com.quickbite.order_service.dto.DeliveryAddress;
 import com.quickbite.order_service.dto.OrderRequest;
 import com.quickbite.order_service.entity.Order;
 import org.mapstruct.Mapper;
@@ -17,4 +18,13 @@ public interface OrderCreateMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Order toEntity(OrderRequest request);
+
+    default DeliveryAddress map(String value) {
+        if (value == null) return null;
+
+        DeliveryAddress address = new DeliveryAddress();
+        address.setStreet(value);
+
+        return address;
+    }
 }

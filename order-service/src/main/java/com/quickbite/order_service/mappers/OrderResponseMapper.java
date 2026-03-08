@@ -1,5 +1,6 @@
 package com.quickbite.order_service.mappers;
 
+import com.quickbite.order_service.dto.DeliveryAddress;
 import com.quickbite.order_service.dto.OrderResponse;
 import com.quickbite.order_service.entity.Order;
 import org.mapstruct.Mapper;
@@ -20,4 +21,9 @@ public interface OrderResponseMapper {
     OrderResponse toResponse(Order order);
 
     List<OrderResponse> toResponseList(List<Order> orders);
+
+    default String map(DeliveryAddress value) {
+        if (value == null) return null;
+        return value.getStreet();
+    }
 }
