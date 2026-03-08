@@ -1,4 +1,4 @@
-package com.quickbite.order_service.domain;
+package com.quickbite.order_service.service.validation;
 
 import com.quickbite.core.exception.BusinessRuleViolationException;
 import com.quickbite.order_service.entity.Order;
