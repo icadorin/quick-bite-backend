@@ -25,7 +25,10 @@ public class OrderRequest {
 
     @NotBlank
     private String deliveryAddress;
+
     private String customerNotes;
+
+    @NotNull
     private PaymentMethod paymentMethod;
 
     @NotEmpty
