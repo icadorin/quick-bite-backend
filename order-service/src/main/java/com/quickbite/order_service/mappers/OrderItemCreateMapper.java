@@ -10,6 +10,10 @@ public interface OrderItemCreateMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "order", ignore = true)
+    @Mapping(target = "productName", ignore = true)
+    @Mapping(target = "unitPrice", ignore = true)
     @Mapping(target = "totalPrice", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     OrderItem toEntity(OrderItemRequest request);
 }

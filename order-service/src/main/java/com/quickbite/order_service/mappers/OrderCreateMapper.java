@@ -6,7 +6,10 @@ import com.quickbite.order_service.entity.Order;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "spring",
+    uses = OrderItemCreateMapper.class
+)
 public interface OrderCreateMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -15,6 +18,8 @@ public interface OrderCreateMapper {
     @Mapping(target = "totalAmount", ignore = true)
     @Mapping(target = "estimatedDeliveryTime", ignore = true)
     @Mapping(target = "actualDeliveryTime", ignore = true)
+    @Mapping(target = "paymentStatus", ignore = true)
+    @Mapping(target = "statusHistory", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Order toEntity(OrderRequest request);
