@@ -2,7 +2,7 @@ package com.quickbite.order_service.entity;
 
 import com.quickbite.core.entity.BaseEntity;
 import com.quickbite.core.exception.BusinessRuleViolationException;
-import com.quickbite.order_service.dto.DeliveryAddress;
+import com.quickbite.order_service.model.DeliveryAddress;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -105,7 +105,9 @@ public class Order extends BaseEntity {
 
     public void recalculateTotal() {
         this.totalAmount = items.stream()
-            .map(OrderItem::getTotalPrice)
+            .map(item -> item.getTotalPrice() != null
+                ? item.getTotalPrice()
+                : BigDecimal.ZERO)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

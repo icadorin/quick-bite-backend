@@ -1,4 +1,4 @@
-package com.quickbite.order_service.dto;
+package com.quickbite.order_service.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,6 +1,6 @@
 package com.quickbite.order_service.mappers;
 
-import com.quickbite.order_service.dto.DeliveryAddress;
+import com.quickbite.order_service.model.DeliveryAddress;
 import com.quickbite.order_service.dto.OrderRequest;
 import com.quickbite.order_service.entity.Order;
 import org.mapstruct.Mapper;
