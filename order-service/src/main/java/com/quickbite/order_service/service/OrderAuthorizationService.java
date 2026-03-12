@@ -17,6 +17,7 @@ public class OrderAuthorizationService {
     public Order authorizeUserAccess(
         Long orderId,
         Long userId,
+        Long restaurantId,
         UserRole role
     ) {
 
@@ -34,7 +35,8 @@ public class OrderAuthorizationService {
             return order;
         }
 
-        if (role == UserRole.RESTAURANT_OWNER) {
+        if (role == UserRole.RESTAURANT_OWNER
+            && order.getRestaurantId().equals(restaurantId)) {
             return order;
         }
 

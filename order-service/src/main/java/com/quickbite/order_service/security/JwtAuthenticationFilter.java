@@ -55,9 +55,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             String role =  jwtService.getRoleFromToken(token);
             Long userId = jwtService.getUserIdFromToken(token);
+            Long restaurantId = jwtService.getUserIdFromToken(token);
 
             var jwtUser = new JwtUser(
                 userId,
+                restaurantId,
                 UserRole.valueOf(role)
             );
 

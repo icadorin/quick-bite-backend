@@ -51,16 +51,18 @@ public class OrderService {
         Long id,
         OrderStatusUpdateRequest request,
         Long userId,
+        Long restaurantId,
         UserRole role
     ) {
-        return statusService.updateStatus(id, request, userId, role);
+        return statusService.updateStatus(id, request, userId, restaurantId, role);
     }
 
     public OrderResponse cancelOrder(
         Long id,
         Long userId,
+        Long restaurantId,
         UserRole role
     ) {
-        return statusService.cancelOrder(id, userId, role);
+        return statusService.cancelOrder(id, userId, restaurantId, role);
     }
 }
