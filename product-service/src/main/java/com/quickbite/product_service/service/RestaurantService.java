@@ -171,6 +171,10 @@ public class RestaurantService {
             .map(responseMapper::toResponse);
     }
 
+    public boolean existsById(Long id) {
+        return repository.existsById(id);
+    }
+
     private void validateUniqueRestaurantName(String name, Long ownerId, Long currentRestaurantId) {
         boolean exists = repository.existsByNameAndOwnerIdAndIdNot(name, ownerId, currentRestaurantId);
 

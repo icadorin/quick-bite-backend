@@ -60,6 +60,12 @@ public class RestaurantController {
         return service.searchRestaurants(name, pageable);
     }
 
+    @GetMapping("/{id}/exists")
+    public ResponseEntity<Boolean> exists(@PathVariable("id") @Positive Long id) {
+        boolean exists = service.existsById(id);
+        return ResponseEntity.ok(exists);
+    }
+
     @GetMapping("/cuisine/{cuisineType}")
     public Page<RestaurantResponse> getByCuisine(
         @PathVariable String cuisineType,
@@ -88,7 +94,7 @@ public class RestaurantController {
     @PutMapping(ApiPaths.BY_ID)
     @PreAuthorize("@restaurantSecurity.canManageRestaurant(#id)")
     public RestaurantResponse update(
-        @PathVariable @Positive Long id,
+        @PathVariable("id") @Positive Long id,
         @Valid @RequestBody RestaurantRequest request
     ) {
         return service.updateRestaurant(id, request);
