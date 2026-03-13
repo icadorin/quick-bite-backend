@@ -11,6 +11,7 @@ import com.quickbite.order_service.mappers.OrderCreateMapper;
 import com.quickbite.order_service.mappers.OrderItemCreateMapper;
 import com.quickbite.order_service.mappers.OrderResponseMapper;
 import com.quickbite.order_service.repositories.OrderRepository;
+import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,15 @@ public class OrderCreationService {
         OrderRequest request,
         Long userId
     ) {
-        productClient.validateRestaurant(request.getRestaurantId());
+
+        boolean restaurantExists =
+            productClient.validateRestaurant(request.getRestaurantId());
+
+        if (!restaurantExists) {
+            throw new BusinessRuleViolationException(
+                "Restaurant not found: " + request.getRestaurantId()
+            );
+        }
 
         Order order = createMapper.toEntity(request);
 
@@ -41,10 +50,11 @@ public class OrderCreationService {
         List<OrderItem> items = request.getItems().stream()
             .map(itemRequest -> {
 
-                ProductResponse product =
-                    productClient.getProduct(itemRequest.getProductId());
+                ProductResponse product;
 
-                if (product == null) {
+                try {
+                    product = productClient.getProduct(itemRequest.getProductId());
+                } catch (FeignException.NotFound ex) {
                     throw new BusinessRuleViolationException(
                         "Product not found: " + itemRequest.getProductId()
                     );
@@ -52,7 +62,7 @@ public class OrderCreationService {
 
                 if (!Boolean.TRUE.equals(product.getIsAvailable())) {
                     throw new BusinessRuleViolationException(
-                        "Product" + itemRequest.getProductId() + "is unavailable"
+                        "Product " + itemRequest.getProductId() + " is unavailable"
                     );
                 }
 
