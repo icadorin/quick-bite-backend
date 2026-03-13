@@ -15,7 +15,7 @@ public class RouteConfig {
     public enum Service {
         AUTH("auth", "8082"),
         PRODUCT("product", "8083"),
-        ORDER("order", "8084"),
+        ORDERS("orders", "8084"),
         PAYMENT("payment", "8085"),
         NOTIFICATION("notification", "8086");
 
@@ -28,14 +28,14 @@ public class RouteConfig {
         "products", Service.PRODUCT,
         "restaurants", Service.PRODUCT,
         "categories", Service.PRODUCT,
-        "order", Service.ORDER,
+        "orders", Service.ORDERS,
         "payment", Service.PAYMENT,
         "notification", Service.NOTIFICATION
     );
 
     public Optional<Service> findServiceByPath(String requestPath) {
         return PATH_TO_SERVICE.entrySet().stream()
-            .filter(entry -> requestPath.startsWith("/api/" + entry.getKey()))
+            .filter(entry -> requestPath.startsWith("/api/v1/" + entry.getKey()))
             .map(Map.Entry::getValue)
             .findFirst();
     }
