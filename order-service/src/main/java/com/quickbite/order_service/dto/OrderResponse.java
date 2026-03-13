@@ -24,7 +24,7 @@ public class OrderResponse {
     private String restaurantName;
     private Order.OrderStatus status;
     private BigDecimal totalAmount;
-    private String deliveryAddress;
+    private DeliveryAddressRequest deliveryAddress;
     private String customerNotes;
     private LocalDateTime estimatedDeliveryTime;
     private LocalDateTime actualDeliveryTime;
