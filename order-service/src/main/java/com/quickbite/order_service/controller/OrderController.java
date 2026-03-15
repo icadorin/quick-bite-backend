@@ -1,10 +1,7 @@
 package com.quickbite.order_service.controller;
 
 import com.quickbite.order_service.constants.ApiPaths;
-import com.quickbite.order_service.dto.OrderRequest;
-import com.quickbite.order_service.dto.OrderResponse;
-import com.quickbite.order_service.dto.OrderStatusResponse;
-import com.quickbite.order_service.dto.OrderStatusUpdateRequest;
+import com.quickbite.order_service.dto.*;
 import com.quickbite.order_service.dto.filter.OrderFilter;
 import com.quickbite.order_service.security.JwtUser;
 import com.quickbite.order_service.service.OrderService;
@@ -14,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -65,18 +64,21 @@ public class OrderController {
     }
 
     @GetMapping(ApiPaths.BY_RESTAURANT + "/stats")
+    @PreAuthorize("hasRole('RESTAURANT')")
     public OrderStatusResponse getRestaurantStats(
-        @PathVariable("restaurantId") Long restaurantId
+        @PathVariable("restaurantId") @Positive Long restaurantId
     ) {
         return orderService.getRestaurantStats(restaurantId);
     }
 
     @PostMapping
-    public OrderResponse createOrder(
+    public ResponseEntity<OrderResponse> createOrder(
         @Valid @RequestBody OrderRequest request,
         @AuthenticationPrincipal JwtUser user
     ) {
-        return orderService.createOrder(request, user.id());
+        OrderResponse response = orderService.createOrder(request, user.id());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping(ApiPaths.ORDER_ID + ApiPaths.STATUS)
@@ -86,7 +88,13 @@ public class OrderController {
         @Valid @RequestBody OrderStatusUpdateRequest request,
         @AuthenticationPrincipal JwtUser user
     ) {
-        return orderService.updateOrderStatus(id, request, user.id(), user.role());
+        return orderService.updateOrderStatus(
+            id,
+            request,
+            user.id(),
+            user.restaurantId(),
+            user.role()
+        );
     }
 
     @PostMapping(ApiPaths.ORDER_ID + ApiPaths.CANCEL)
@@ -94,6 +102,11 @@ public class OrderController {
         @PathVariable("id") @Positive Long id,
         @AuthenticationPrincipal JwtUser user
     ) {
-        return orderService.cancelOrder(id, user.id(), user.role());
+        return orderService.cancelOrder(
+            id,
+            user.id(),
+            user.restaurantId(),
+            user.role()
+        );
     }
 }
