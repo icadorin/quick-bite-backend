@@ -25,6 +25,7 @@
     import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
     import org.springframework.security.core.Authentication;
     import org.springframework.security.web.SecurityFilterChain;
+    import org.springframework.test.context.ActiveProfiles;
     import org.springframework.test.context.bean.override.mockito.MockitoBean;
     import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,6 +40,7 @@
 
     @WebMvcTest(OrderController.class)
     @AutoConfigureMockMvc
+    @ActiveProfiles("test")
     @Import(OrderControllerTest.TestSecurityConfig.class)
     public class OrderControllerTest {
 
@@ -98,7 +100,6 @@
 
             mockMvc.perform(post(ApiPaths.ORDERS)
                     .with(authentication(auth))
-                    .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
