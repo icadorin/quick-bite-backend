@@ -2,6 +2,7 @@
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import com.quickbite.core.security.UserRole;
+    import com.quickbite.order_service.client.ProductServiceClient;
     import com.quickbite.order_service.constants.ApiPaths;
     import com.quickbite.order_service.dto.DeliveryAddressRequest;
     import com.quickbite.order_service.dto.OrderItemRequest;
@@ -33,6 +34,7 @@
 
     import static org.mockito.ArgumentMatchers.any;
     import static org.mockito.ArgumentMatchers.anyLong;
+    import static org.mockito.Mockito.verify;
     import static org.mockito.Mockito.when;
     import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
     import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -52,6 +54,9 @@
 
         @MockitoBean
         private JwtService jwtService;
+
+        @MockitoBean
+        private ProductServiceClient productServiceClient;
 
         @Autowired
         private ObjectMapper objectMapper;
@@ -103,6 +108,11 @@
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
+
+            verify(orderService).createOrder(
+                any(),
+                anyLong()
+            );
         }
 
         @TestConfiguration
