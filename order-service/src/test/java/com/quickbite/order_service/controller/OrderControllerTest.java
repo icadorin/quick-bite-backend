@@ -16,9 +16,15 @@
     import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
     import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+    import org.springframework.boot.test.context.TestConfiguration;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Import;
     import org.springframework.http.MediaType;
     import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+    import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+    import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
     import org.springframework.security.core.Authentication;
+    import org.springframework.security.web.SecurityFilterChain;
     import org.springframework.test.context.bean.override.mockito.MockitoBean;
     import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,6 +39,7 @@
 
     @WebMvcTest(OrderController.class)
     @AutoConfigureMockMvc
+    @Import(OrderControllerTest.TestSecurityConfig.class)
     public class OrderControllerTest {
 
         @Autowired
@@ -95,5 +102,17 @@
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
+        }
+
+        @TestConfiguration
+        public static class TestSecurityConfig {
+
+            @Bean
+            SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+                return http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                    .build();
+            }
         }
     }
