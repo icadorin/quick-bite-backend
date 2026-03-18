@@ -1,5 +1,6 @@
 package com.quickbite.order_service.mappers;
 
+import com.quickbite.order_service.dto.DeliveryAddressRequest;
 import com.quickbite.order_service.model.DeliveryAddress;
 import com.quickbite.order_service.dto.OrderRequest;
 import com.quickbite.order_service.entity.Order;
@@ -24,12 +25,16 @@ public interface OrderCreateMapper {
     @Mapping(target = "updatedAt", ignore = true)
     Order toEntity(OrderRequest request);
 
-    default DeliveryAddress map(String value) {
-        if (value == null) return null;
+    default DeliveryAddress map(DeliveryAddressRequest request) {
+        if (request == null) return null;
 
-        DeliveryAddress address = new DeliveryAddress();
-        address.setStreet(value);
-
-        return address;
+        return DeliveryAddress.builder()
+            .state(request.getState())
+            .number(request.getNumber())
+            .city(request.getCity())
+            .state(request.getState())
+            .zipCode(request.getZipCode())
+            .complement(request.getComplement())
+            .build();
     }
 }
