@@ -34,8 +34,16 @@ public class OrderCreationService {
         Long userId
     ) {
 
-        boolean restaurantExists =
-            productClient.validateRestaurant(request.getRestaurantId());
+        boolean restaurantExists;
+
+        try {
+             restaurantExists =
+                productClient.validateRestaurant(request.getRestaurantId());
+        } catch (FeignException ex) {
+            throw new BusinessRuleViolationException(
+                "Error validating restaurant"
+            );
+        }
 
         if (!restaurantExists) {
             throw new BusinessRuleViolationException(
@@ -58,13 +66,13 @@ public class OrderCreationService {
                     throw new BusinessRuleViolationException(
                         "Product not found: " + itemRequest.getProductId()
                     );
-                }
-
-                if (!Boolean.TRUE.equals(product.getIsAvailable())) {
+                } catch (FeignException ex) {
                     throw new BusinessRuleViolationException(
-                        "Product " + itemRequest.getProductId() + " is unavailable"
+                        "Error communicating with product service"
                     );
                 }
+
+                validateProductAvailable(product, itemRequest.getProductId());
 
                 OrderItem item = itemMapper.toEntity(itemRequest);
 
@@ -82,5 +90,13 @@ public class OrderCreationService {
         Order saved = orderRepository.save(order);
 
         return responseMapper.toResponse(saved);
+    }
+
+    private void validateProductAvailable(ProductResponse product, Long productId) {
+        if (!Boolean.TRUE.equals(product.getIsAvailable())) {
+            throw new BusinessRuleViolationException(
+                "Product " + productId + " is unavailable"
+            );
+        }
     }
 }
