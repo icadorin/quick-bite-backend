@@ -40,6 +40,10 @@ public class JwtService {
         return getClaims(token).get("userId", Long.class);
     }
 
+    public Long getRestaurantIdFromToken(String token) {
+        return getClaims(token).get("restaurantId", Long.class);
+    }
+
     private Claims getClaims(String token) {
         return Jwts.parserBuilder()
             .setSigningKey(secretKey)
