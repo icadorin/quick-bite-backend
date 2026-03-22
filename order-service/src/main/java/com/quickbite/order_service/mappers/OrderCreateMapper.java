@@ -29,7 +29,7 @@ public interface OrderCreateMapper {
         if (request == null) return null;
 
         return DeliveryAddress.builder()
-            .state(request.getState())
+            .street(request.getStreet())
             .number(request.getNumber())
             .city(request.getCity())
             .state(request.getState())
