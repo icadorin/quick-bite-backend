@@ -48,6 +48,7 @@ public class OrderController {
     }
 
     @GetMapping(ApiPaths.BY_RESTAURANT)
+    @PreAuthorize("hasRole('RESTAURANT')")
     public Page<OrderResponse> getRestaurantOrders(
         @PathVariable("restaurantId") @Positive Long restaurantId,
         @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
@@ -58,9 +59,10 @@ public class OrderController {
     @GetMapping("/search")
     public Page<OrderResponse> searchOrders(
         OrderFilter filter,
-        Pageable pageable
+        Pageable pageable,
+        @AuthenticationPrincipal JwtUser user
     ) {
-        return orderService.searchOrders(filter, pageable);
+        return orderService.searchOrders(filter, user, pageable);
     }
 
     @GetMapping(ApiPaths.BY_RESTAURANT + "/stats")
