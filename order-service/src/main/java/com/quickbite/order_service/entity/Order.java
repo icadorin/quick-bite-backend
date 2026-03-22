@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -87,6 +89,12 @@ public class Order extends BaseEntity {
             );
         }
 
+        if (!isValidTransition(this.status, newStatus)) {
+            throw new BusinessRuleViolationException(
+                "Invalid status transition: " + this.status + " → " + newStatus
+            );
+        }
+
         this.status = newStatus;
 
         if (newStatus == OrderStatus.DELIVERED) {
@@ -109,5 +117,21 @@ public class Order extends BaseEntity {
                 ? item.getTotalPrice()
                 : BigDecimal.ZERO)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private static final Map<OrderStatus, Set<OrderStatus>> VALID_TRANSITIONS = Map.of(
+        OrderStatus.PENDING, Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED),
+        OrderStatus.CONFIRMED, Set.of(OrderStatus.PENDING, OrderStatus.CANCELLED),
+        OrderStatus.PREPARING, Set.of(OrderStatus.READY_FOR_PICKUP),
+        OrderStatus.READY_FOR_PICKUP, Set.of(OrderStatus.OUT_FOR_DELIVERY),
+        OrderStatus.OUT_FOR_DELIVERY, Set.of(OrderStatus.DELIVERED),
+        OrderStatus.DELIVERED, Set.of(),
+        OrderStatus.CANCELLED, Set.of()
+    );
+
+    private boolean isValidTransition(OrderStatus current, OrderStatus next) {
+        return VALID_TRANSITIONS
+            .getOrDefault(current, Set.of())
+            .contains(next);
     }
 }
