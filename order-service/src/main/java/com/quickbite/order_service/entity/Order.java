@@ -83,7 +83,7 @@ public class Order extends BaseEntity {
     }
 
     public void changeStatus(OrderStatus newStatus, String notes) {
-        if (this.status.equals(newStatus)) {
+        if (this.status == newStatus) {
             throw new BusinessRuleViolationException(
                 "Order already in this status"
             );
@@ -121,7 +121,7 @@ public class Order extends BaseEntity {
 
     private static final Map<OrderStatus, Set<OrderStatus>> VALID_TRANSITIONS = Map.of(
         OrderStatus.PENDING, Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED),
-        OrderStatus.CONFIRMED, Set.of(OrderStatus.PENDING, OrderStatus.CANCELLED),
+        OrderStatus.CONFIRMED, Set.of(OrderStatus.PREPARING, OrderStatus.CANCELLED),
         OrderStatus.PREPARING, Set.of(OrderStatus.READY_FOR_PICKUP),
         OrderStatus.READY_FOR_PICKUP, Set.of(OrderStatus.OUT_FOR_DELIVERY),
         OrderStatus.OUT_FOR_DELIVERY, Set.of(OrderStatus.DELIVERED),
