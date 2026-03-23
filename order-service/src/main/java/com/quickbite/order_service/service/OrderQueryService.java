@@ -14,7 +14,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,31 +81,13 @@ public class OrderQueryService {
 
     public OrderStatusResponse getRestaurantStats(Long restaurantId) {
 
-        long pending = orderRepository.countByRestaurantAndStatus(
-            restaurantId,
-            Order.OrderStatus.PENDING
-        );
+        Map<Order.OrderStatus, Long> stats =
+            Arrays.stream(Order.OrderStatus.values())
+                .collect(Collectors.toMap(
+                    status -> status,
+                    status -> orderRepository.countByRestaurantAndStatus(restaurantId, status)
+                ));
 
-        long preparing =  orderRepository.countByRestaurantAndStatus(
-            restaurantId,
-            Order.OrderStatus.PREPARING
-        );
-
-        long delivered = orderRepository.countByRestaurantAndStatus(
-            restaurantId,
-            Order.OrderStatus.DELIVERED
-        );
-
-        long cancelled = orderRepository.countByRestaurantAndStatus(
-            restaurantId,
-            Order.OrderStatus.CANCELLED
-        );
-
-        return new OrderStatusResponse(
-            pending,
-            preparing,
-            delivered,
-            cancelled
-        );
+        return new OrderStatusResponse(stats);
     }
 }
