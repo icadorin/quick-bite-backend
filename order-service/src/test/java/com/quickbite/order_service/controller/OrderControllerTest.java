@@ -13,6 +13,7 @@
     import com.quickbite.order_service.service.JwtService;
     import com.quickbite.order_service.service.OrderService;
     import org.junit.jupiter.api.Test;
+    import org.mockito.Mockito;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
@@ -32,12 +33,11 @@
 
     import java.util.List;
 
-    import static org.mockito.ArgumentMatchers.any;
-    import static org.mockito.ArgumentMatchers.anyLong;
-    import static org.mockito.Mockito.verify;
-    import static org.mockito.Mockito.when;
+    import static org.mockito.ArgumentMatchers.*;
+    import static org.mockito.Mockito.*;
     import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
     import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+    import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
     import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
     @WebMvcTest(OrderController.class)
@@ -62,7 +62,7 @@
         private ObjectMapper objectMapper;
 
         @Test
-        void createOrder_shouldReturn201_whenRequestIsValid() throws Exception {
+        void createOrder_shouldCreateOrderAndReturnResponse_whenRequestIsValid() throws Exception {
 
             OrderRequest request = OrderRequest.builder()
                 .restaurantId(1L)
@@ -107,12 +107,37 @@
                     .with(authentication(auth))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.userId").value(1L))
+                .andExpect(jsonPath("$.restaurantId").value(1L));
 
             verify(orderService).createOrder(
                 any(),
-                anyLong()
+                eq(1L)
             );
+        }
+
+        @Test
+        void createOrder_shouldReturn400_whenRequestIdInvalid() throws Exception {
+
+            OrderRequest request = OrderRequest.builder()
+                .restaurantId(null)
+                .build();
+
+            JwtUser user = new JwtUser(1L, 1L, UserRole.CUSTOMER);
+
+            Authentication auth =
+                new UsernamePasswordAuthenticationToken(user, null, List.of());
+
+            mockMvc.perform(post(ApiPaths.ORDERS)
+                    .with(authentication(auth))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+            verify(orderService, Mockito.never())
+                .createOrder(any(), anyLong());
         }
 
         @TestConfiguration
