@@ -1,6 +1,7 @@
 package com.quickbite.order_service.security;
 
 import com.quickbite.core.exception.BaseBusinessException;
+import com.quickbite.core.exception.InvalidTokenException;
 import com.quickbite.core.security.UserRole;
 import com.quickbite.order_service.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -56,17 +57,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String role =  jwtService.getRoleFromToken(token);
             Long userId = jwtService.getUserIdFromToken(token);
             Long restaurantId = jwtService.getRestaurantIdFromToken(token);
+            UserRole userRole;
+
+            try {
+                userRole = UserRole.valueOf(role);
+            } catch (IllegalArgumentException ex) {
+                throw new InvalidTokenException("Invalid role in token");
+            }
 
             var jwtUser = new JwtUser(
                 userId,
                 restaurantId,
-                UserRole.valueOf(role)
+                userRole
             );
 
             var auth = new UsernamePasswordAuthenticationToken(
                 jwtUser,
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                List.of(new SimpleGrantedAuthority(userRole.getAuthority()))
             );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
