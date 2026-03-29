@@ -16,8 +16,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class OrderCreationService {
@@ -55,35 +53,32 @@ public class OrderCreationService {
 
         order.setUserId(userId);
 
-        List<OrderItem> items = request.getItems().stream()
-            .map(itemRequest -> {
+        request.getItems().forEach(itemRequest -> {
 
-                ProductResponse product;
+            ProductResponse product;
 
-                try {
-                    product = productClient.getProduct(itemRequest.getProductId());
-                } catch (FeignException.NotFound ex) {
-                    throw new BusinessRuleViolationException(
-                        "Product not found: " + itemRequest.getProductId()
-                    );
-                } catch (FeignException ex) {
-                    throw new BusinessRuleViolationException(
-                        "Error communicating with product service"
-                    );
-                }
+            try {
+                product = productClient.getProduct(itemRequest.getProductId());
+            } catch (FeignException.NotFound ex) {
+                throw new BusinessRuleViolationException(
+                    "Product not found: " + itemRequest.getProductId()
+                );
+            } catch (FeignException ex) {
+                throw new BusinessRuleViolationException(
+                    "Product service error: " + ex.status()
+                );
+            }
 
-                validateProductAvailable(product, itemRequest.getProductId());
+            validateProductAvailable(product, itemRequest.getProductId());
 
-                OrderItem item = itemMapper.toEntity(itemRequest);
+            OrderItem item = itemMapper.toEntity(itemRequest);
 
-                item.setOrder(order);
-                item.setProductName(product.getName());
-                item.setUnitPrice(product.getPrice());
+            item.defineProductData(product.getName(), product.getPrice());
 
-                return item;
-            }).toList();
+            item.calculateTotalPrice();
 
-        order.setItems(items);
+            order.addItem(item);
+        });
 
         order.recalculateTotal();
 
