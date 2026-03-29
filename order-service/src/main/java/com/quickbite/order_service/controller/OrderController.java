@@ -48,7 +48,7 @@ public class OrderController {
     }
 
     @GetMapping(ApiPaths.BY_RESTAURANT)
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public Page<OrderResponse> getRestaurantOrders(
         @PathVariable("restaurantId") @Positive Long restaurantId,
         @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
@@ -66,7 +66,7 @@ public class OrderController {
     }
 
     @GetMapping(ApiPaths.BY_RESTAURANT + "/stats")
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public OrderStatusResponse getRestaurantStats(
         @PathVariable("restaurantId") @Positive Long restaurantId
     ) {
@@ -84,7 +84,7 @@ public class OrderController {
     }
 
     @PatchMapping(ApiPaths.ORDER_ID + ApiPaths.STATUS)
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public OrderResponse updateOrderStatus(
         @PathVariable("id") @Positive Long id,
         @Valid @RequestBody OrderStatusUpdateRequest request,
