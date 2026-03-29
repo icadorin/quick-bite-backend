@@ -89,11 +89,7 @@ public class Order extends BaseEntity {
             );
         }
 
-        if (!isValidTransition(this.status, newStatus)) {
-            throw new BusinessRuleViolationException(
-                "Invalid status transition: " + this.status + " → " + newStatus
-            );
-        }
+        validateTransition(this.status, newStatus);
 
         this.status = newStatus;
 
@@ -119,6 +115,11 @@ public class Order extends BaseEntity {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public void addItem(OrderItem item) {
+        item.setOrder(this);
+        this.items.add(item);
+    }
+
     private static final Map<OrderStatus, Set<OrderStatus>> VALID_TRANSITIONS = Map.of(
         OrderStatus.PENDING, Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED),
         OrderStatus.CONFIRMED, Set.of(OrderStatus.PREPARING, OrderStatus.CANCELLED),
@@ -129,9 +130,14 @@ public class Order extends BaseEntity {
         OrderStatus.CANCELLED, Set.of()
     );
 
-    private boolean isValidTransition(OrderStatus current, OrderStatus next) {
-        return VALID_TRANSITIONS
+    private void validateTransition(OrderStatus current, OrderStatus next) {
+        if (!VALID_TRANSITIONS
             .getOrDefault(current, Set.of())
-            .contains(next);
+            .contains(next)) {
+
+            throw new BusinessRuleViolationException(
+                "Invalid status transition: " + current + " → " + next
+            );
+        }
     }
 }
