@@ -45,13 +45,18 @@ public class OrderItem extends BaseEntity {
     @Column(length = 500)
     private String notes;
 
-    @PrePersist
-    @PreUpdate
-    protected void calculateTotalPrice() {
-        if (unitPrice != null && quantity != null) {
-            this.totalPrice = unitPrice
-                .multiply(BigDecimal.valueOf(quantity))
-                .setScale(2, RoundingMode.HALF_UP);
+    public void defineProductData(String name, BigDecimal price) {
+        this.productName = name;
+        this.unitPrice = price;
+    }
+
+    public void calculateTotalPrice() throws IllegalStateException {
+        if (unitPrice == null || quantity == null) {
+            throw new IllegalStateException("Cannot calculate total price without unitPrice and quantity");
         }
+
+        this.totalPrice = unitPrice
+            .multiply(BigDecimal.valueOf(quantity))
+            .setScale(2, RoundingMode.HALF_UP);
     }
 }
