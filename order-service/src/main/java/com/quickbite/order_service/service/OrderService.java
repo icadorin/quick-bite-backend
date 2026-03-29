@@ -4,7 +4,6 @@ import com.quickbite.core.exception.BusinessRuleViolationException;
 import com.quickbite.core.security.UserRole;
 import com.quickbite.order_service.dto.*;
 import com.quickbite.order_service.dto.filter.OrderFilter;
-import com.quickbite.order_service.entity.Order;
 import com.quickbite.order_service.mappers.*;
 import com.quickbite.order_service.repositories.OrderRepository;
 import com.quickbite.order_service.repositories.specifications.OrderSpecification;
@@ -16,10 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -46,15 +42,7 @@ public class OrderService {
     }
 
     public OrderStatusResponse getRestaurantStats(Long restaurantId) {
-
-        Map<Order.OrderStatus, Long> stats =
-            Arrays.stream(Order.OrderStatus.values())
-                .collect(Collectors.toMap(
-                    status -> status,
-                    status -> orderRepository.countByRestaurantAndStatus(restaurantId, status)
-                ));
-
-        return new OrderStatusResponse(stats);
+        return queryService.getRestaurantStats(restaurantId);
     }
 
     public Page<OrderResponse> searchOrders(
