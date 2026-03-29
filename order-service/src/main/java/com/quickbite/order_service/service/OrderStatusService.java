@@ -2,7 +2,6 @@ package com.quickbite.order_service.service;
 
 import com.quickbite.core.security.UserRole;
 import com.quickbite.order_service.repositories.OrderRepository;
-import com.quickbite.order_service.service.validation.OrderStatusValidation;
 import com.quickbite.order_service.dto.OrderResponse;
 import com.quickbite.order_service.dto.OrderStatusUpdateRequest;
 import com.quickbite.order_service.entity.Order;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 public class OrderStatusService {
 
     private final OrderAuthorizationService authorizationService;
-    private final OrderStatusValidation statusValidation;
     private final OrderResponseMapper responseMapper;
     private final OrderRepository orderRepository;
 
@@ -35,11 +33,6 @@ public class OrderStatusService {
                 restaurantId,
                 role
             );
-
-        statusValidation.validateTransition(
-            order.getStatus(),
-            request.getStatus()
-        );
 
         order.changeStatus(
             request.getStatus(),
@@ -63,11 +56,6 @@ public class OrderStatusService {
                 restaurantId,
                 role
             );
-
-        statusValidation.validateTransition(
-            order.getStatus(),
-            Order.OrderStatus.CANCELLED
-        );
 
         order.changeStatus(
             Order.OrderStatus.CANCELLED,
