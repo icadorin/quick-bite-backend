@@ -63,18 +63,26 @@ public class OrderCreationServiceTest {
                 )
             ).build();
 
-        Order order = Order.builder().build();
-
-        OrderItem item = OrderItem.builder().build();
+        Order order = new Order();
 
         ProductResponse product = new ProductResponse();
+        product.setId(1L);
         product.setName("Burger");
         product.setPrice(BigDecimal.valueOf(10));
         product.setIsAvailable(true);
 
         when(productClient.validateRestaurant(1L)).thenReturn(true);
+        when(productClient.getProduct(1L)).thenReturn(product);
         when(createMapper.toEntity(request)).thenReturn(order);
-        when(itemMapper.toEntity(any())).thenReturn(item);
+
+        when(itemMapper.toEntity(any())).thenAnswer(invocation -> {
+            OrderItemRequest req = invocation.getArgument(0);
+
+            return OrderItem.builder()
+                .quantity(req.getQuantity())
+                .build();
+        });
+
         when(orderRepository.save(order)).thenReturn(order);
         when(responseMapper.toResponse(order)).thenReturn(new OrderResponse());
 
@@ -114,15 +122,13 @@ public class OrderCreationServiceTest {
             .build();
 
         Order order = Order.builder().build();
-        OrderItem item = OrderItem.builder().build();
 
         ProductResponse product = new ProductResponse();
         product.setIsAvailable(false);
 
         when(productClient.validateRestaurant(1L)).thenReturn(true);
-        when(createMapper.toEntity(request)).thenReturn(order);
-        when(itemMapper.toEntity(any())).thenReturn(item);
         when(productClient.getProduct(1L)).thenReturn(product);
+        when(createMapper.toEntity(request)).thenReturn(order);
 
         assertThrows(
             BusinessRuleViolationException.class,
