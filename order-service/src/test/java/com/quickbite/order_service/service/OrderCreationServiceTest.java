@@ -25,8 +25,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderCreationServiceTest {
@@ -286,5 +285,94 @@ public class OrderCreationServiceTest {
         service.createOrder(request, 99L);
 
         assertEquals(0, order.getTotalAmount().compareTo(BigDecimal.valueOf(25)));
+    }
+
+    @Test
+    void shouldCallProductClientForEachItem() {
+
+        OrderRequest request = OrderRequest.builder()
+            .restaurantId(1L)
+            .items(List.of(
+                OrderItemRequest.builder()
+                    .productId(1L)
+                    .quantity(1)
+                    .build(),
+                OrderItemRequest.builder()
+                    .productId(2L)
+                    .quantity(1)
+                    .build()
+            )).build();
+
+        Order order = new Order();
+
+        ProductResponse product = new ProductResponse();
+        product.setName("Any");
+        product.setPrice(BigDecimal.valueOf(10));
+        product.setIsAvailable(true);
+
+        when(productClient.validateRestaurant(1L)).thenReturn(true);
+        when(productClient.getProduct(any())).thenReturn(product);
+        when(createMapper.toEntity(request)).thenReturn(order);
+
+        when(itemMapper.toEntity(any())).thenAnswer(invocation -> {
+            OrderItemRequest req = invocation.getArgument(0);
+
+            return OrderItem.builder()
+                .quantity(req.getQuantity())
+                .build();
+        });
+
+        when(orderRepository.save(any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(responseMapper.toResponse(any()))
+            .thenReturn(new OrderResponse());
+
+
+        service.createOrder(request, 1L);
+
+        verify(productClient, times(2)).getProduct(any());
+    }
+
+    @Test
+    void shouldCallRepositorySaveOnce() {
+
+        OrderRequest request = OrderRequest.builder()
+            .restaurantId(1L)
+            .items(List.of(
+                OrderItemRequest.builder()
+                    .productId(1L)
+                    .quantity(1)
+                    .build()
+            )).build();
+
+        Order order = new Order();
+
+        ProductResponse product = new ProductResponse();
+        product.setName("Burger");
+        product.setPrice(BigDecimal.valueOf(10));
+        product.setIsAvailable(true);
+
+        when(productClient.validateRestaurant(1L)).thenReturn(true);
+        when(productClient.getProduct(1L)).thenReturn(product);
+        when(createMapper.toEntity(request)).thenReturn(order);
+
+        when(itemMapper.toEntity(any())).thenAnswer(invocation -> {
+            OrderItemRequest req = invocation.getArgument(0);
+
+            return OrderItem.builder()
+                .quantity(req.getQuantity())
+                .build();
+        });
+
+        when(orderRepository.save(any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(responseMapper.toResponse(any()))
+            .thenReturn(new OrderResponse());
+
+        service.createOrder(request, 1L);
+
+        verify(orderRepository, times(1)).save(any());
     }
 }
