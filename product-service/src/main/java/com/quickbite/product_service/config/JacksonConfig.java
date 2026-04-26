@@ -1,21 +1,22 @@
 package com.quickbite.product_service.config;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.quickbite.core.config.JacksonCustomizer;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 public class JacksonConfig {
 
     @Bean
     @Primary
-    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
-        ObjectMapper mapper = JacksonCustomizer.withJavaTime(builder.build());
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        return mapper;
+    public JsonMapper objectMapper() {
+
+        return JsonMapper.builder()
+            .changeDefaultPropertyInclusion(incl ->
+                incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+            .build();
     }
 }

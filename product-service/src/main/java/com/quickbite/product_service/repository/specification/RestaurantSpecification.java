@@ -44,7 +44,7 @@ public final class RestaurantSpecification {
 
             if (filter.ownerId() != null) {
                 predicates.add(
-                    cb.equal(root.get("owner").get("id"), filter.ownerId())
+                    cb.equal(root.get("ownerId"), filter.ownerId())
                 );
             }
 
