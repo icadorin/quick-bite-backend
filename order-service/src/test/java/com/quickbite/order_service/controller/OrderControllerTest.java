@@ -1,6 +1,5 @@
     package com.quickbite.order_service.controller;
 
-    import com.fasterxml.jackson.databind.ObjectMapper;
     import com.quickbite.core.security.UserRole;
     import com.quickbite.order_service.client.ProductServiceClient;
     import com.quickbite.order_service.constants.ApiPaths;
@@ -24,12 +23,14 @@
     import org.springframework.http.MediaType;
     import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
     import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+    import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
     import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
     import org.springframework.security.core.Authentication;
     import org.springframework.security.web.SecurityFilterChain;
     import org.springframework.test.context.ActiveProfiles;
     import org.springframework.test.context.bean.override.mockito.MockitoBean;
     import org.springframework.test.web.servlet.MockMvc;
+    import tools.jackson.databind.ObjectMapper;
 
     import java.util.List;
 
@@ -44,6 +45,7 @@
     @AutoConfigureMockMvc
     @ActiveProfiles("test")
     @Import(OrderControllerTest.TestSecurityConfig.class)
+    @EnableWebSecurity
     public class OrderControllerTest {
 
         @Autowired
