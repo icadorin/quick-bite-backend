@@ -13,18 +13,16 @@ public class JwtService {
 
     private final SecretKey secretKey;
 
-    public JwtService(
-        @Value("${security.jwt.secret}") String secret
-    ) {
+    public JwtService(@Value("${security.jwt.secret}") String secret) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
     public void validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+            Jwts.parser()
+                .verifyWith(secretKey)
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token);
         } catch (ExpiredJwtException ex) {
             throw new InvalidTokenException("Token expired");
         } catch (JwtException ex) {
@@ -45,10 +43,10 @@ public class JwtService {
     }
 
     private Claims getClaims(String token) {
-        return Jwts.parserBuilder()
-            .setSigningKey(secretKey)
+        return Jwts.parser()
+            .verifyWith(secretKey)
             .build()
-            .parseClaimsJws(token)
-            .getBody();
+            .parseSignedClaims(token)
+            .getPayload();
     }
 }
