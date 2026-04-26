@@ -118,7 +118,7 @@ public class GlobalExceptionHandler {
             case "JWT_VALIDATION_ERROR", "TOKEN_ERROR", "UNAUTHORIZED" -> HttpStatus.UNAUTHORIZED;
             case "ACCESS_DENIED" -> HttpStatus.FORBIDDEN;
             case "DATA_VALIDATION_ERROR", "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
-            case "BUSINESS_RULE_VIOLATION" -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case "BUSINESS_RULE_VIOLATION" -> HttpStatus.UNPROCESSABLE_CONTENT;
             case "RESOURCE_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "DATABASE_ERROR" -> HttpStatus.INTERNAL_SERVER_ERROR;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;

@@ -41,13 +41,13 @@ public class JwtService {
         Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-            .setSubject(user.getEmail())
+            .subject(user.getEmail())
             .claim("userId", user.getId())
             .claim("role", user.getRole().name())
             .claim("fullName", user.getFullName())
-            .setIssuer(issuer)
-            .setIssuedAt(now)
-            .setExpiration(expiryDate)
+            .issuer(issuer)
+            .issuedAt(now)
+            .expiration(expiryDate)
             .signWith(getSigningKey())
             .compact();
     }
@@ -116,11 +116,11 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-            .setSigningKey(getSigningKey())
+        return Jwts.parser()
+            .verifyWith(getSigningKey())
             .build()
-            .parseClaimsJws(token)
-            .getBody();
+            .parseSignedClaims(token)
+            .getPayload();
     }
 
     private boolean isTokenExpired(Claims claims) {

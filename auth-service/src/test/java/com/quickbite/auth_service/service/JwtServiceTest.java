@@ -114,12 +114,12 @@ public class JwtServiceTest {
         ReflectionTestUtils.setField(jwtService, "issuer", "auth-service");
 
         String token = Jwts.builder()
-            .setSubject(user.getEmail())
+            .subject(user.getEmail())
             .claim("userId", user.getId())
             .claim("role", "INVALID_ROLE")
-            .setIssuer("auth-service")
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + 3600000))
+            .issuer("auth-service")
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + 3600000))
             .signWith(
                 Keys.hmacShaKeyFor(
                     "testSecretKeytestSecretKeytestSecretKey"
