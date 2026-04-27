@@ -1,6 +1,7 @@
 package com.quickbite.auth_service.controller;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.auth_service.constants.TestConstants;
 import com.quickbite.auth_service.dto.LoginRequest;
 import com.quickbite.auth_service.dto.LoginResponse;
@@ -17,7 +18,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -38,8 +38,7 @@ public class AuthControllerTest {
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void register_shouldReturn400_whenEmailIsInvalid() throws Exception {

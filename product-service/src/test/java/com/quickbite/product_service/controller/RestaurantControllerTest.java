@@ -1,5 +1,6 @@
 package com.quickbite.product_service.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quickbite.product_service.constants.ApiPaths;
 import com.quickbite.product_service.constants.TestConstants;
 import com.quickbite.product_service.dto.RestaurantRequest;
@@ -18,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -41,8 +41,7 @@ class RestaurantControllerTest {
     @MockitoBean
     private RestaurantService restaurantService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @WithMockUser(roles = {"ADMIN", "RESTAURANT_OWNED"})
     @Test
