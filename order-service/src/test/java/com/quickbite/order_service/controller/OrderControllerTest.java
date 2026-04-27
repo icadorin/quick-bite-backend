@@ -1,5 +1,6 @@
     package com.quickbite.order_service.controller;
 
+    import com.fasterxml.jackson.databind.ObjectMapper;
     import com.quickbite.core.security.UserRole;
     import com.quickbite.order_service.client.ProductServiceClient;
     import com.quickbite.order_service.constants.ApiPaths;
@@ -30,13 +31,14 @@
     import org.springframework.test.context.ActiveProfiles;
     import org.springframework.test.context.bean.override.mockito.MockitoBean;
     import org.springframework.test.web.servlet.MockMvc;
-    import tools.jackson.databind.ObjectMapper;
 
     import java.util.List;
 
+    import static com.quickbite.order_service.constants.TestConstants.*;
     import static org.mockito.ArgumentMatchers.*;
     import static org.mockito.Mockito.*;
     import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+    import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
     import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
     import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
     import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -60,45 +62,44 @@
         @MockitoBean
         private ProductServiceClient productServiceClient;
 
-        @Autowired
-        private ObjectMapper objectMapper;
+        private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Test
         void createOrder_shouldCreateOrderAndReturnResponse_whenRequestIsValid() throws Exception {
 
             OrderRequest request = OrderRequest.builder()
-                .restaurantId(1L)
+                .restaurantId(VALID_RESTAURANT_ID)
                 .deliveryAddress(
                     DeliveryAddressRequest.builder()
-                        .street("Z street")
-                        .number("123")
-                        .city("Join")
-                        .state("SC")
-                        .zipCode("999999-999")
-                        .complement("Z complement")
+                        .street(CONTROLLER_STREET)
+                        .number(VALID_NUMBER)
+                        .city(VALID_CITY)
+                        .state(VALID_STATE)
+                        .zipCode(VALID_ZIP_CODE)
+                        .complement(VALID_COMPLEMENT)
                         .build()
                 )
                 .paymentMethod(PaymentMethod.PIX)
                 .items(List.of(
                     OrderItemRequest.builder()
-                        .productId(1L)
-                        .quantity(1)
+                        .productId(VALID_PRODUCT_ID)
+                        .quantity(SINGLE_QUANTITY)
                         .build()
                 ))
                 .build();
 
             OrderResponse expectedResponse = OrderResponse.builder()
-                .id(1L)
-                .userId(1L)
-                .restaurantId(1L)
+                .id(VALID_ORDER_ID)
+                .userId(VALID_USER_ID)
+                .restaurantId(VALID_RESTAURANT_ID)
                 .build();
 
             when(orderService.createOrder(any(), anyLong()))
                 .thenReturn(expectedResponse);
 
             JwtUser user = new JwtUser(
-                1L,
-                1L,
+                VALID_USER_ID,
+                VALID_RESTAURANT_ID,
                 UserRole.CUSTOMER
             );
 
@@ -110,9 +111,9 @@
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.userId").value(1L))
-                .andExpect(jsonPath("$.restaurantId").value(1L));
+                .andExpect(jsonPath("$.id").value(VALID_ORDER_ID))
+                .andExpect(jsonPath("$.userId").value(VALID_USER_ID))
+                .andExpect(jsonPath("$.restaurantId").value(VALID_RESTAURANT_ID));
 
             verify(orderService).createOrder(
                 any(),
@@ -127,7 +128,11 @@
                 .restaurantId(null)
                 .build();
 
-            JwtUser user = new JwtUser(1L, 1L, UserRole.CUSTOMER);
+            JwtUser user = new JwtUser(
+                VALID_USER_ID,
+                VALID_RESTAURANT_ID,
+                UserRole.CUSTOMER
+            );
 
             Authentication auth =
                 new UsernamePasswordAuthenticationToken(user, null, List.of());
@@ -140,6 +145,29 @@
 
             verify(orderService, Mockito.never())
                 .createOrder(any(), anyLong());
+        }
+
+        @Test
+        void shouldGetUserOrders() throws Exception {
+            JwtUser user = new JwtUser(
+                VALID_USER_ID,
+                INVALID_ID,
+                UserRole.CUSTOMER
+            );
+
+            Authentication auth =
+                new UsernamePasswordAuthenticationToken(
+                    user,
+                    INVALID_ID,
+                    List.of()
+                );
+
+            when(orderService.getUserOrders(VALID_USER_ID))
+                .thenReturn(List.of(new OrderResponse()));
+
+            mockMvc.perform(get(ApiPaths.ORDERS)
+                    .with(authentication(auth)))
+                .andExpect(status().isOk());
         }
 
         @TestConfiguration
