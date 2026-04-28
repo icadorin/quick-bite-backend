@@ -12,6 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static com.quickbite.order_service.constants.TestConstants.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -32,25 +34,98 @@ public class OrderStatusServiceTest {
     @InjectMocks
     private OrderStatusService service;
 
+    private Order buildOrder(
+        Long id,
+        Order.OrderStatus status
+    ) {
+        return Order.builder()
+            .id(id)
+            .status(status)
+            .build();
+    }
+
+    private OrderResponse buildOrderResponse() {
+        return new OrderResponse();
+    }
+
     @Test
     void shouldUpdateStatus() {
 
-        Order order = Order.builder().build();
+        Order order = buildOrder(
+            VALID_ORDER_ID,
+            Order.OrderStatus.PENDING
+        );
 
         OrderStatusUpdateRequest request =
-            new OrderStatusUpdateRequest(Order.OrderStatus.CONFIRMED, "ok");
+            new OrderStatusUpdateRequest(
+                Order.OrderStatus.CONFIRMED,
+                VALID_REASON
+            );
 
-        when(authorizationService.authorizeUserAccess(any(), any(), any(), any()))
+        when(
+            authorizationService.authorizeUserAccess(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        ).thenReturn(order);
+
+        when(orderRepository.save(order))
             .thenReturn(order);
-
-        when(orderRepository.save(order)).thenReturn(order);
-        when(responseMapper.toResponse(order)).thenReturn(new OrderResponse());
+        when(responseMapper.toResponse(order))
+            .thenReturn(buildOrderResponse());
 
         OrderResponse response = service.updateStatus(
-            1L, request, 1L, 1L, UserRole.RESTAURANT_OWNER
+            VALID_ORDER_ID,
+            request,
+            VALID_USER_ID,
+            VALID_RESTAURANT_ID,
+            UserRole.RESTAURANT_OWNER
         );
 
         assertNotNull(response);
+
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void shouldCancelOrder() {
+
+        Order order = buildOrder(
+            VALID_ORDER_ID,
+            Order.OrderStatus.PENDING
+        );
+
+        when(
+            authorizationService.authorizeUserAccess(
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        ).thenReturn(order);
+
+        when(orderRepository.save(order))
+            .thenReturn(order);
+
+        when(responseMapper.toResponse(order))
+            .thenReturn(buildOrderResponse());
+
+        OrderResponse response = service.cancelOrder(
+            VALID_ORDER_ID,
+            VALID_USER_ID,
+            VALID_RESTAURANT_ID,
+            UserRole.CUSTOMER
+        );
+
+        assertNotNull(response);
+
+        assertEquals(
+            Order.OrderStatus.CANCELLED,
+            order.getStatus()
+        );
+
         verify(orderRepository).save(order);
     }
 }

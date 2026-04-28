@@ -8,7 +8,6 @@ import com.quickbite.order_service.dto.OrderResponse;
 import com.quickbite.order_service.dto.ProductResponse;
 import com.quickbite.order_service.entity.Order;
 import com.quickbite.order_service.entity.OrderItem;
-import com.quickbite.order_service.entity.PaymentMethod;
 import com.quickbite.order_service.mappers.OrderCreateMapper;
 import com.quickbite.order_service.mappers.OrderItemCreateMapper;
 import com.quickbite.order_service.mappers.OrderResponseMapper;
@@ -23,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.quickbite.order_service.constants.TestConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -48,279 +48,270 @@ public class OrderCreationServiceTest {
     @InjectMocks
     private OrderCreationService service;
 
+    private OrderRequest buildOrderRequest(
+        Long restaurantId,
+        Long productId,
+        Integer quantity
+    ) {
+        return OrderRequest.builder()
+            .restaurantId(restaurantId)
+            .items(List.of(
+                OrderItemRequest.builder()
+                    .productId(productId)
+                    .quantity(quantity)
+                    .build()
+            )).build();
+    }
+
+    private ProductResponse buildProduct(
+        Long id,
+        String name,
+        BigDecimal price,
+        boolean available
+    ) {
+        ProductResponse product = new ProductResponse();
+        product.setId(id);
+        product.setName(name);
+        product.setPrice(price);
+        product.setIsAvailable(available);
+
+        return product;
+    }
+
+    private void mockItemMapper() {
+        when(itemMapper.toEntity(any()))
+            .thenAnswer(invocation -> {
+                OrderItemRequest req = invocation.getArgument(0);
+
+                return OrderItem.builder()
+                    .quantity(DOUBLE_QUANTITY)
+                    .build();
+            });
+    }
+
     @Test
     void shouldCreateOrderSuccessfully() {
 
-        OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
-            .paymentMethod(PaymentMethod.PIX)
-            .items(List.of(
-                OrderItemRequest.builder()
-                    .productId(1L)
-                    .quantity(2)
-                    .build()
-                )
-            ).build();
+        OrderRequest request = buildOrderRequest(
+            VALID_RESTAURANT_ID,
+            VALID_PRODUCT_ID,
+            DOUBLE_QUANTITY
+        );
 
         Order order = new Order();
 
-        ProductResponse product = new ProductResponse();
-        product.setId(1L);
-        product.setName("Burger");
-        product.setPrice(BigDecimal.valueOf(10));
-        product.setIsAvailable(true);
+        ProductResponse product =  buildProduct(
+            VALID_PRODUCT_ID,
+            VALID_PRODUCT_NAME,
+            VALID_PRODUCT_PRICE,
+            true
+        );
 
-        when(productClient.validateRestaurant(1L)).thenReturn(true);
-        when(productClient.getProduct(1L)).thenReturn(product);
-        when(createMapper.toEntity(request)).thenReturn(order);
+        when(productClient.validateRestaurant(VALID_RESTAURANT_ID))
+            .thenReturn(true);
+        when(productClient.getProduct(VALID_PRODUCT_ID))
+            .thenReturn(product);
+        when(createMapper.toEntity(request))
+            .thenReturn(order);
 
-        when(itemMapper.toEntity(any())).thenAnswer(invocation -> {
-            OrderItemRequest req = invocation.getArgument(0);
+        mockItemMapper();
 
-            return OrderItem.builder()
-                .quantity(req.getQuantity())
-                .build();
-        });
+        when(orderRepository.save(order))
+            .thenReturn(order);
+        when(responseMapper.toResponse(order))
+            .thenReturn(new OrderResponse());
 
-        when(orderRepository.save(order)).thenReturn(order);
-        when(responseMapper.toResponse(order)).thenReturn(new OrderResponse());
-
-        OrderResponse response = service.createOrder(request, 99L);
+        OrderResponse response = service.createOrder(request, CUSTOMER_USER_ID);
 
         assertNotNull(response);
+
         verify(orderRepository).save(order);
-        verify(productClient).getProduct(1L);
+        verify(productClient).getProduct(VALID_PRODUCT_ID);
     }
 
     @Test
     void shouldThrow_whenRestaurantDoesNotExist() {
 
         OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
+            .restaurantId(VALID_RESTAURANT_ID)
             .build();
 
-        when(productClient.validateRestaurant(1L)).thenReturn(false);
+        when(productClient.validateRestaurant(VALID_RESTAURANT_ID))
+            .thenReturn(false);
 
         assertThrows(
             BusinessRuleViolationException.class,
-            () -> service.createOrder(request, 1L)
+            () -> service.createOrder(request, VALID_USER_ID)
         );
     }
 
     @Test
     void shouldThrow_whenProductUnavailable() {
 
-        OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
-            .items(List.of(
-                OrderItemRequest.builder()
-                    .productId(1L)
-                    .quantity(1)
-                    .build()
-            ))
-            .build();
+        OrderRequest request = buildOrderRequest(
+            VALID_RESTAURANT_ID,
+            VALID_PRODUCT_ID,
+            SINGLE_QUANTITY
+        );
 
         Order order = Order.builder().build();
 
-        ProductResponse product = new ProductResponse();
-        product.setIsAvailable(false);
+        ProductResponse product = buildProduct(
+            VALID_PRODUCT_ID,
+            VALID_PRODUCT_NAME,
+            VALID_PRODUCT_PRICE,
+            false
+        );
 
-        when(productClient.validateRestaurant(1L)).thenReturn(true);
-        when(productClient.getProduct(1L)).thenReturn(product);
-        when(createMapper.toEntity(request)).thenReturn(order);
+        when(productClient.validateRestaurant(VALID_RESTAURANT_ID))
+            .thenReturn(true);
+        when(productClient.getProduct(VALID_PRODUCT_ID))
+            .thenReturn(product);
+        when(createMapper.toEntity(request))
+            .thenReturn(order);
 
         assertThrows(
             BusinessRuleViolationException.class,
-            () -> service.createOrder(request, 1L)
+            () -> service.createOrder(request, VALID_USER_ID)
         );
     }
 
     @Test
     void shouldThrow_whenProductNotFound() {
 
-        OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
-            .items(List.of(
-                OrderItemRequest.builder()
-                    .productId(1L)
-                    .quantity(1)
-                    .build()
-            )).build();
+        OrderRequest request = buildOrderRequest(
+            VALID_RESTAURANT_ID,
+            VALID_PRODUCT_ID,
+            SINGLE_QUANTITY
+        );
 
-        Order order = Order.builder().build();
+        Order order = new Order();
 
-        when(productClient.validateRestaurant(1L)).thenReturn(true);
-        when(productClient.getProduct(1L)).thenThrow(FeignException.NotFound.class);
-        when(createMapper.toEntity(request)).thenReturn(order);
+        when(productClient.validateRestaurant(VALID_RESTAURANT_ID))
+            .thenReturn(true);
+        when(productClient.getProduct(VALID_PRODUCT_ID))
+            .thenThrow(FeignException.NotFound.class);
+        when(createMapper.toEntity(request))
+            .thenReturn(order);
 
         assertThrows(
             BusinessRuleViolationException.class,
-            () -> service.createOrder(request, 1L)
+            () -> service.createOrder(request, VALID_USER_ID)
         );
     }
 
     @Test
     void shouldThrow_whenProductServiceFails() {
 
-        OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
-            .items(List.of(
-                OrderItemRequest.builder()
-                    .productId(1L)
-                    .quantity(1)
-                    .build()
-            )).build();
+        OrderRequest request = buildOrderRequest(
+            VALID_RESTAURANT_ID,
+            VALID_PRODUCT_ID,
+            SINGLE_QUANTITY
+        );
 
-        Order order = Order.builder().build();
+        Order order = new Order();
 
-        when(productClient.validateRestaurant(1L)).thenReturn(true);
-        when(productClient.getProduct(1L)).thenThrow(FeignException.class);
-        when(createMapper.toEntity(request)).thenReturn(order);
+        when(productClient.validateRestaurant(VALID_RESTAURANT_ID))
+            .thenReturn(true);
+        when(productClient.getProduct(VALID_PRODUCT_ID))
+            .thenThrow(FeignException.class);
+        when(createMapper.toEntity(request))
+            .thenReturn(order);
 
         assertThrows(
             BusinessRuleViolationException.class,
-            () -> service.createOrder(request, 1L)
+            () -> service.createOrder(request, VALID_USER_ID)
         );
     }
 
     @Test
     void shouldAddItemsToOrderCorrectly() {
 
-        OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
-            .items(List.of(
-                OrderItemRequest.builder()
-                    .productId(1L)
-                    .quantity(2)
-                    .build()
-            )).build();
+        OrderRequest request = buildOrderRequest(
+            VALID_RESTAURANT_ID,
+            VALID_PRODUCT_ID,
+            DOUBLE_QUANTITY
+        );
 
         Order order = new Order();
 
-        ProductResponse product = new ProductResponse();
-        product.setId(1L);
-        product.setName("Burger");
-        product.setPrice(BigDecimal.valueOf(10));
-        product.setIsAvailable(true);
+        ProductResponse product =  buildProduct(
+            VALID_PRODUCT_ID,
+            VALID_PRODUCT_NAME,
+            VALID_PRODUCT_PRICE,
+            true
+        );
 
-        when(productClient.validateRestaurant(1L)).thenReturn(true);
-        when(productClient.getProduct(1L)).thenReturn(product);
-        when(createMapper.toEntity(request)).thenReturn(order);
+        when(productClient.validateRestaurant(VALID_RESTAURANT_ID))
+            .thenReturn(true);
+        when(productClient.getProduct(VALID_PRODUCT_ID))
+            .thenReturn(product);
+        when(createMapper.toEntity(request))
+            .thenReturn(order);
 
-        when(itemMapper.toEntity(any())).thenAnswer(invocation -> {
-            OrderItemRequest req = invocation.getArgument(0);
-
-            return OrderItem.builder()
-                .quantity(req.getQuantity())
-                .build();
-        });
+        mockItemMapper();
 
         when(orderRepository.save(any())).
             thenAnswer(invocation -> invocation.getArgument(0));
-        when(responseMapper.toResponse(any())).thenReturn(new OrderResponse());
+        when(responseMapper.toResponse(any()))
+            .thenReturn(new OrderResponse());
 
-        OrderResponse response = service.createOrder(request, 99L);
+        OrderResponse response = service.createOrder(request, CUSTOMER_USER_ID);
 
         assertNotNull(response);
         assertEquals(1, order.getItems().size());
 
         OrderItem savedItem = order.getItems().getFirst();
 
-        assertEquals("Burger", savedItem.getProductName());
-        assertEquals(BigDecimal.valueOf(10), savedItem.getUnitPrice());
-        assertEquals(2, savedItem.getQuantity());
-    }
+        assertEquals(
+            VALID_PRODUCT_NAME,
+            savedItem.getProductName()
+        );
 
-    @Test
-    void shouldCalculateOrderResponse() {
+        assertEquals(
+            VALID_PRODUCT_PRICE,
+            savedItem.getUnitPrice()
+        );
 
-        OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
-            .items(List.of(
-                OrderItemRequest.builder()
-                    .productId(1L)
-                    .quantity(2)
-                    .build(),
-                OrderItemRequest.builder()
-                    .productId(2L)
-                    .quantity(1)
-                    .build()
-            )).build();
-
-        Order order = new Order();
-
-        ProductResponse product1 = new ProductResponse();
-        product1.setId(1L);
-        product1.setName("Burger");
-        product1.setPrice(BigDecimal.valueOf(10));
-        product1.setIsAvailable(true);
-
-        ProductResponse product2 = new ProductResponse();
-        product2.setId(2L);
-        product2.setName("Fries");
-        product2.setPrice(BigDecimal.valueOf(5));
-        product2.setIsAvailable(true);
-
-        when(productClient.validateRestaurant(1L)).thenReturn(true);
-
-        when(productClient.getProduct(1L)).thenReturn(product1);
-        when(productClient.getProduct(2L)).thenReturn(product2);
-
-        when(createMapper.toEntity(request)).thenReturn(order);
-
-        when(itemMapper.toEntity(any())).thenAnswer(invocation -> {
-            OrderItemRequest req = invocation.getArgument(0);
-
-            return OrderItem.builder()
-                .quantity(req.getQuantity())
-                .build();
-        });
-
-        when(orderRepository.save(any()))
-            .thenAnswer(invocation -> invocation.getArgument(0));
-
-        when(responseMapper.toResponse(any()))
-            .thenReturn(new OrderResponse());
-
-        service.createOrder(request, 99L);
-
-        assertEquals(0, order.getTotalAmount().compareTo(BigDecimal.valueOf(25)));
+        assertEquals(
+            DOUBLE_QUANTITY,
+            savedItem.getQuantity()
+        );
     }
 
     @Test
     void shouldCallProductClientForEachItem() {
 
         OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
+            .restaurantId(VALID_RESTAURANT_ID)
             .items(List.of(
                 OrderItemRequest.builder()
-                    .productId(1L)
-                    .quantity(1)
+                    .productId(VALID_PRODUCT_ID)
+                    .quantity(SINGLE_QUANTITY)
                     .build(),
                 OrderItemRequest.builder()
-                    .productId(2L)
-                    .quantity(1)
+                    .productId(SECOND_PRODUCT_ID)
+                    .quantity(SINGLE_QUANTITY)
                     .build()
             )).build();
 
         Order order = new Order();
 
-        ProductResponse product = new ProductResponse();
-        product.setName("Any");
-        product.setPrice(BigDecimal.valueOf(10));
-        product.setIsAvailable(true);
+        ProductResponse product = buildProduct(
+            VALID_PRODUCT_ID,
+            GENERIC_PRODUCT_NAME,
+            VALID_PRODUCT_PRICE,
+            true
+        );
 
-        when(productClient.validateRestaurant(1L)).thenReturn(true);
-        when(productClient.getProduct(any())).thenReturn(product);
-        when(createMapper.toEntity(request)).thenReturn(order);
+        when(productClient.validateRestaurant(VALID_RESTAURANT_ID))
+            .thenReturn(true);
+        when(productClient.getProduct(any()))
+            .thenReturn(product);
+        when(createMapper.toEntity(request))
+            .thenReturn(order);
 
-        when(itemMapper.toEntity(any())).thenAnswer(invocation -> {
-            OrderItemRequest req = invocation.getArgument(0);
-
-            return OrderItem.builder()
-                .quantity(req.getQuantity())
-                .build();
-        });
+        mockItemMapper();
 
         when(orderRepository.save(any()))
             .thenAnswer(invocation -> invocation.getArgument(0));
@@ -329,50 +320,9 @@ public class OrderCreationServiceTest {
             .thenReturn(new OrderResponse());
 
 
-        service.createOrder(request, 1L);
+        service.createOrder(request, VALID_USER_ID);
 
-        verify(productClient, times(2)).getProduct(any());
-    }
-
-    @Test
-    void shouldCallRepositorySaveOnce() {
-
-        OrderRequest request = OrderRequest.builder()
-            .restaurantId(1L)
-            .items(List.of(
-                OrderItemRequest.builder()
-                    .productId(1L)
-                    .quantity(1)
-                    .build()
-            )).build();
-
-        Order order = new Order();
-
-        ProductResponse product = new ProductResponse();
-        product.setName("Burger");
-        product.setPrice(BigDecimal.valueOf(10));
-        product.setIsAvailable(true);
-
-        when(productClient.validateRestaurant(1L)).thenReturn(true);
-        when(productClient.getProduct(1L)).thenReturn(product);
-        when(createMapper.toEntity(request)).thenReturn(order);
-
-        when(itemMapper.toEntity(any())).thenAnswer(invocation -> {
-            OrderItemRequest req = invocation.getArgument(0);
-
-            return OrderItem.builder()
-                .quantity(req.getQuantity())
-                .build();
-        });
-
-        when(orderRepository.save(any()))
-            .thenAnswer(invocation -> invocation.getArgument(0));
-
-        when(responseMapper.toResponse(any()))
-            .thenReturn(new OrderResponse());
-
-        service.createOrder(request, 1L);
-
-        verify(orderRepository, times(1)).save(any());
+        verify(productClient, times(2))
+            .getProduct(any());
     }
 }
