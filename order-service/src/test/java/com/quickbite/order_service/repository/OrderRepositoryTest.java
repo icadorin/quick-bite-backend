@@ -15,8 +15,8 @@ import static com.quickbite.order_service.constants.TestConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class OrderRepositoryTest {
 
     @Autowired
