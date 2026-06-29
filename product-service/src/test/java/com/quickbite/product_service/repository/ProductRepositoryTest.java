@@ -39,7 +39,7 @@ public class ProductRepositoryTest {
                 .build()
         );
 
-        Product product = entityManager.persist(
+        entityManager.persist(
             Product.builder()
                 .name(TestConstants.VALID_PRODUCT_NAME)
                 .price(BigDecimal.TEN)

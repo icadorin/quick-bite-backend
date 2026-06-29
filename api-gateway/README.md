@@ -1,27 +1,38 @@
-# 🚪 API Gateway
+# API Gateway
 
-Gateway principal para todas as requisições da API QuickBite. Responsável por rotear as requisições para os microsserviços corretos usando roteamento estático.
+Gateway para roteamento de requisições para os microsserviços.
 
-## 🚀 Funcionalidades
+**Porta:** 8081
 
--   Roteamento estático para microsserviços
--   Proxy de requisições HTTP
--   Ponto único de entrada para a API
+## Funcionalidades
 
-## 🛠️ Dependências
+- Roteamento dinâmico baseado no path da URL
+- Proxy de requisições HTTP via WebClient
+- Tratamento de erros dos serviços backend
+- Logging de requisições e respostas
 
--   `Spring Boot DevTools`
--   `Spring Web`
--   `WebFlux` (para WebClient)
+## Endpoints Roteados
 
-## ⚙️ Configuração
+| Prefixo | Serviço | Porta |
+|---------|---------|-------|
+| /api/v1/auth/** | Auth Service | 8082 |
+| /api/v1/products/** | Product Service | 8083 |
+| /api/v1/restaurants/** | Product Service | 8083 |
+| /api/v1/categories/** | Product Service | 8083 |
+| /api/v1/orders/** | Order Service | 8084 |
 
-**Porta:** `8081`  
-**Roteamento:** Configuração estática via WebClient  
-**Auth Service:** `http://localhost:8082`
+## Dependências
 
-## 🏃‍♂️ Como Executar
+- Spring Boot WebFlux
+- Spring Cloud Gateway Server WebFlux
+- Spring Cloud LoadBalancer
+- Spring Boot Actuator
+- Lombok
+- QuickBite Core
+
+## Execução
 
 ```bash
-cd services/api-gateway
-mvn spring-boot:run
+    cd api-gateway
+    mvn spring-boot:run
+```

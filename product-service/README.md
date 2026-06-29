@@ -1,31 +1,81 @@
-# 🍕 Product Service
+# Product Service
 
-Microsserviço responsável pelo catálogo de produtos, cardápios e gestão de itens dos restaurantes.
+Microsserviço responsável por restaurantes, produtos e categorias.
 
-## 🚀 Funcionalidades
+**Porta:** 8083
 
--   CRUD completo de produtos
--   Gestão de categorias
--   Controle de disponibilidade
--   Busca e filtros de produtos
+## Funcionalidades
 
-## 🛠️ Dependências
+- CRUD de restaurantes
+- CRUD de categorias
+- CRUD de produtos
+- Filtros por restaurante, categoria, preço e disponibilidade
+- Produtos em destaque (featured)
+- Validação de existência de restaurantes
+- Contagem de produtos por restaurante/categoria
+- Busca por nome, cozinha, avaliação
 
--   `Spring Boot DevTools`
--   `Spring Web`
--   `Spring Data JPA`
--   `Eureka Discovery Client`
--   `PostgreSQL Driver`
--   `Lombok`
+## Endpoints
 
-## ⚙️ Configuração
+### Restaurantes
 
-**Porta:** `8083`  
-**Banco de Dados:** PostgreSQL (Neon.tech)  
-**Service Discovery:** Eureka Server (`8761`)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | /api/v1/restaurants | Listar restaurantes |
+| GET | /api/v1/restaurants/{id} | Buscar restaurante |
+| GET | /api/v1/restaurants/owner/{ownerId} | Restaurantes por dono |
+| GET | /api/v1/restaurants/search | Buscar por nome |
+| GET | /api/v1/restaurants/{id}/exists | Validar existência |
+| GET | /api/v1/restaurants/cuisine/{cuisineType} | Buscar por cozinha |
+| GET | /api/v1/restaurants/rating | Buscar por avaliação mínima |
+| POST | /api/v1/restaurants | Criar restaurante |
+| PUT | /api/v1/restaurants/{id} | Atualizar |
+| DELETE | /api/v1/restaurants/{id} | Deletar |
 
-## 🏃‍♂️ Como Executar
+### Categorias
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | /api/v1/categories | Listar categorias |
+| POST | /api/v1/categories | Criar (ADMIN) |
+| PUT | /api/v1/categories/{id} | Atualizar (ADMIN) |
+| DELETE | /api/v1/categories/{id} | Deletar (ADMIN) |
+
+### Produtos
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | /api/v1/products | Listar produtos |
+| GET | /api/v1/products/{id} | Buscar produto |
+| GET | /api/v1/products/featured | Produtos em destaque |
+| GET | /api/v1/products/by-restaurant/{restaurantId}/count | Contar produtos |
+| POST | /api/v1/products | Criar |
+| PUT | /api/v1/products/{id} | Atualizar |
+| DELETE | /api/v1/products/{id} | Deletar |
+
+## Entidades
+
+- Restaurant: ownerId, name, description, address, phone, email, cuisineType, rating
+- Category: name, description, imageUrl, sortOrder, isActive
+- Product: restaurant, category, name, price, comparePrice, costPrice, isAvailable, isFeatured
+
+## Dependências
+
+- Spring Boot Web
+- Spring Data JPA
+- Spring Boot Validation
+- Spring Security
+- Spring Boot Actuator
+- JJWT (API, Impl, Jackson)
+- Lombok
+- MapStruct
+- QuickBite Core
+- PostgreSQL (runtime)
+- H2 (testes)
+
+## Execução
 
 ```bash
-cd services/product-service
-mvn spring-boot:run
+    cd product-service
+    mvn spring-boot:run
+```

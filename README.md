@@ -1,130 +1,148 @@
-# 🍔 QuickBite — Plataforma Fullstack (Backend-First) de Delivery
+# QuickBite - Backend (Monorepo)
 
-QuickBite é uma **plataforma fullstack de delivery de comida**, desenvolvida com **arquitetura de microsserviços**, com foco principal em **backend e sistemas distribuídos**, simulando desafios reais encontrados em ambientes corporativos.
+## Visão Geral
 
-O frontend tem como objetivo **consumir e validar as APIs**, enquanto o backend concentra as decisões arquiteturais, regras de negócio e comunicação entre serviços.
+Sistema de delivery de comida desenvolvido em Java 21 com arquitetura de microsserviços. Organizado em um monorepo gerenciado pelo Maven.
 
-O projeto foi construído com foco em:
+## Microsserviços
 
-- Arquitetura backend escalável  
-- Separação de responsabilidades  
-- Comunicação síncrona e assíncrona  
-- Decisões arquiteturais documentadas  
-- Boas práticas de desenvolvimento backend  
-- Integração entre frontend e APIs REST  
+| Serviço | Porta | Descrição |
+|---------|-------|-----------|
+| API Gateway | 8081 | Roteamento de requisições |
+| Auth Service | 8082 | Autenticação e gestão de usuários |
+| Product Service | 8083 | Gestão de restaurantes, produtos e categorias |
+| Order Service | 8084 | Ciclo de vida de pedidos |
+| QuickBite Core | - | Componentes compartilhados |
 
-📚 **Documentação**  
-https://israelcadorin.vercel.app/quickbite
+## Tecnologias
 
----
+- Java 21
+- Spring Boot 4.0.6
+- Spring Cloud 2025.1.1 (Gateway, Feign, LoadBalancer)
+- Spring Security 7.0.5 (JWT)
+- Spring Data JPA
+- PostgreSQL
+- H2 Database (testes)
+- JJWT 0.12.6
+- MapStruct 1.6.3
+- Lombok 1.18.34
+- Maven 3.9.11
 
-## 📌 Status das Implementações
+## Estrutura
 
-- ✅ APIs REST com Spring Boot *(em evolução contínua)*  
-- ✅ API Gateway  
-- ✅ Autenticação JWT  
-- ✅ Integração com PostgreSQL  
-- 🧪 Kafka *(microserviço criado, integração em desenvolvimento)*  
-- 🧪 Redis *(planejado para cache e otimização de performance)*  
-- 🚧 Frontend simples para consumo das APIs *(em desenvolvimento)*  
-
----
-
-## 🛠️ Stack Tecnológica
-
-### 🔙 Backend (foco principal)
-- **Java 21**
-- **Spring Boot**
-- **Spring Cloud**
-- **Spring Security (JWT)**
-- **PostgreSQL**
-- **Kafka**
-- **Redis**
-- **Maven**
-
-### 🎨 Frontend
-- **React**
-- **TypeScript**
-- **Node.js**
-- **Vite**
-- **Axios / Fetch API**
-
-### ☁️ Infraestrutura & DevOps
-- **Git**
-- **Neon.tech** *(PostgreSQL)*
-- **Upstash** *(Kafka e Redis)*
-
----
-
-## 🏗️ Arquitetura
-
-O sistema é composto por múltiplos **microsserviços independentes**, desenvolvidos com **Spring Boot**, integrados via **Spring Cloud** e consumidos por um **frontend React**.
-
-```text
-Frontend → API Gateway (8081) → Microsserviços (8082–8086)
+```
+quick-bite-backend/
+├── api-gateway/
+├── auth-service/
+├── product-service/
+├── order-service/
+├── quickbite-core/
+├── pom.xml
+└── .github/workflows/ci-backend.yml
 ```
 
-## ☁️ Infraestrutura na Nuvem
+## Módulo Core (quickbite-core)
 
-| Serviço       | Fornecedor   | Uso                  |
-|---------------|--------------|----------------------|
-| 🐘 **PostgreSQL** | [Neon.tech](https://neon.tech/) | Banco de dados |
-| ⚡ **Kafka**      | [Upstash.com](https://upstash.com/) | Mensageria assíncrona |
-| 🗃️ **Redis**     | [Upstash.com](https://upstash.com/) | Cache e sessões      |
+Componentes reutilizáveis:
 
-## 📦 Microsserviços
+- `BaseEntity`: Classe base com createdAt e updatedAt
+- `UserRole`: Papéis (CUSTOMER, RESTAURANT_OWNER, ADMIN)
+- Exceções customizadas (ResourceNotFoundException, BusinessRuleViolationException, etc)
+- `ErrorResponse` e `ApiError`: Padronização de respostas de erro
+- `PatchMapperConfig`: Configuração para mapeamento parcial com MapStruct
 
-| Serviço | Descrição | Porta Padrão |
-| :--- | :--- | :--- |
-| 🚪 **`api-gateway`** | 	API Gateway com roteamento estático | `8081` |
-| 🔐 **`auth-service`** | Autenticação e autorização JWT | `8082` |
-| 🍕 **`product-service`** | Catálogo de produtos e cardápios | `8083` |
-| 📋 **`order-service`** | Gestão do ciclo de vida de pedidos | `8084` |
-| 💳 **`payment-service`** | Processamento de pagamentos | `8085` |
-| 📧 **`notification-service`** | Notificações por e-mail e SMS | `8086` |
+## Serviços
 
+### API Gateway
 
-## 🚀 Como Executar (Desenvolvimento Local)
-📋 Pré-requisitos
-Java 17 ou superior
+- Roteamento baseado no path da URL
+- Mapeamento: `/api/v1/auth/**` → Auth Service, `/api/v1/products/**` → Product Service, `/api/v1/orders/**` → Order Service
 
-Maven 3.6 ou superior
+### Auth Service
 
-Contas nos serviços:
+Endpoints:
 
-🌐 Neon.tech (PostgreSQL)
+- `POST /api/auth/register` - Registro
+- `POST /api/auth/login` - Login
+- `POST /api/auth/refresh-token` - Renovação de token
+- `POST /api/auth/logout` - Logout
+- `GET /api/users/{id}` - Buscar usuário
+- `PUT /api/users/{id}` - Atualizar usuário
+- `GET /api/users` - Listar usuários (ADMIN)
 
-⚡ Upstash.com (Kafka + Redis)
+### Product Service
 
-## ▶️ Execução dos Serviços
-Execute os serviços:
+Endpoints:
+
+- **Restaurantes**: CRUD, busca por nome, cozinha, avaliação, validação de existência
+- **Categorias**: CRUD
+- **Produtos**: CRUD, filtros por restaurante, categoria, preço e disponibilidade
+
+### Order Service
+
+Endpoints:
+
+- `POST /api/v1/orders` - Criar pedido
+- `GET /api/v1/orders` - Listar pedidos do usuário
+- `PATCH /api/v1/orders/{id}/status` - Atualizar status (RESTAURANT_OWNER)
+- `POST /api/v1/orders/{id}/cancel` - Cancelar pedido
+- `GET /api/v1/orders/{id}` - Detalhes do pedido
+- `GET /api/v1/orders/restaurant/{restaurantId}` - Pedidos de um restaurante
+
+Integração com Product Service via Feign Client.
+
+Transições de status: PENDING → CONFIRMED → PREPARING → READY_FOR_PICKUP → OUT_FOR_DELIVERY → DELIVERED
+
+## Segurança
+
+Autenticação baseada em JWT.
+
+Fluxo:
+
+1. Auth Service gera accessToken e refreshToken
+2. Cliente envia accessToken no header `Authorization: Bearer <token>`
+3. Filtro JWT valida token e extrai userId, role e restaurantId
+4. `@PreAuthorize` controla acesso baseado no papel
+
+Papéis:
+
+- CUSTOMER: Cria pedidos e visualiza próprios dados
+- RESTAURANT_OWNER: Gerencia restaurantes e pedidos do seu restaurante
+- ADMIN: Acesso total
+
+## Execução
+
+Pré-requisitos: Java 21, Maven 3.9+, PostgreSQL
 
 ```bash
-# Terminal 1 - API Gateway
-cd services/api-gateway
-mvn spring-boot:run
+git clone <URL>
+cd quick-bite-backend
 
-# Terminal 2 - Autenticação
-cd services/auth-service
-mvn spring-boot:run
+# Configurar datasources nos application.properties
 
-# Terminal 3 - Produtos
-cd services/product-service
-mvn spring-boot:run
+mvn clean compile
 
-# Terminal 4 - Pedidos
-cd services/order-service
-mvn spring-boot:run
+# Executar serviços (terminais separados)
+cd auth-service && mvn spring-boot:run
+cd product-service && mvn spring-boot:run
+cd order-service && mvn spring-boot:run
+cd api-gateway && mvn spring-boot:run
 
-# Terminal 5 - Pagamentos
-cd services/payment-service
-mvn spring-boot:run
-
-# Terminal 6 - Notificações
-cd services/notification-service
-mvn spring-boot:run
+# Acessar
+http://localhost:8081
+http://localhost:8081/actuator/health
 ```
 
-## ✅ Verificação
+## Testes
 
-Acesse: http://localhost:8081/api/auth/test
+```bash
+mvn test
+```
+
+## CI/CD
+
+Pipeline GitHub Actions em `.github/workflows/ci-backend.yml`.
+
+Executa build e testes em push/pull request para branches main/master.
+
+Ambiente de teste: H2 em memória.

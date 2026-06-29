@@ -1,31 +1,53 @@
-# 🔐 Auth Service
+# Auth Service
 
-Microsserviço responsável pela autenticação e autorização de usuários na plataforma QuickBite.
+Microsserviço responsável por autenticação, registro e gestão de usuários.
 
-## 🚀 Funcionalidades
+**Porta:** 8082
 
--   Registro de novos usuários
--   Login e geração de tokens JWT
--   Validação de tokens e rotas protegidas
+## Funcionalidades
 
-## 🛠️ Dependências
+- Registro de novos usuários com validação
+- Login com geração de JWT (access + refresh token)
+- Renovação de token
+- Logout (invalidação de refresh token)
+- CRUD de usuários com segurança por papel
+- Perfil de usuário com informações adicionais
 
--   `Spring Boot DevTools`
--   `Spring Web`
--   `Spring Data JPA`
--   `Eureka Discovery Client`
--   `PostgreSQL Driver`
--   `Lombok`
--   `Spring Security`
+## Endpoints
 
-## ⚙️ Configuração
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | /api/auth/register | Registro de usuário |
+| POST | /api/auth/login | Login |
+| POST | /api/auth/refresh-token | Renovar token |
+| POST | /api/auth/logout | Logout |
+| GET | /api/users/{id} | Buscar usuário |
+| PUT | /api/users/{id} | Atualizar usuário |
+| GET | /api/users | Listar usuários (ADMIN) |
 
-**Porta:** `8082`  
-**Banco de Dados:** PostgreSQL (Neon.tech)  
-**Service Discovery:** Eureka Server (`8761`)
+## Entidades
 
-## 🏃‍♂️ Como Executar
+- User: email, passwordHash, fullName, role, status
+- UserProfile: phone, address, avatarUrl, preferências
+- RefreshToken: token, expiresAt, revoked
 
+## Dependências
+
+- Spring Boot Web
+- Spring Security
+- Spring Data JPA
+- Spring Boot Validation
+- Spring Boot Actuator
+- JJWT (API, Impl, Jackson)
+- Lombok
+- MapStruct
+- QuickBite Core
+- PostgreSQL (runtime)
+- H2 (testes)
+- Testcontainers (testes)
+
+## Execução
 ```bash
-cd services/auth-service
-mvn spring-boot:run
+    cd auth-service
+    mvn spring-boot:run
+```
